@@ -66,6 +66,11 @@ bytecode at `JvmTarget.JVM_17`. `.editorconfig` holds the house style.
 - Tags and versions are bare SemVer (`0.1.0`, never `v0.1.0`). Never hand-edit versions;
   `VERSION_NAME` is injected by `release.yml` from the tag, which must equal
   `.release-please-manifest.json`.
+- Releases are gated: `release-please.yml` and `release.yml` only run when the repository variable
+  `RELEASES_ENABLED` is `true`. Do not remove the gate or set the variable; the maintainer enables
+  releases after reviewing the repo.
+- Shared IntelliJ run configurations live in `.run/`; keep them in sync with the CI task list and
+  the sample/verification entry points.
 - Publishing needs `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_IN_MEMORY_KEY`, and
   `SIGNING_IN_MEMORY_KEY_PASSWORD` in the `secrets` environment, and the `com.arjangconsulting`
   namespace verified in the Central Portal (DNS TXT record on `arjangconsulting.com`).

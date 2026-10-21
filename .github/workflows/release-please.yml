@@ -15,9 +15,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# Releases are switched off until the repository variable RELEASES_ENABLED is set to "true"
+# (Settings > Secrets and variables > Actions > Variables). Until then no release PR is opened,
+# nothing is tagged, and nothing is published, so 0.1.0 waits for a manual review.
 jobs:
   release-please:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: vars.RELEASES_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}

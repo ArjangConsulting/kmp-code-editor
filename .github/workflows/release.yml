@@ -32,6 +32,8 @@ concurrency:
 
 jobs:
   publish:
+    # Same switch as release-please.yml: a manual dispatch can't publish before releases are enabled.
+    if: vars.RELEASES_ENABLED == 'true'
     runs-on: macos-26
     environment: secrets
     steps:

@@ -23,6 +23,12 @@ verification/build-apps.sh android    # Android app with the editor (see verific
 verification/build-apps.sh ios        # iOS simulator app (needs Xcode and xcodegen)
 ```
 
+In IntelliJ IDEA or Android Studio, open the repository and use the shared run configurations in
+`.run/`: **Run** has *Sample (desktop)*, *Sample (desktop, window layers)* (adds
+`-Dcompose.layers.type=WINDOW` for testing the RSyntaxTextArea engine with overlays), and the
+Android and iOS verification builds; **Test** has *Tests (JVM)*, *Tests (all targets)*, and
+*Check (CI)*.
+
 The desktop sample has language and engine pickers, a toggle for every option, a demo
 `LanguageService` for a small command language (with simulated latency), JSON completion from a
 tiny schema, a read-only Swift test whose lines highlight from a clickable step list, a REPL, a
@@ -300,3 +306,7 @@ includeBuild("../kmp-code-editor")
 
 Releases are automated by Release Please from Conventional Commit messages (`feat:`, `fix:`,
 `feat!:`), with bare SemVer tags (no `v` prefix). Changes land through pull requests.
+
+Releases are **off** until the GitHub repository variable `RELEASES_ENABLED` is set to `true`
+(Settings > Secrets and variables > Actions > Variables). Until then no release PR is opened and
+nothing is tagged or published, so the first release (0.1.0) waits for review.
