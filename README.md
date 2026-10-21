@@ -305,7 +305,11 @@ includeBuild("../kmp-code-editor")
 ```
 
 Releases are automated by Release Please from Conventional Commit messages (`feat:`, `fix:`,
-`feat!:`), with bare SemVer tags (no `v` prefix). Changes land through pull requests.
+`feat!:`), with bare SemVer tags (no `v` prefix). Until 0.1.0 is released, changes are committed
+directly to `main`; after that they land through pull requests.
+
+Dependabot opens one weekly pull request for all Gradle and GitHub Actions updates, which is
+merged automatically once CI passes.
 
 Releases are **off** until the GitHub repository variable `RELEASES_ENABLED` is set to `true`
 (Settings > Secrets and variables > Actions > Variables). Until then no release PR is opened and

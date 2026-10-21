@@ -1,6 +1,8 @@
 # KMP Code Editor Agent Instructions
 
-`AGENTS.md` is the source of truth for agent guidance in this repo. `CLAUDE.md` only points here.
+`AGENTS.md` is the source of truth for agent guidance in this repo, for every agent (Codex, Claude
+Code, Copilot, Cursor, …). Put shared rules here. `CLAUDE.md` imports this file and adds only
+Claude Code specifics; don't duplicate content between them.
 When this file and the checked-in build disagree, trust `settings.gradle.kts`,
 `gradle/libs.versions.toml`, and the module build files, then fix this file.
 
@@ -24,7 +26,9 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
 - `verification/` — standalone Android/iOS harness for native input and accessibility checks; a
   separate Gradle build that includes this repo (see `verification/README.md`).
 - `docs/ARCHITECTURE.md` — internals. `README.md` — public API, engines, keyboard, known gaps.
-- `.github/workflows/` — `ci.yml`, `release-please.yml` -> `release.yml` (Maven Central publish).
+- `.github/workflows/` — `ci.yml`, `release-please.yml` -> `release.yml` (Maven Central publish),
+  `dependabot-auto-merge.yml`. `.github/dependabot.yml` configures dependency updates.
+- `.run/` — shared IntelliJ run configurations.
 
 ## API rules
 
@@ -58,11 +62,25 @@ The build needs Google Maven for the Android Gradle plugin. Versions live in
 `gradle/libs.versions.toml` only; declare Compose libraries through catalog entries. Keep Kotlin/JVM
 bytecode at `JvmTarget.JVM_17`. `.editorconfig` holds the house style.
 
+## Before you finish
+
+1. `./gradlew :code-editor:jvmTest` passes; for changes outside pure JVM code, run the full CI task
+   list above (iOS/Android behavior: also the checks in `verification/README.md`).
+2. Public API changed: KDoc updated, `README.md` (API table, engines, keyboard, known gaps) updated,
+   and the sample shows the feature.
+3. Internals changed (new file, layer, or data flow): `docs/ARCHITECTURE.md` updated.
+4. A command, path, or workflow named in this file changed: update this file in the same commit.
+
 ## Workflow and releases
 
-- Never commit to `main`. Work on a branch (`feature/<name>`, `fix/<name>`) and open a pull request.
-- Conventional Commits drive Release Please (`feat:` minor pre-1.0, `fix:` patch, `!` breaking);
-  call out breaking public API changes in the commit body.
+- **Until 0.1.0 is released, commit and push directly to `main`.** No feature branches or pull
+  requests yet. Once 0.1.0 is out, switch to branches (`feature/<name>`, `fix/<name>`) and pull
+  requests, and update this rule.
+- Keep `main` green: run the CI task list locally before pushing.
+- Conventional Commits drive Release Please and the release notes. Only `feat:` (minor pre-1.0),
+  `fix:` (patch), and `!` (breaking) produce a release; use `docs:`, `test:`, `refactor:`, `build:`,
+  `ci:`, or `chore:` for everything else so the notes list only user-visible changes. Call out
+  breaking public API changes in the commit body.
 - Tags and versions are bare SemVer (`0.1.0`, never `v0.1.0`). Never hand-edit versions;
   `VERSION_NAME` is injected by `release.yml` from the tag, which must equal
   `.release-please-manifest.json`.
@@ -71,6 +89,10 @@ bytecode at `JvmTarget.JVM_17`. `.editorconfig` holds the house style.
   releases after reviewing the repo.
 - Shared IntelliJ run configurations live in `.run/`; keep them in sync with the CI task list and
   the sample/verification entry points.
+- Dependabot opens **one** weekly pull request covering Gradle (the version catalog and wrapper)
+  and GitHub Actions. `dependabot-auto-merge.yml` squash-merges it once CI passes on the exact head
+  commit. If an update breaks the build, fix it on `main` rather than pinning around it; don't
+  disable the automation.
 - Publishing needs `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_IN_MEMORY_KEY`, and
   `SIGNING_IN_MEMORY_KEY_PASSWORD` in the `secrets` environment, and the `com.arjangconsulting`
   namespace verified in the Central Portal (DNS TXT record on `arjangconsulting.com`).
