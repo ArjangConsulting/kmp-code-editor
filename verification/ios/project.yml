@@ -1,0 +1,35 @@
+name: EditorVerification
+options:
+  bundleIdPrefix: com.arjangconsulting
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  EditorVerification:
+    type: application
+    platform: iOS
+    sources: [App.swift]
+    info:
+      path: Info.plist
+      properties:
+        CADisableMinimumFrameDurationOnPhone: true
+        CFBundleDisplayName: Editor Verification
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        PRODUCT_MODULE_NAME: EditorVerificationHost
+        ARCHS: arm64
+        PRODUCT_BUNDLE_IDENTIFIER: com.arjangconsulting.codeeditor.verification
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_KEY_CFBundleDisplayName: Editor Verification
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        CODE_SIGNING_ALLOWED: NO
+        FRAMEWORK_SEARCH_PATHS: $(inherited) $(SRCROOT)/../build/bin/iosSimulatorArm64/debugFramework
+        OTHER_LDFLAGS: $(inherited) -framework EditorVerificationKit -lc++

@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin*"
+      compose:
+        patterns:
+          - "org.jetbrains.compose*"
+      android:
+        patterns:
+          - "com.android*"
+      maven-publish:
+        patterns:
+          - "com.vanniktech*"
+      kotlinx:
+        patterns:
+          - "org.jetbrains.kotlinx*"
+      rsyntaxtextarea:
+        patterns:
+          - "com.fifesoft*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
