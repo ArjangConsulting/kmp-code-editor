@@ -1,7 +1,7 @@
 [versions]
 agp = "9.4.1"
-kotlin = "2.4.20"
-compose = "1.12.0"
+kotlin = "2.4.21"
+compose = "1.12.2"
 # Compose Material 3 is versioned separately; keep it on the release paired with `compose`.
 composeMaterial3 = "1.9.0"
 mavenPublish = "0.37.0"
