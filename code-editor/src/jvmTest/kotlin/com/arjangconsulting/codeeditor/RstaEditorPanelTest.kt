@@ -135,7 +135,12 @@ class RstaEditorPanelTest {
 
     @Test
     fun `colors map to the text area and syntax scheme`() {
-        val colors = CodeEditorDefaults.colorsFrom(lightColorScheme()).copy(background = Color.DarkGray, foreground = Color.LightGray, keyword = Color.Red)
+        val defaults = CodeEditorDefaults.colorsFrom(lightColorScheme())
+        val colors = defaults.copy(
+            background = Color.DarkGray,
+            foreground = Color.LightGray,
+            syntaxTheme = CodeEditorSyntaxTheme(defaults.syntax.copy(keyword = Color.Red)),
+        )
         panel.applyConfig(config(colors = colors))
         assertEquals(Color.DarkGray.toAwt(), panel.textArea.background)
         assertEquals(Color.LightGray.toAwt(), panel.textArea.foreground)

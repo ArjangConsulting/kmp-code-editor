@@ -7,14 +7,20 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class HighlightedTextTest {
-    private val colors = CodeEditorDefaults.colorsFrom(lightColorScheme()).copy(
-        keyword = Color.Red,
-        string = Color.Green,
-        comment = Color.Blue,
-        attribute = Color.Magenta,
-        property = Color.Cyan,
-        number = Color.Yellow,
-    )
+    private val colors = CodeEditorDefaults.colorsFrom(lightColorScheme()).let {
+        it.copy(
+            syntaxTheme = CodeEditorSyntaxTheme(
+                it.syntax.copy(
+                    keyword = Color.Red,
+                    string = Color.Green,
+                    comment = Color.Blue,
+                    attribute = Color.Magenta,
+                    property = Color.Cyan,
+                    number = Color.Yellow,
+                ),
+            ),
+        )
+    }
 
     private fun spans(text: String, rules: TokenRules): List<Pair<String, Color>> =
         highlightedText(text, rules, colors).spanStyles.map { text.substring(it.start, it.end) to it.item.color }
@@ -55,6 +61,6 @@ class HighlightedTextTest {
     fun `json keys and crlf line breaks`() {
         val text = "{\r\n  \"a\": \"b\"\r\n}"
         val result = spans(text, JsonRules)
-        assertEquals(listOf("\"a\"" to Color.Cyan, "\"b\"" to Color.Green), result.filter { it.second != colors.punctuation })
+        assertEquals(listOf("\"a\"" to Color.Cyan, "\"b\"" to Color.Green), result.filter { it.second != colors.syntax.punctuation })
     }
 }

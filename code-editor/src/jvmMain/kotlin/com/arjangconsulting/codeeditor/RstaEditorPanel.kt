@@ -603,7 +603,7 @@ internal class RstaEditorPanel(
         TokenKind.entries.forEach { kind ->
             scheme.setStyle(kind.toRstaType(), Style(colors.tokenColor(kind).toAwt()))
         }
-        scheme.setStyle(TokenTypes.COMMENT_MULTILINE, Style(colors.comment.toAwt()))
+        scheme.setStyle(TokenTypes.COMMENT_MULTILINE, Style(colors.tokenColor(TokenKind.COMMENT).toAwt()))
         scheme.setStyle(TokenTypes.WHITESPACE, Style(colors.foreground.toAwt()))
         textArea.syntaxScheme = scheme
         val gutter = scrollPane.gutter

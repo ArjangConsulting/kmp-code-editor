@@ -285,14 +285,17 @@ internal fun completionKindBadge(kind: CompletionItemKind?): String = when (kind
 }
 
 private fun completionKindColor(kind: CompletionItemKind?, colors: CodeEditorColors): Color = when (kind) {
-    CompletionItemKind.METHOD, CompletionItemKind.FUNCTION, CompletionItemKind.CONSTRUCTOR -> colors.function
-    CompletionItemKind.KEYWORD -> colors.keyword
+    CompletionItemKind.METHOD, CompletionItemKind.FUNCTION, CompletionItemKind.CONSTRUCTOR,
+    -> colors.tokenColor(TokenKind.FUNCTION)
+    CompletionItemKind.KEYWORD -> colors.tokenColor(TokenKind.KEYWORD)
     CompletionItemKind.CLASS, CompletionItemKind.INTERFACE, CompletionItemKind.STRUCT, CompletionItemKind.ENUM,
     CompletionItemKind.TYPE_PARAMETER,
-    -> colors.type
-    CompletionItemKind.FIELD, CompletionItemKind.PROPERTY, CompletionItemKind.VARIABLE -> colors.property
-    CompletionItemKind.CONSTANT, CompletionItemKind.ENUM_MEMBER, CompletionItemKind.VALUE -> colors.constant
-    CompletionItemKind.SNIPPET -> colors.annotation
+    -> colors.tokenColor(TokenKind.TYPE)
+    CompletionItemKind.FIELD, CompletionItemKind.PROPERTY, CompletionItemKind.VARIABLE,
+    -> colors.tokenColor(TokenKind.PROPERTY)
+    CompletionItemKind.CONSTANT, CompletionItemKind.ENUM_MEMBER, CompletionItemKind.VALUE,
+    -> colors.tokenColor(TokenKind.CONSTANT)
+    CompletionItemKind.SNIPPET -> colors.tokenColor(TokenKind.ANNOTATION)
     else -> colors.popupSecondaryForeground
 }
 

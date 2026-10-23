@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.arjangconsulting.codeeditor.CodeEditor
+import com.arjangconsulting.codeeditor.CodeEditorColors
 import com.arjangconsulting.codeeditor.CodeEditorDefaults
 import com.arjangconsulting.codeeditor.CodeEditorEngine
 import com.arjangconsulting.codeeditor.CodeEditorOptions
@@ -86,6 +87,9 @@ fun CodeEditorScreen() {
     var tabMovesFocus by remember { mutableStateOf(false) }
     var latency by remember { mutableStateOf(250f) }
     var caret by remember { mutableStateOf(TextPosition.Zero) }
+    var syntaxPreset by remember { mutableStateOf(SyntaxPreset.DEFAULT) }
+    var syntaxTheme by remember { mutableStateOf(SyntaxPreset.DEFAULT.theme) }
+    val colors = CodeEditorDefaults.colors(syntaxTheme)
 
     val commandService = remember { CommandLanguageService { latency.toLong() } }
     val jsonService = remember { JsonSchemaLanguageService { latency.toLong() } }
@@ -143,6 +147,16 @@ fun CodeEditorScreen() {
                 Text("Simulated service latency: ${latency.toInt()} ms", style = MaterialTheme.typography.bodySmall)
                 Slider(value = latency, onValueChange = { latency = it }, valueRange = 0f..2_000f)
             }
+            SyntaxColorsEditor(
+                preset = syntaxPreset,
+                theme = syntaxTheme,
+                colors = colors,
+                onPresetChange = {
+                    syntaxPreset = it
+                    syntaxTheme = it.theme
+                },
+                onThemeChange = { syntaxTheme = it },
+            )
             OverlayCheck()
         }
         Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(spacing.medium)) {
@@ -161,6 +175,7 @@ fun CodeEditorScreen() {
                     folding = folding,
                     onCaretChange = { caret = it },
                     tabBehavior = if (tabMovesFocus) TabBehavior.MOVE_FOCUS else TabBehavior.INSERT_INDENT,
+                    colors = colors,
                     options = options,
                 )
             }
@@ -168,11 +183,11 @@ fun CodeEditorScreen() {
                 "Ln ${caret.line + 1}, Col ${caret.character + 1}  ·  Ctrl+Space completes, Cmd/Ctrl+F finds, Cmd/Ctrl+/ comments",
                 style = CodeEditorDefaults.textStyle(),
             )
-            ReplDemo(engine, commandService)
+            ReplDemo(engine, commandService, colors)
         }
         Column(Modifier.width(spacing.large * 22).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(spacing.medium)) {
-            GeneratedTestDemo(engine)
-            SnippetDemo()
+            GeneratedTestDemo(engine, colors)
+            SnippetDemo(colors)
         }
     }
 }
@@ -184,7 +199,7 @@ private fun Toggle(label: String, checked: Boolean, onChange: (Boolean) -> Unit)
 
 /** A single-line REPL: Enter submits, Up/Down browse history, completion works inline. */
 @Composable
-private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService) {
+private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors: CodeEditorColors) {
     val state = rememberCodeEditorState("")
     val history = remember { mutableStateListOf<String>() }
     val output = remember { mutableStateListOf<String>() }
@@ -200,6 +215,7 @@ private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService) {
             languageService = service,
             engine = engine,
             singleLine = true,
+            colors = colors,
             onSubmit = { command ->
                 if (command.isNotBlank()) {
                     output += command
@@ -239,7 +255,7 @@ private val steps = listOf(
 
 /** A read-only generated test whose lines highlight from a clickable step list (a source map). */
 @Composable
-private fun ColumnScope.GeneratedTestDemo(engine: CodeEditorEngine) {
+private fun ColumnScope.GeneratedTestDemo(engine: CodeEditorEngine, colors: CodeEditorColors) {
     var selected by remember { mutableStateOf<TestStep?>(null) }
     var hovered by remember { mutableStateOf<TestStep?>(null) }
     val state = rememberCodeEditorState(SWIFT_TEST_SAMPLE)
@@ -275,6 +291,7 @@ private fun ColumnScope.GeneratedTestDemo(engine: CodeEditorEngine) {
         lineHighlights = highlights,
         revealLine = selected?.lines?.first,
         onLineClick = { line -> selected = steps.firstOrNull { line in it.lines } },
+        colors = colors,
     )
 }
 
@@ -288,11 +305,11 @@ private val snippets = listOf(
 
 /** CodeSnippet: cheap highlighted rows for timelines and logs, instead of an editor per row. */
 @Composable
-private fun ColumnScope.SnippetDemo() {
+private fun ColumnScope.SnippetDemo(colors: CodeEditorColors) {
     Text("Snippets", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
     LazyColumn(Modifier.fillMaxWidth().weight(0.6f), verticalArrangement = Arrangement.spacedBy(SampleSpacing.small)) {
         items(List(40) { snippets[it % snippets.size] }) { (rules, code) ->
-            CodeSnippet(code, language = rules, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            CodeSnippet(code, language = rules, colors = colors, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

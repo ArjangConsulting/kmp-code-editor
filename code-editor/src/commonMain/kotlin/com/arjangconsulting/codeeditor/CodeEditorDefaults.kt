@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 
@@ -14,6 +14,9 @@ import androidx.compose.ui.text.font.FontFamily
  * Every color the editor draws. Build the defaults with [CodeEditorDefaults.colors] and override
  * roles with `copy`. Material 3 has no warning role, so [diagnosticWarning] and
  * [lineHighlightWarning] default to the tertiary palette; apps with a warning color should pass it.
+ *
+ * Token colors come from [syntaxTheme], resolved against [background] into [syntax]: a
+ * `copy(background = panel)` with a dark panel switches to the theme's dark variant automatically.
  */
 @Immutable
 public data class CodeEditorColors(
@@ -46,43 +49,13 @@ public data class CodeEditorColors(
     val popupMatchForeground: Color,
     val popupBorder: Color,
     val scrollbar: Color,
-    val keyword: Color,
-    val type: Color,
-    val function: Color,
-    val variable: Color,
-    val property: Color,
-    val attribute: Color,
-    val string: Color,
-    val escape: Color,
-    val number: Color,
-    val constant: Color,
-    val comment: Color,
-    val annotation: Color,
-    val operator: Color,
-    val punctuation: Color,
-    val preprocessor: Color,
-    val error: Color,
+    val syntaxTheme: CodeEditorSyntaxTheme,
 ) {
-    /** The color for tokens of [kind]. */
-    public fun tokenColor(kind: TokenKind): Color = when (kind) {
-        TokenKind.PLAIN -> foreground
-        TokenKind.KEYWORD -> keyword
-        TokenKind.TYPE -> type
-        TokenKind.FUNCTION -> function
-        TokenKind.VARIABLE -> variable
-        TokenKind.PROPERTY -> property
-        TokenKind.ATTRIBUTE -> attribute
-        TokenKind.STRING -> string
-        TokenKind.ESCAPE -> escape
-        TokenKind.NUMBER -> number
-        TokenKind.CONSTANT -> constant
-        TokenKind.COMMENT -> comment
-        TokenKind.ANNOTATION -> annotation
-        TokenKind.OPERATOR -> operator
-        TokenKind.PUNCTUATION -> punctuation
-        TokenKind.PREPROCESSOR -> preprocessor
-        TokenKind.ERROR -> error
-    }
+    /** The [syntaxTheme] variant for [background]. */
+    public val syntax: CodeEditorSyntaxColors = syntaxTheme.colorsFor(background)
+
+    /** The color for tokens of [kind]: its [syntax] color, or [foreground] when that is unspecified. */
+    public fun tokenColor(kind: TokenKind): Color = syntax[kind].takeOrElse { foreground }
 
     /** The squiggle and gutter marker color for [severity]. */
     public fun diagnosticColor(severity: DiagnosticSeverity): Color = when (severity) {
@@ -193,13 +166,20 @@ public data class CodeEditorOptions(
 
 /** Defaults for [CodeEditor]. */
 public object CodeEditorDefaults {
-    /** Colors derived from `MaterialTheme.colorScheme`. */
+    /**
+     * Chrome colors derived from `MaterialTheme.colorScheme`, with token colors from [syntaxTheme]
+     * matched to the editor background.
+     */
     @Composable
     @ReadOnlyComposable
-    public fun colors(): CodeEditorColors = colorsFrom(MaterialTheme.colorScheme)
+    public fun colors(syntaxTheme: CodeEditorSyntaxTheme = CodeEditorSyntaxTheme.Default): CodeEditorColors =
+        colorsFrom(MaterialTheme.colorScheme, syntaxTheme)
 
-    /** Colors derived from an explicit [scheme]; useful outside a Material theme. */
-    public fun colorsFrom(scheme: ColorScheme): CodeEditorColors = CodeEditorColors(
+    /** Like [colors], from an explicit [scheme]; useful outside a Material theme. */
+    public fun colorsFrom(
+        scheme: ColorScheme,
+        syntaxTheme: CodeEditorSyntaxTheme = CodeEditorSyntaxTheme.Default,
+    ): CodeEditorColors = CodeEditorColors(
         background = scheme.surfaceContainerLowest,
         foreground = scheme.onSurface,
         gutterBackground = scheme.surfaceContainerLow,
@@ -229,22 +209,7 @@ public object CodeEditorDefaults {
         popupMatchForeground = scheme.primary,
         popupBorder = scheme.outlineVariant,
         scrollbar = scheme.onSurface.copy(alpha = 0.25f),
-        keyword = scheme.primary,
-        type = scheme.tertiary,
-        function = scheme.secondary,
-        variable = scheme.onSurface,
-        property = lerp(scheme.secondary, scheme.tertiary, 0.5f),
-        attribute = lerp(scheme.secondary, scheme.tertiary, 0.5f),
-        string = lerp(scheme.tertiary, scheme.error, 0.35f),
-        escape = scheme.error,
-        number = lerp(scheme.primary, scheme.error, 0.5f),
-        constant = lerp(scheme.primary, scheme.error, 0.5f),
-        comment = scheme.onSurfaceVariant.copy(alpha = 0.75f),
-        annotation = scheme.tertiary,
-        operator = scheme.onSurfaceVariant,
-        punctuation = scheme.onSurfaceVariant,
-        preprocessor = lerp(scheme.primary, scheme.secondary, 0.5f),
-        error = scheme.error,
+        syntaxTheme = syntaxTheme,
     )
 
     /** Monospace text based on `MaterialTheme.typography.bodyMedium`. */

@@ -406,7 +406,8 @@ class ComposeEditorUiTest {
         val snippets = List(200) { "tap id=\"row$it\"" }
         setContent {
             Themed {
-                val colors = CodeEditorDefaults.colors().copy(keyword = keyword)
+                val defaults = CodeEditorDefaults.colors()
+                val colors = defaults.copy(syntaxTheme = CodeEditorSyntaxTheme(defaults.syntax.with(TokenKind.KEYWORD, keyword)))
                 androidx.compose.foundation.lazy.LazyColumn(Modifier.size(300.dp, 200.dp).testTag("list")) {
                     items(snippets.size) { index ->
                         CodeSnippet(snippets[index], language = tokenRules("c") { keywords("tap") }, colors = colors, maxLines = 1)

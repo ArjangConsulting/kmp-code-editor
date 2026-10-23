@@ -28,6 +28,7 @@ CodeEditor (public composable)
 | `FuzzyMatcher.kt` | Subsequence matching with boundary, prefix, consecutive, and case bonuses; ranking. | `FuzzyMatcherTest` |
 | `EditorKeymap.kt` | Key chord → command, platform aware. | `EditorKeymapTest` |
 | `HighlightedText.kt` | `highlightedText`, `CodeSnippet`. | `HighlightedTextTest`, UI test |
+| `CodeEditorSyntaxColors.kt` | Token palettes: `CodeEditorSyntaxColors` (one color per `TokenKind`), `CodeEditorSyntaxTheme` (light + dark variants chosen by background luminance), WCAG `contrastRatio`. Built-in palette values are generated offline to meet their contrast targets; the test enforces them. | `CodeEditorSyntaxColorsTest` |
 
 ## Compose engine
 
