@@ -76,7 +76,7 @@ public class LexedLine internal constructor(
  * A language definition: lexical rules for highlighting plus the editing metadata (comments,
  * brackets, auto-closing pairs, indentation) that the editor needs for that language.
  *
- * Build one with [tokenRules]; presets are [PlainText], [JsonRules], [KotlinRules], and [SwiftRules].
+ * Build one with [tokenRules]; presets include [PlainText], [JsonRules], [KotlinRules], [SwiftRules], and [ShellRules].
  * Instances are immutable and safe to share; keep them in a top-level `val` so the editor's caches
  * survive recomposition.
  */

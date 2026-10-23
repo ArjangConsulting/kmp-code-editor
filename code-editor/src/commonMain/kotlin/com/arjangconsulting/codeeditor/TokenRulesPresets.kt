@@ -81,3 +81,33 @@ public val SwiftRules: TokenRules = tokenRules("swift") {
     brackets('(' to ')', '[' to ']', '{' to '}')
     autoClose('"' to '"')
 }
+
+/**
+ * Lightweight sh/Bash highlighting: control words, common builtins, assignments, flags, variables,
+ * comments, and quoted strings. Double-quoted strings highlight variable interpolation; single
+ * quotes are literal. This is lexical highlighting, not a shell parser: heredocs, context-sensitive
+ * comments, and nested command substitutions are not fully modeled.
+ */
+public val ShellRules: TokenRules = tokenRules("shell") {
+    keywords(
+        "if", "then", "else", "elif", "fi", "case", "in", "esac", "for", "while", "until", "do", "done",
+        "function", "select", "time",
+    )
+    keywords(
+        "alias", "bg", "break", "cd", "command", "continue", "declare", "echo", "eval", "exec", "exit",
+        "export", "false", "fg", "local", "printf", "pwd", "read", "readonly", "return", "set", "shift",
+        "source", "test", "trap", "true", "type", "typeset", "ulimit", "umask", "unalias", "unset", "wait",
+        kind = TokenKind.FUNCTION,
+    )
+    lineComment("#")
+    string("'", escape = null, multiline = true)
+    string("\"", multiline = true, interpolationOpen = "\${", simpleInterpolationPrefix = '$')
+    pattern("\\$(?:\\{[^}]*\\}|[A-Za-z_][A-Za-z0-9_]*|[0-9@*#?$!_-])", TokenKind.VARIABLE)
+    pattern("--?[A-Za-z][A-Za-z0-9_-]*", TokenKind.ATTRIBUTE)
+    attributeAssignments()
+    functionCalls()
+    operators("=|&;<>!+-*/%$\\")
+    punctuation(",:")
+    brackets('(' to ')', '[' to ']', '{' to '}')
+    autoClose('"' to '"', '\'' to '\'')
+}

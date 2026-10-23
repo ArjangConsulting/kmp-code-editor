@@ -141,6 +141,32 @@ class LexerTest {
     }
 
     @Test
+    fun `shell highlights control words assignments flags variables and comments`() {
+        val kinds = ShellRules.kinds("if test -n \"\$HOME\"; then export OUT=\${HOME}/out; echo \$? --verbose # result")
+        assertTrue("if" to TokenKind.KEYWORD in kinds)
+        assertTrue("then" to TokenKind.KEYWORD in kinds)
+        assertTrue("test" to TokenKind.FUNCTION in kinds)
+        assertTrue("OUT" to TokenKind.ATTRIBUTE in kinds)
+        assertTrue("\$HOME" to TokenKind.ESCAPE in kinds)
+        assertTrue("\${HOME}" to TokenKind.VARIABLE in kinds)
+        assertTrue("\$?" to TokenKind.VARIABLE in kinds)
+        assertTrue("--verbose" to TokenKind.ATTRIBUTE in kinds)
+        assertTrue("# result" to TokenKind.COMMENT in kinds)
+    }
+
+    @Test
+    fun `shell quoted comments stay strings and single quotes do not interpolate`() {
+        assertEquals(listOf("'\$HOME # literal'" to TokenKind.STRING), ShellRules.kinds("'\$HOME # literal'"))
+        val kinds = ShellRules.kinds("\"# quoted \${HOME}\"")
+        assertTrue(kinds.none { it.second == TokenKind.COMMENT })
+        assertTrue("\${HOME}" to TokenKind.ESCAPE in kinds)
+        val lines = ShellRules.tokenize("echo 'first\n\$HOME # literal\nlast' && echo done")
+        assertNotEquals(LexerState.Initial, lines[0].endState)
+        assertEquals(listOf(TokenKind.STRING), lines[1].tokens.map { it.kind })
+        assertEquals(LexerState.Initial, lines[2].endState)
+    }
+
+    @Test
     fun `kindAt finds the covering token`() {
         val line = KotlinRules.tokenizeLine("val s = \"x\"")
         assertEquals(TokenKind.KEYWORD, line.kindAt(1))

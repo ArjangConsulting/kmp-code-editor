@@ -12,6 +12,18 @@ A Compose Multiplatform code editor (Android, desktop JVM, iOS) with LSP-shaped,
 intelligence. Published as `com.arjangconsulting.codeeditor:code-editor`. Product-specific
 languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studio, moqserver).
 
+## Product scope
+
+- Prioritize readable syntax highlighting and generated-test line highlighting over IDE features.
+- Keep language definitions and language services pluggable. Include shell highlighting alongside
+  JSON, Kotlin, and Swift; do not require a language server just to display text.
+- Format only on an explicit host action, such as Format or before Save. Saving and persistence
+  belong to the consuming app. Formatting must be undoable and reject results for an older document.
+- Provide JSON syntax validation and formatting locally. Kotlin and Swift validation/formatting
+  may be supplied by adapters; do not bundle an LSP runtime or imply compiler-level validation.
+- Retain lightweight smart typing, including bracket pairing and indentation on Enter.
+- Keep REPL-specific product decisions separate until the amoo-studio workflow is defined.
+
 ## Repository map
 
 - `code-editor/` — the only published module (package `com.arjangconsulting.codeeditor`).
@@ -19,6 +31,7 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
     incremental `Highlighter`, pure `EditingOps` and `EditHistory`, `CodeEditorState`,
     `LanguageService` + `LanguageServiceController` (orchestration), the Compose engine
     (`ComposeCodeEditor`, `EditorModel`, `EditorOverlays`), `HighlightedText`, defaults/labels.
+    `Formatting` handles explicit format actions; `JsonLanguageService` supplies local JSON tooling.
   - `jvmMain/` — the opt-in RSyntaxTextArea engine (`RstaEditorPanel`, `RstaCodeEditor`).
   - `commonTest/` — pure logic and virtual-time controller tests, run on every target.
   - `jvmTest/` — Compose UI tests (`runComposeUiTest`) and headless RSyntaxTextArea panel tests.

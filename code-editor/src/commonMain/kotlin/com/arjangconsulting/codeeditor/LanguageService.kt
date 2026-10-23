@@ -32,6 +32,15 @@ public interface LanguageService {
     /** Problems in [doc]. Merged with the diagnostics passed to the editor directly. */
     public suspend fun diagnostics(doc: DocumentSnapshot): List<Diagnostic> = emptyList()
 
+    /**
+     * Formats [doc] using LSP-style edits in its original coordinates. Null means formatting is
+     * unavailable for this document; an empty list means it is already formatted.
+     *
+     * Called only by an explicit host action through [CodeEditorState.format], never while typing.
+     * Implementations can delegate to a local formatter or LSP's `textDocument/formatting`.
+     */
+    public suspend fun format(doc: DocumentSnapshot, options: FormattingOptions): List<TextEdit>? = null
+
     /** Hover information at [position], or null for none. */
     public suspend fun hover(doc: DocumentSnapshot, position: TextPosition): Hover? = null
 

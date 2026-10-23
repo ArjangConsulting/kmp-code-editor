@@ -39,9 +39,12 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.arjangconsulting.codeeditor.CodeEditor
@@ -50,23 +53,29 @@ import com.arjangconsulting.codeeditor.CodeEditorDefaults
 import com.arjangconsulting.codeeditor.CodeEditorEngine
 import com.arjangconsulting.codeeditor.CodeEditorOptions
 import com.arjangconsulting.codeeditor.CodeSnippet
+import com.arjangconsulting.codeeditor.FormatResult
+import com.arjangconsulting.codeeditor.FormattingOptions
 import com.arjangconsulting.codeeditor.JsonRules
 import com.arjangconsulting.codeeditor.KotlinRules
 import com.arjangconsulting.codeeditor.LanguageService
 import com.arjangconsulting.codeeditor.LineHighlight
 import com.arjangconsulting.codeeditor.LineHighlightRole
 import com.arjangconsulting.codeeditor.PlainText
+import com.arjangconsulting.codeeditor.ShellRules
 import com.arjangconsulting.codeeditor.SwiftRules
 import com.arjangconsulting.codeeditor.TabBehavior
 import com.arjangconsulting.codeeditor.TextPosition
 import com.arjangconsulting.codeeditor.TokenRules
+import com.arjangconsulting.codeeditor.format
 import com.arjangconsulting.codeeditor.rememberCodeEditorState
+import kotlinx.coroutines.launch
 
 private enum class DemoLanguage(val label: String, val rules: TokenRules, val sample: String) {
     Commands("Commands", CommandRules, COMMANDS_SAMPLE),
     Json("JSON", JsonRules, JSON_SAMPLE),
     Kotlin("Kotlin", KotlinRules, KOTLIN_SAMPLE),
     Swift("Swift", SwiftRules, SWIFT_TEST_SAMPLE),
+    Shell("Shell", ShellRules, SHELL_SAMPLE),
     Plain("Plain text", PlainText, "Plain text has no highlighting.\nBrackets (still) match."),
 }
 
@@ -164,6 +173,73 @@ fun CodeEditorScreen() {
             // Keyed by language so switching starts from that language's sample with fresh history.
             key(language) {
                 val keyedState = rememberCodeEditorState(language.sample)
+                val actionScope = rememberCoroutineScope()
+                var busy by remember { mutableStateOf(false) }
+                var formatOnSave by remember { mutableStateOf(true) }
+                var actionMessage by remember { mutableStateOf("") }
+                var savedText by remember { mutableStateOf<String?>(null) }
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
+                    Button(enabled = language == DemoLanguage.Json && !readOnly && !busy, onClick = {
+                        actionScope.launch {
+                            busy = true
+                            try {
+                                actionMessage = keyedState.format(service, FormattingOptions(tabSize = 2)).message()
+                            } finally {
+                                busy = false
+                            }
+                        }
+                    }) { Text("Format") }
+                    OutlinedButton(enabled = language == DemoLanguage.Json && !busy, onClick = {
+                        actionScope.launch {
+                            busy = true
+                            try {
+                                val requested = keyedState.snapshot()
+                                val problems = service.diagnostics(requested)
+                                actionMessage = if (keyedState.version != requested.version) {
+                                    "Text changed; validate again"
+                                } else {
+                                    problems.firstOrNull()?.message ?: "Valid JSON"
+                                }
+                            } finally {
+                                busy = false
+                            }
+                        }
+                    }) { Text("Validate") }
+                    OutlinedButton(enabled = !readOnly && !busy, onClick = {
+                        actionScope.launch {
+                            busy = true
+                            try {
+                                val result = if (language == DemoLanguage.Json && formatOnSave) {
+                                    keyedState.format(service, FormattingOptions(tabSize = 2))
+                                } else {
+                                    FormatResult.UNCHANGED
+                                }
+                                if (result == FormatResult.APPLIED || result == FormatResult.UNCHANGED) {
+                                    savedText = keyedState.text
+                                    actionMessage = "Snapshot saved in memory"
+                                } else {
+                                    actionMessage = result.message()
+                                }
+                            } finally {
+                                busy = false
+                            }
+                        }
+                    }) { Text("Save snapshot") }
+                    if (language == DemoLanguage.Json) {
+                        Toggle("Format before save", formatOnSave) { formatOnSave = it }
+                    }
+                }
+                Text(
+                    if (busy) "Working…" else actionMessage,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                savedText?.let { saved ->
+                    Text(
+                        "Saved ${saved.length} characters in memory${if (saved != keyedState.text) " · unsaved changes" else ""}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
                 CodeEditor(
                     state = keyedState,
                     modifier = Modifier.fillMaxWidth().weight(1f),
@@ -190,6 +266,14 @@ fun CodeEditorScreen() {
             SnippetDemo(colors)
         }
     }
+}
+
+private fun FormatResult.message(): String = when (this) {
+    FormatResult.APPLIED -> "Formatted"
+    FormatResult.UNCHANGED -> "Already formatted"
+    FormatResult.UNAVAILABLE -> "Cannot format this document; check validation errors"
+    FormatResult.STALE -> "Text changed; format again before saving"
+    FormatResult.FAILED -> "Formatting failed; text was preserved"
 }
 
 @Composable
@@ -301,6 +385,7 @@ private val snippets = listOf(
     JsonRules to "{\"tool\": \"tap\", \"args\": {\"id\": \"sign-in\"}, \"ok\": true}",
     KotlinRules to "val result = runCatching { client.call(\"ping\") }",
     SwiftRules to "XCTAssertTrue(app.buttons[\"Send\"].exists)",
+    ShellRules to "export OUTPUT=\"\${HOME}/results\"; echo \"\$OUTPUT\"",
 )
 
 /** CodeSnippet: cheap highlighted rows for timelines and logs, instead of an editor per row. */
@@ -392,6 +477,19 @@ private val KOTLIN_SAMPLE = """
         val users = listOf(User(UserId("1"), "Ada", 36), User(UserId("2"), "Linus"))
         users.forEach { println(greet(it)) }
     }
+""".trimIndent()
+
+private val SHELL_SAMPLE = """
+    #!/usr/bin/env bash
+    set -eu
+    export OUTPUT="${'$'}{HOME}/results"
+    mkdir -p "${'$'}OUTPUT"
+    for file in *.json; do
+        if test -f "${'$'}file"; then
+            printf '%s\n' "Checking ${'$'}file"
+            ./validate --strict "${'$'}file" > "${'$'}OUTPUT/report.txt"
+        fi
+    done
 """.trimIndent()
 
 private val SWIFT_TEST_SAMPLE = """

@@ -83,10 +83,12 @@ val annotated = highlightedText(code, KotlinRules, CodeEditorDefaults.colorsFrom
 | `CodeEditor(state, …)` / `CodeEditor(value, onValueChange, …)` | The editor. Parameters: `language`, `languageService`, `engine`, `readOnly`, `singleLine`, `onSubmit`, `onHistory`, `showLineNumbers`, `folding`, `lineHighlights`, `diagnostics`, `revealLine`, `revealRange`, `onCaretChange`, `onLineClick`, `tabBehavior`, `colors`, `textStyle`, `labels`, `options`, `serviceOptions`, `logger`. |
 | `CodeEditorState`, `rememberCodeEditorState` | Text, selection, monotonically increasing `version`, folding, undo/redo, `visibleLines`, `revealLine`/`revealRange`, `edit(List<TextEdit>)`, `snapshot()`. |
 | `TextPosition`, `TextRange`, `TextEdit`, `applyTextEdits`, `DocumentSnapshot` | LSP-shaped text model: 0-based lines, UTF-16 characters. `TextRange` is position based; it is not `androidx.compose.ui.text.TextRange`. |
-| `LanguageService` | `triggerCharacters`, `complete`, `resolveCompletionItem`, `diagnostics`, `hover`, `semanticTokens`, `foldingRanges`. All default to no-ops. |
+| `LanguageService` | `triggerCharacters`, `complete`, `resolveCompletionItem`, `diagnostics`, `format`, `hover`, `semanticTokens`, `foldingRanges`. All default to no-ops. |
+| `FormattingOptions`, `FormatResult`, `CodeEditorState.format` | Explicit, asynchronous formatting with timeout, stale-result rejection, and one undo step. |
+| `JsonLanguageService`, `JsonLanguageServiceLabels` | Local JSON syntax validation and whitespace-only formatting, with localizable diagnostic messages. |
 | `CompletionItem`, `CompletionList`, `CompletionTrigger`, `Diagnostic`, `Hover`, `MarkupContent`, `SemanticToken`, `FoldingRange` | Mirrors of the LSP types. |
 | `LineHighlight(lines, role)` | Full-width line tint: `SELECTED`, `HOVER`, `WARNING`, `ERROR`, `INFO`. |
-| `TokenRules`, `tokenRules { }`, `PlainText`, `JsonRules`, `KotlinRules`, `SwiftRules` | Language definitions: lexer rules plus brackets, comment prefix, indentation. |
+| `TokenRules`, `tokenRules { }`, `PlainText`, `JsonRules`, `KotlinRules`, `SwiftRules`, `ShellRules` | Language definitions: lexer rules plus brackets, comment prefix, indentation. |
 | `highlightedText`, `rememberHighlightedText`, `CodeSnippet` | Lightweight read-only highlighting. |
 | `FuzzyMatcher`, `filterAndRankCompletions` | The client-side completion filter, reusable elsewhere. |
 | `CodeEditorSyntaxTheme` (`Default`, `HighContrast`), `CodeEditorSyntaxColors`, `contrastRatio`, `isDarkBackground` | Token color palettes; see [Colors](#colors). |
@@ -132,6 +134,12 @@ someone's choices is up to the app: store the edited `CodeEditorSyntaxTheme` how
 other settings.
 
 ## Languages
+
+The library includes four highlighting presets: JSON, Kotlin, Swift, and shell (sh/Bash), plus
+plain text. Choose `language` explicitly; filename/content detection is left to the host. Highlighting
+and generated-test line highlights work without a language service. Shell rules cover control words,
+common builtins, assignments, flags, variables, comments, and quoted strings. Heredocs, nested command
+substitutions, and context-sensitive shell comments are not fully modeled.
 
 `tokenRules` builds a line-based incremental lexer. Rules are tried in order: line comments,
 delimited constructs (strings and block comments, longest opening delimiter first), regex
@@ -186,6 +194,64 @@ The editor owns orchestration so services can be simple, slow, remote, or flaky:
 - `tabSize`, request timeout, and completion item limits must be positive; delays must be nonnegative.
   Empty string and block-comment delimiters are rejected when building token rules.
 
+### Formatting, saving, and validation
+
+Highlighting is the core feature; services are optional plugins. A service can implement only
+`format`, only `diagnostics`, or both, without providing completion or other IDE features. The
+library bundles JSON syntax validation and formatting. Kotlin, Swift, and shell have highlighting
+and smart typing, but no bundled formatter or validator. Host adapters may supply local tools or
+LSP-backed implementations. There is no bundled LSP client or server process.
+
+```kotlin
+val state = rememberCodeEditorState("""{"port":8080,"routes":[]}""")
+val service = remember { JsonLanguageService() }
+val scope = rememberCoroutineScope()
+CodeEditor(state = state, language = JsonRules, languageService = service)
+Button(onClick = {
+    scope.launch {
+        state.format(service, FormattingOptions(tabSize = 2))
+    }
+}) { Text("Format") }
+```
+
+Formatting runs only when the host requests it, such as a Format button or a Save handler. It never
+runs on typing or automatically on save; this library owns no persistence. Call `state.format` from
+the UI thread. The provider runs on the configured service dispatcher, with a timeout; the result
+returns to the caller before edits are applied. Newer typing makes the result `STALE`. Successful
+edits are one undo step, and selection is mapped through them. `UNAVAILABLE` means the provider
+cannot format this document (including invalid JSON), `FAILED` means an exception/timeout/invalid
+edit response, and `UNCHANGED` means no change was needed. Cancellation propagates to the caller.
+
+For format-before-save, the host can use this sequence inside its UI coroutine; `saveDocument` and
+`showFormattingOutcome` are host callbacks:
+
+```kotlin
+val result = state.format(service, FormattingOptions(tabSize = 2))
+when (result) {
+    FormatResult.APPLIED, FormatResult.UNCHANGED -> saveDocument(state.text)
+    else -> showFormattingOutcome(result)
+}
+```
+
+`JsonLanguageService` validates any JSON root value, reports the first syntax error, and does not
+perform JSON Schema validation. Invalid input is never formatted. Formatting changes only whitespace
+between tokens: property order, duplicate keys, exact numbers, and string escapes are preserved.
+The first line-ending style and presence of a final line ending are retained; empty collections
+stay compact. Nesting is limited to 128 objects/arrays by default, configurable downward. Use
+`JsonLanguageServiceLabels` to localize diagnostic messages.
+
+The editor requests `diagnostics` after edits when a service is installed; a host can also explicitly
+call `service.diagnostics(state.snapshot())` to validate before saving. Reject stale results when
+managing validation yourself. For multiple validators, combine their diagnostics in your service,
+or pass a combined list through the editor's `diagnostics` parameter. Direct diagnostics are owned
+by the host and do not receive the controller's version checks. The sample layers mock-server schema
+checks over the built-in JSON service and demonstrates Format, Validate, and an in-memory Save snapshot.
+
+Smart typing already pairs `{` with `}`, and Enter between them creates an indented blank line.
+JSON uses two spaces by default; Kotlin, Swift, and shell use four. Configure this through
+`TokenRules.indentUnit` and `CodeEditorOptions.autoIndent`/`autoCloseBrackets`. This is lightweight
+bracket-based indentation rather than whole-document formatting.
+
 ### Adapting an LSP server
 
 The types map one to one; an adapter is a thin translation layer:
@@ -199,8 +265,13 @@ The types map one to one; an adapter is a thin translation layer:
 | `textDocument/hover` | `hover(doc, position)`. |
 | `textDocument/semanticTokens/full` | `semanticTokens(doc)`; decode the integer stream with your legend into `SemanticToken(line, startCharacter, length, kind)`. |
 | `textDocument/foldingRange` | `foldingRanges(doc)`. |
+| `textDocument/formatting` | `format(doc, options)`; return edits or null when unavailable. |
 
 Positions are UTF-16 based, LSP's default `positionEncoding`.
+An adapter owns JSON-RPC transport, initialization/capabilities, document URI and language ID, and
+open/change/close synchronization. `DocumentSnapshot` contains text and version only. For push
+diagnostics, update the host's diagnostics state when a publish arrives; returning a cached list
+from `diagnostics(doc)` alone does not trigger another analysis when the push arrives later.
 
 ## Engines
 

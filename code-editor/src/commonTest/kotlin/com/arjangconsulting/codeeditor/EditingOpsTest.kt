@@ -101,6 +101,14 @@ class EditingOpsTest {
     }
 
     @Test
+    fun `JSON smart typing pairs a brace then indents Enter between the pair`() {
+        val paired = type("|", '{', JsonRules)
+        assertEquals("{|}", paired)
+        assertEquals("{\n  |\n}", newline(paired, JsonRules))
+        assertEquals("{\n  \"items\": {\n    |\n  }", newline("{\n  \"items\": {|}", JsonRules))
+    }
+
+    @Test
     fun `typing an opening bracket before a word does not auto close`() {
         assertEquals("f(|x", type("f|x", '('))
     }

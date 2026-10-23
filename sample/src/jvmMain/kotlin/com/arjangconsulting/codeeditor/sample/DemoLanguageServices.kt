@@ -7,8 +7,10 @@ import com.arjangconsulting.codeeditor.CompletionTrigger
 import com.arjangconsulting.codeeditor.Diagnostic
 import com.arjangconsulting.codeeditor.DiagnosticSeverity
 import com.arjangconsulting.codeeditor.DocumentSnapshot
+import com.arjangconsulting.codeeditor.FormattingOptions
 import com.arjangconsulting.codeeditor.Hover
 import com.arjangconsulting.codeeditor.InsertTextFormat
+import com.arjangconsulting.codeeditor.JsonLanguageService
 import com.arjangconsulting.codeeditor.LanguageService
 import com.arjangconsulting.codeeditor.MarkupContent
 import com.arjangconsulting.codeeditor.TextEdit
@@ -173,6 +175,10 @@ object MockServerSchema {
  * warnings.
  */
 class JsonSchemaLanguageService(private val latencyMillis: () -> Long) : LanguageService {
+    private val json = JsonLanguageService()
+
+    override suspend fun format(doc: DocumentSnapshot, options: FormattingOptions): List<TextEdit>? = json.format(doc, options)
+
     override val triggerCharacters: Set<Char> = setOf('"', ':')
 
     override suspend fun complete(doc: DocumentSnapshot, position: TextPosition, trigger: CompletionTrigger): CompletionList {
@@ -216,11 +222,8 @@ class JsonSchemaLanguageService(private val latencyMillis: () -> Long) : Languag
 
     override suspend fun diagnostics(doc: DocumentSnapshot): List<Diagnostic> {
         delay(latencyMillis())
-        val error = MiniJson.validate(doc.text)
-        if (error != null) {
-            val position = doc.positionOf(error.second)
-            return listOf(Diagnostic(TextRange(position, TextPosition(position.line, position.character + 1)), error.first, source = "json"))
-        }
+        val syntaxErrors = json.diagnostics(doc)
+        if (syntaxErrors.isNotEmpty()) return syntaxErrors
         val result = ArrayList<Diagnostic>()
         Regex("\"([A-Za-z_]+)\"\\s*:").findAll(doc.text).forEach { match ->
             val key = match.groupValues[1]
@@ -306,118 +309,6 @@ private data class JsonContext(val path: List<String>, val isKey: Boolean, val t
             val inObject = stack.lastOrNull()?.first == '{'
             val isKey = inObject && (significantBeforeToken == '{' || significantBeforeToken == ',')
             return JsonContext(path, isKey, tokenStart, lastKey.takeIf { significantBeforeToken == ':' }, keysPerLevel.last())
-        }
-    }
-}
-
-/** A minimal JSON validator that reports the first syntax error and its offset. */
-private object MiniJson {
-    fun validate(text: String): Pair<String, Int>? {
-        val parser = Parser(text)
-        return try {
-            parser.skip()
-            if (parser.pos < text.length) parser.value()
-            parser.skip()
-            if (parser.pos < text.length) throw Failure("Unexpected '${text[parser.pos]}'", parser.pos)
-            null
-        } catch (failure: Failure) {
-            failure.message.orEmpty() to failure.offset.coerceIn(0, maxOf(0, text.length - 1))
-        }
-    }
-
-    private class Failure(message: String, val offset: Int) : Exception(message)
-
-    private class Parser(val text: String) {
-        var pos = 0
-
-        fun skip() {
-            while (pos < text.length && text[pos].isWhitespace()) pos++
-        }
-
-        fun value() {
-            skip()
-            if (pos >= text.length) throw Failure("Unexpected end of input", pos)
-            when (val c = text[pos]) {
-                '{' -> obj()
-                '[' -> array()
-                '"' -> string()
-                't' -> literal("true")
-                'f' -> literal("false")
-                'n' -> literal("null")
-                else -> if (c == '-' || c.isDigit()) number() else throw Failure("Unexpected '$c'", pos)
-            }
-        }
-
-        fun obj() {
-            pos++
-            skip()
-            if (text.getOrNull(pos) == '}') {
-                pos++
-                return
-            }
-            while (true) {
-                skip()
-                if (text.getOrNull(pos) != '"') throw Failure("Expected a property name", pos)
-                string()
-                skip()
-                if (text.getOrNull(pos) != ':') throw Failure("Expected ':'", pos)
-                pos++
-                value()
-                skip()
-                when (text.getOrNull(pos)) {
-                    ',' -> pos++
-                    '}' -> {
-                        pos++
-                        return
-                    }
-                    else -> throw Failure("Expected ',' or '}'", pos)
-                }
-            }
-        }
-
-        fun array() {
-            pos++
-            skip()
-            if (text.getOrNull(pos) == ']') {
-                pos++
-                return
-            }
-            while (true) {
-                value()
-                skip()
-                when (text.getOrNull(pos)) {
-                    ',' -> pos++
-                    ']' -> {
-                        pos++
-                        return
-                    }
-                    else -> throw Failure("Expected ',' or ']'", pos)
-                }
-            }
-        }
-
-        fun string() {
-            val start = pos
-            pos++
-            while (pos < text.length && text[pos] != '"') {
-                if (text[pos] == '\n') throw Failure("Unterminated string", start)
-                if (text[pos] == '\\') pos++
-                pos++
-            }
-            if (pos >= text.length) throw Failure("Unterminated string", start)
-            pos++
-        }
-
-        fun number() {
-            val start = pos
-            if (text[pos] == '-') pos++
-            while (pos < text.length && (text[pos].isDigit() || text[pos] in ".eE+-")) pos++
-            if (text.substring(start, pos).toDoubleOrNull() == null) throw Failure("Invalid number", start)
-        }
-
-        fun literal(word: String) {
-            if (!text.startsWith(word, pos)) throw Failure("Unexpected '${text[pos]}'", pos)
-            pos += word.length
         }
     }
 }

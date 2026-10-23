@@ -25,6 +25,8 @@ CodeEditor (public composable)
 | `EditHistory.kt` | Undo stack of `(start, removed, inserted)` fragments with typing/deletion coalescing. | `CodeEditorStateTest` |
 | `CodeEditorState.kt` | Snapshot-state holder. `apply(outcome)` is the single mutation path: it records history, bumps `version`, remaps folds, and notifies listeners synchronously (the value overload depends on that). | `CodeEditorStateTest` |
 | `LanguageServiceController.kt` | Per-editor orchestration on the composition's scope. One job each for completion, resolve, analysis (diagnostics + semantic tokens + folding ranges), and hover. Every result is checked against the latest seen version before publishing to a `StateFlow`. | `LanguageServiceControllerTest` (virtual time) |
+| `Formatting.kt` | Host-triggered `CodeEditorState.format`: snapshot, timed provider call off the UI thread, version check, edit preflight, and one undoable mutation on the caller's thread. Formatting is independent of automatic analysis. | `FormattingTest` |
+| `JsonLanguageService.kt` | Shared strict JSON scanner for syntax diagnostics and formatting. Whitespace edits preserve all original tokens and selection positions within them. Cancellation checkpoints and a bounded nesting depth limit work on every target. Diagnostic messages are supplied through labels. | `JsonLanguageServiceTest` |
 | `FuzzyMatcher.kt` | Subsequence matching with boundary, prefix, consecutive, and case bonuses; ranking. | `FuzzyMatcherTest` |
 | `EditorKeymap.kt` | Key chord → command, platform aware. | `EditorKeymapTest` |
 | `HighlightedText.kt` | `highlightedText`, `CodeSnippet`. | `HighlightedTextTest`, UI test |
