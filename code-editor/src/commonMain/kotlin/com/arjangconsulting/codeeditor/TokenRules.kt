@@ -37,7 +37,8 @@ public enum class TokenKind {
 public data class Token(val start: Int, val end: Int, val kind: TokenKind)
 
 /**
- * The lexer's state at a line boundary: [Initial], or "inside a block comment / multi-line string".
+ * The lexer's state at a line boundary: [Initial], or continuation context such as a block comment,
+ * multi-line string, or YAML flow collection / block scalar indentation.
  * The value is opaque and stable for a given [TokenRules], so engines can cache it per line.
  */
 @JvmInline
@@ -76,7 +77,8 @@ public class LexedLine internal constructor(
  * A language definition: lexical rules for highlighting plus the editing metadata (comments,
  * brackets, auto-closing pairs, indentation) that the editor needs for that language.
  *
- * Build one with [tokenRules]; presets include [PlainText], [JsonRules], [KotlinRules], [SwiftRules], and [ShellRules].
+ * Build one with [tokenRules]; presets include [PlainText], [JsonRules], [YamlRules], [KotlinRules],
+ * [SwiftRules], and [ShellRules].
  * Instances are immutable and safe to share; keep them in a top-level `val` so the editor's caches
  * survive recomposition.
  */
@@ -106,6 +108,7 @@ public class TokenRules internal constructor(
     public val lineComment: String?,
     /** One level of indentation, e.g. four spaces. */
     public val indentUnit: String,
+    internal val lineTokenizer: ((String, LexerState) -> LexedLine)?,
 ) {
     /** True when [c] can start an identifier (used for completion prefixes and word navigation). */
     public fun isIdentifierStart(c: Char): Boolean = identifierStart(c)
@@ -115,7 +118,7 @@ public class TokenRules internal constructor(
 
     /** Tokenizes one line starting in [state]. Pure; safe to call from any thread. */
     public fun tokenizeLine(line: String, state: LexerState = LexerState.Initial): LexedLine =
-        Lexer(this, line, state).run()
+        lineTokenizer?.invoke(line, state) ?: Lexer(this, line, state).run()
 
     /** Tokenizes a whole text line by line (`\n`, `\r\n`, and `\r` all end a line). */
     public fun tokenize(text: String): List<LexedLine> {
@@ -163,6 +166,7 @@ internal class PatternRule(val regex: Regex, val kind: TokenKind)
  * ```
  */
 public class TokenRulesBuilder internal constructor(private val name: String, base: TokenRules?) {
+    internal var lineTokenizer: ((String, LexerState) -> LexedLine)? = base?.lineTokenizer
     private val keywordKinds = LinkedHashMap<String, TokenKind>(base?.keywordKinds ?: emptyMap())
     private val lineComments = ArrayList(base?.lineComments ?: emptyList())
     private val delimited = ArrayList(base?.delimited ?: emptyList())
@@ -314,6 +318,7 @@ public class TokenRulesBuilder internal constructor(private val name: String, ba
             autoClosingPairs = autoClosing.toList(),
             lineComment = lineComments.firstOrNull(),
             indentUnit = indentUnit,
+            lineTokenizer = lineTokenizer,
         )
     }
 }

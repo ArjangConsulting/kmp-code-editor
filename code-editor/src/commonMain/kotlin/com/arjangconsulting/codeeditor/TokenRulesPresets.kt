@@ -21,6 +21,19 @@ public val JsonRules: TokenRules = tokenRules("json") {
     autoClose('"' to '"')
 }
 
+/**
+ * YAML (`.yaml` and `.yml`): mapping keys, scalars, comments, flow collections, document markers,
+ * anchors, aliases, and tags. Indentation-aware block strings and quoted strings carry line state.
+ * Uses a dedicated lightweight lexer; DSL token patterns added to a derived preset are not applied.
+ */
+public val YamlRules: TokenRules = tokenRules("yaml") {
+    indentUnit = "  "
+    lineComment("#")
+    brackets('{' to '}', '[' to ']')
+    autoClose('"' to '"', '\'' to '\'')
+    lineTokenizer = ::tokenizeYamlLine
+}
+
 /** Kotlin: hard, soft, and modifier keywords, nested block comments, raw strings, templates, annotations. */
 public val KotlinRules: TokenRules = tokenRules("kotlin") {
     keywords(

@@ -1,6 +1,7 @@
 package com.arjangconsulting.codeeditor
 
 import androidx.compose.runtime.Immutable
+import kotlinx.serialization.Serializable
 
 /**
  * A position in a document, mirroring LSP's `Position`.
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Immutable
  * occupies two characters. A [character] past the end of the line means the end of the line.
  */
 @Immutable
+@Serializable
 public data class TextPosition(val line: Int, val character: Int) : Comparable<TextPosition> {
     init {
         require(line >= 0) { "line must be >= 0, was $line" }
@@ -33,6 +35,7 @@ public data class TextPosition(val line: Int, val character: Int) : Comparable<T
  * when a file needs both.
  */
 @Immutable
+@Serializable(with = TextRangeSerializer::class)
 public class TextRange(start: TextPosition, end: TextPosition) {
     /** The inclusive start. */
     public val start: TextPosition = minOf(start, end)
@@ -75,6 +78,7 @@ public class TextRange(start: TextPosition, end: TextPosition) {
  * an empty [newText] deletes.
  */
 @Immutable
+@Serializable
 public data class TextEdit(val range: TextRange, val newText: String) {
     public companion object {
         /** Inserts [text] at [position]. */

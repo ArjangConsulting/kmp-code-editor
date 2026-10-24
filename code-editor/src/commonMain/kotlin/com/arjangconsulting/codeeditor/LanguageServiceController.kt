@@ -54,15 +54,17 @@ internal class LanguageServiceController(
         set(value) {
             if (field === value) return
             field = value
-            closeCompletion()
-            cancelHover()
-            _diagnostics.value = Versioned(-1L, emptyList())
-            _semanticTokens.value = null
-            _foldingRanges.value = null
-            lastSnapshot?.let { scheduleAnalysis(it) }
+            invalidateService()
+        }
+    var serviceRevision: Long = 0
+        set(value) {
+            if (field == value) return
+            field = value
+            invalidateService()
         }
     var options: LanguageServiceOptions = options
     var rules: TokenRules = rules
+    private var serviceGeneration: Long = 0
 
     private val _completion = MutableStateFlow<CompletionSession?>(null)
     val completion: StateFlow<CompletionSession?> = _completion.asStateFlow()
@@ -91,6 +93,17 @@ internal class LanguageServiceController(
         private set
 
     private val serviceContext get() = options.dispatcher ?: Dispatchers.Default
+
+    private fun invalidateService() {
+        serviceGeneration++
+        closeCompletion()
+        cancelHover()
+        analysisJob?.cancel()
+        _diagnostics.value = Versioned(-1L, emptyList())
+        _semanticTokens.value = null
+        _foldingRanges.value = null
+        lastSnapshot?.let { scheduleAnalysis(it) }
+    }
 
     /**
      * The document changed to [snapshot] with the caret at [caret]. [typed] is the character the user
@@ -182,10 +195,13 @@ internal class LanguageServiceController(
         if (item in session.resolved) return
         resolveJob?.cancel()
         val service = service
+        val generation = serviceGeneration
         resolveJob = scope.launch {
             val resolved = call("resolveCompletionItem") { service.resolveCompletionItem(item) } ?: return@launch
             val current = _completion.value ?: return@launch
-            if (current.rawItems === session.rawItems) _completion.value = current.copy(resolved = current.resolved + (item to resolved))
+            if (generation == serviceGeneration && current.rawItems === session.rawItems) {
+                _completion.value = current.copy(resolved = current.resolved + (item to resolved))
+            }
         }
     }
 
@@ -196,14 +212,13 @@ internal class LanguageServiceController(
         hoverJob?.cancel()
         _hover.value = null
         val service = service
+        val generation = serviceGeneration
         val offset = snapshot.offsetOf(position)
         hoverJob = scope.launch {
             delay(options.hoverDelayMillis)
             val hover = call("hover") { service.hover(snapshot, position) }
-            if (lastSnapshot?.version == snapshot.version) {
+            if (isCurrent(snapshot, "hover", generation)) {
                 _hover.value = HoverState(position, offset, snapshot.version, hover)
-            } else {
-                logger.debug("Dropped stale hover for version ${snapshot.version}")
             }
         }
     }
@@ -215,6 +230,7 @@ internal class LanguageServiceController(
     }
 
     fun dispose() {
+        serviceGeneration++
         closeCompletion()
         cancelHover()
         analysisJob?.cancel()
@@ -248,6 +264,7 @@ internal class LanguageServiceController(
     private fun request(snapshot: DocumentSnapshot, caret: Int, trigger: CompletionTrigger, explicit: Boolean) {
         completionJob?.cancel()
         val service = service
+        val generation = serviceGeneration
         val position = snapshot.positionOf(caret)
         val debounce = if (trigger.kind == CompletionTriggerKind.INVOKED && !explicit) options.completionDebounceMillis else options.triggerDebounceMillis
         completionJob = scope.launch {
@@ -256,7 +273,7 @@ internal class LanguageServiceController(
             logger.debug("Completion requested at $position for version ${snapshot.version} (${trigger.kind})")
             val list = call("complete") { service.complete(snapshot, position, trigger) }
             val current = lastSnapshot
-            if (current == null || current.version != snapshot.version || lastCaret != caret) {
+            if (generation != serviceGeneration || current == null || current.version != snapshot.version || lastCaret != caret) {
                 logger.debug("Dropped stale completion for version ${snapshot.version}")
                 return@launch
             }
@@ -294,25 +311,26 @@ internal class LanguageServiceController(
     private fun scheduleAnalysis(snapshot: DocumentSnapshot) {
         analysisJob?.cancel()
         val service = service
+        val generation = serviceGeneration
         analysisJob = scope.launch {
             delay(options.diagnosticsDebounceMillis)
             launch {
                 val diagnostics = call("diagnostics") { service.diagnostics(snapshot) } ?: return@launch
-                if (isCurrent(snapshot, "diagnostics")) _diagnostics.value = Versioned(snapshot.version, diagnostics)
+                if (isCurrent(snapshot, "diagnostics", generation)) _diagnostics.value = Versioned(snapshot.version, diagnostics)
             }
             launch {
                 val tokens = call("semanticTokens") { service.semanticTokens(snapshot) }
-                if (isCurrent(snapshot, "semanticTokens")) _semanticTokens.value = tokens?.let { Versioned(snapshot.version, it) }
+                if (isCurrent(snapshot, "semanticTokens", generation)) _semanticTokens.value = tokens?.let { Versioned(snapshot.version, it) }
             }
             launch {
                 val ranges = call("foldingRanges") { service.foldingRanges(snapshot) }
-                if (isCurrent(snapshot, "foldingRanges")) _foldingRanges.value = ranges?.let { Versioned(snapshot.version, it) }
+                if (isCurrent(snapshot, "foldingRanges", generation)) _foldingRanges.value = ranges?.let { Versioned(snapshot.version, it) }
             }
         }
     }
 
-    private fun isCurrent(snapshot: DocumentSnapshot, what: String): Boolean {
-        val current = lastSnapshot?.version == snapshot.version
+    private fun isCurrent(snapshot: DocumentSnapshot, what: String, generation: Long): Boolean {
+        val current = generation == serviceGeneration && lastSnapshot?.version == snapshot.version
         if (!current) logger.debug("Dropped stale $what for version ${snapshot.version}")
         return current
     }

@@ -1,8 +1,10 @@
 package com.arjangconsulting.codeeditor
 
 import androidx.compose.runtime.Immutable
+import kotlinx.serialization.Serializable
 
 /** How [MarkupContent.value] should be rendered, mirroring LSP's `MarkupKind`. */
+@Serializable
 public enum class MarkupKind {
     /** Rendered verbatim. */
     PLAIN_TEXT,
@@ -16,6 +18,7 @@ public enum class MarkupKind {
 
 /** Documentation or hover text, mirroring LSP's `MarkupContent`. */
 @Immutable
+@Serializable
 public data class MarkupContent(val value: String, val kind: MarkupKind = MarkupKind.PLAIN_TEXT) {
     public companion object {
         /** Plain text content. */
@@ -27,6 +30,7 @@ public data class MarkupContent(val value: String, val kind: MarkupKind = Markup
 }
 
 /** The kind of a completion item, mirroring LSP's `CompletionItemKind`. Drives the popup's badge. */
+@Serializable
 public enum class CompletionItemKind {
     TEXT,
     METHOD,
@@ -56,6 +60,7 @@ public enum class CompletionItemKind {
 }
 
 /** How [CompletionItem.insertText] or the [CompletionItem.textEdit]'s text is interpreted. */
+@Serializable
 public enum class InsertTextFormat {
     /** Inserted verbatim. */
     PLAIN_TEXT,
@@ -80,6 +85,7 @@ public enum class InsertTextFormat {
  * [LanguageService.resolveCompletionItem]; the editor never interprets it.
  */
 @Immutable
+@Serializable
 public data class CompletionItem(
     val label: String,
     val kind: CompletionItemKind? = null,
@@ -103,6 +109,7 @@ public data class CompletionItem(
  * is true the editor asks the service again (debounced) on every edit while the popup is open.
  */
 @Immutable
+@Serializable
 public data class CompletionList(val items: List<CompletionItem>, val isIncomplete: Boolean = false) {
     public companion object {
         /** No proposals. */
@@ -111,6 +118,7 @@ public data class CompletionList(val items: List<CompletionItem>, val isIncomple
 }
 
 /** Why completion was requested, mirroring LSP's `CompletionTriggerKind`. */
+@Serializable
 public enum class CompletionTriggerKind {
     /** Typing an identifier or an explicit request (Ctrl+Space). */
     INVOKED,
@@ -124,6 +132,7 @@ public enum class CompletionTriggerKind {
 
 /** The context of a completion request, mirroring LSP's `CompletionContext`. */
 @Immutable
+@Serializable
 public data class CompletionTrigger(val kind: CompletionTriggerKind, val character: Char? = null) {
     public companion object {
         /** An explicit or typing-driven request. */

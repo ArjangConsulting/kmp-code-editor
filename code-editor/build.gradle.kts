@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-// The published library. Depends only on Compose, Material 3, coroutines, and (desktop) RSyntaxTextArea.
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.android.multiplatform.library)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
@@ -32,6 +32,8 @@ kotlin {
             api(libs.compose.ui)
             api(libs.compose.material3)
             api(libs.kotlinx.coroutines.core)
+            api(libs.kotlinx.serialization.json)
+            implementation(libs.snakeyaml.engine)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

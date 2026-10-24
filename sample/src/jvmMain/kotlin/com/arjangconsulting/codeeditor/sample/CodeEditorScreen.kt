@@ -57,6 +57,7 @@ import com.arjangconsulting.codeeditor.FormatResult
 import com.arjangconsulting.codeeditor.FormattingOptions
 import com.arjangconsulting.codeeditor.JsonRules
 import com.arjangconsulting.codeeditor.KotlinRules
+import com.arjangconsulting.codeeditor.KeywordLanguageService
 import com.arjangconsulting.codeeditor.LanguageService
 import com.arjangconsulting.codeeditor.LineHighlight
 import com.arjangconsulting.codeeditor.LineHighlightRole
@@ -66,13 +67,17 @@ import com.arjangconsulting.codeeditor.SwiftRules
 import com.arjangconsulting.codeeditor.TabBehavior
 import com.arjangconsulting.codeeditor.TextPosition
 import com.arjangconsulting.codeeditor.TokenRules
+import com.arjangconsulting.codeeditor.YamlLanguageService
+import com.arjangconsulting.codeeditor.YamlRules
 import com.arjangconsulting.codeeditor.format
 import com.arjangconsulting.codeeditor.rememberCodeEditorState
 import kotlinx.coroutines.launch
 
 private enum class DemoLanguage(val label: String, val rules: TokenRules, val sample: String) {
     Commands("Commands", CommandRules, COMMANDS_SAMPLE),
+    Tools("Tools (schema)", ToolDemoRules, "tap_element id=\"sign-in\" scope=app\nswipe_in_direction direction=down"),
     Json("JSON", JsonRules, JSON_SAMPLE),
+    Yaml("YAML", YamlRules, YAML_SAMPLE),
     Kotlin("Kotlin", KotlinRules, KOTLIN_SAMPLE),
     Swift("Swift", SwiftRules, SWIFT_TEST_SAMPLE),
     Shell("Shell", ShellRules, SHELL_SAMPLE),
@@ -102,9 +107,14 @@ fun CodeEditorScreen() {
 
     val commandService = remember { CommandLanguageService { latency.toLong() } }
     val jsonService = remember { JsonSchemaLanguageService { latency.toLong() } }
+    val yamlService = remember { YamlLanguageService() }
+    val toolService = remember { toolDemoService("schema-editor") }
+    val hasLocalTooling = language == DemoLanguage.Json || language == DemoLanguage.Yaml
     val service = when (language) {
         DemoLanguage.Commands -> commandService
+        DemoLanguage.Tools -> toolService
         DemoLanguage.Json -> jsonService
+        DemoLanguage.Yaml -> yamlService
         else -> LanguageService.None
     }
     val options = CodeEditorOptions(
@@ -179,7 +189,7 @@ fun CodeEditorScreen() {
                 var actionMessage by remember { mutableStateOf("") }
                 var savedText by remember { mutableStateOf<String?>(null) }
                 Row(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
-                    Button(enabled = language == DemoLanguage.Json && !readOnly && !busy, onClick = {
+                    Button(enabled = hasLocalTooling && !readOnly && !busy, onClick = {
                         actionScope.launch {
                             busy = true
                             try {
@@ -189,7 +199,7 @@ fun CodeEditorScreen() {
                             }
                         }
                     }) { Text("Format") }
-                    OutlinedButton(enabled = language == DemoLanguage.Json && !busy, onClick = {
+                    OutlinedButton(enabled = hasLocalTooling && !busy, onClick = {
                         actionScope.launch {
                             busy = true
                             try {
@@ -198,7 +208,7 @@ fun CodeEditorScreen() {
                                 actionMessage = if (keyedState.version != requested.version) {
                                     "Text changed; validate again"
                                 } else {
-                                    problems.firstOrNull()?.message ?: "Valid JSON"
+                                    problems.firstOrNull()?.message ?: "Valid ${language.label}"
                                 }
                             } finally {
                                 busy = false
@@ -209,7 +219,7 @@ fun CodeEditorScreen() {
                         actionScope.launch {
                             busy = true
                             try {
-                                val result = if (language == DemoLanguage.Json && formatOnSave) {
+                                val result = if (hasLocalTooling && formatOnSave) {
                                     keyedState.format(service, FormattingOptions(tabSize = 2))
                                 } else {
                                     FormatResult.UNCHANGED
@@ -225,7 +235,7 @@ fun CodeEditorScreen() {
                             }
                         }
                     }) { Text("Save snapshot") }
-                    if (language == DemoLanguage.Json) {
+                    if (hasLocalTooling) {
                         Toggle("Format before save", formatOnSave) { formatOnSave = it }
                     }
                 }
@@ -284,26 +294,68 @@ private fun Toggle(label: String, checked: Boolean, onChange: (Boolean) -> Unit)
 /** A single-line REPL: Enter submits, Up/Down browse history, completion works inline. */
 @Composable
 private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors: CodeEditorColors) {
+    var language by remember { mutableStateOf(DemoLanguage.Commands) }
+    var serviceRevision by remember { mutableStateOf(0L) }
     val state = rememberCodeEditorState("")
-    val history = remember { mutableStateListOf<String>() }
-    val output = remember { mutableStateListOf<String>() }
-    var historyIndex by remember { mutableStateOf(-1) }
-    SectionCard(title = "REPL", description = "Single-line mode with onSubmit and onHistory.") {
+    val history = remember(language) { mutableStateListOf<String>() }
+    val output = remember { mutableStateListOf<Pair<TokenRules, String>>() }
+    var historyIndex by remember(language) { mutableStateOf(-1) }
+    val keywordService = remember(language) { KeywordLanguageService(language.rules) }
+    val toolService = remember(serviceRevision) { toolDemoService("schema-repl", serviceRevision) }
+    SectionCard(
+        title = "REPL",
+        description = "Tools (schema) uses amoo metadata and fixture element IDs; submissions are displayed locally. Enter accepts a suggestion before submitting.",
+    ) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(SampleSpacing.small)) {
+            listOf(
+                DemoLanguage.Commands, DemoLanguage.Tools, DemoLanguage.Kotlin, DemoLanguage.Swift, DemoLanguage.Shell,
+            ).forEach { choice ->
+                FilterChip(
+                    selected = language == choice,
+                    onClick = {
+                        if (language != choice) {
+                            language = choice
+                            serviceRevision++
+                            state.resetText("")
+                        }
+                    },
+                    label = { Text(choice.label) },
+                )
+            }
+            TextButton(onClick = {
+                serviceRevision++
+                history.clear()
+                output.clear()
+                historyIndex = -1
+                state.resetText("")
+            }) { Text("Reset session") }
+        }
         Column(Modifier.fillMaxWidth()) {
-            output.takeLast(4).forEach { Text("> $it", style = CodeEditorDefaults.textStyle()) }
+            output.takeLast(4).forEach { (rules, command) ->
+                Row(Modifier.fillMaxWidth()) {
+                    Text("> ", style = CodeEditorDefaults.textStyle(), color = colors.foreground)
+                    CodeSnippet(command, language = rules, colors = colors, modifier = Modifier.weight(1f))
+                }
+            }
         }
         CodeEditor(
             state = state,
             modifier = Modifier.fillMaxWidth(),
-            language = CommandRules,
-            languageService = service,
+            language = language.rules,
+            languageService = when (language) {
+                DemoLanguage.Commands -> service
+                DemoLanguage.Tools -> toolService
+                else -> keywordService
+            },
+            languageServiceRevision = serviceRevision,
             engine = engine,
             singleLine = true,
             colors = colors,
             onSubmit = { command ->
                 if (command.isNotBlank()) {
-                    output += command
+                    output += language.rules to command
                     history += command
+                    serviceRevision++
                 }
                 historyIndex = -1
                 state.resetText("")
@@ -385,6 +437,7 @@ private val snippets = listOf(
     JsonRules to "{\"tool\": \"tap\", \"args\": {\"id\": \"sign-in\"}, \"ok\": true}",
     KotlinRules to "val result = runCatching { client.call(\"ping\") }",
     SwiftRules to "XCTAssertTrue(app.buttons[\"Send\"].exists)",
+    YamlRules to "name: editor\nformats: [yaml, yml]\nenabled: true",
     ShellRules to "export OUTPUT=\"\${HOME}/results\"; echo \"\$OUTPUT\"",
 )
 
@@ -511,4 +564,21 @@ private val SWIFT_TEST_SAMPLE = """
             XCTAssertTrue(inbox.waitForExistence(timeout: 5), "Inbox for \(email.label) not shown")
         }
     }
+""".trimIndent()
+
+private val YAML_SAMPLE = """
+    # Editor configuration
+    defaults: &defaults
+        enabled: true
+        timeout: 1.5
+    editor:
+        <<: *defaults
+        languages: [json,yaml,kotlin,swift,shell]
+        theme: "dark"
+        description: |-
+            A multiplatform editor.
+            Comments and block strings survive formatting.
+    files:
+        - name: config.yml
+          language: yaml
 """.trimIndent()

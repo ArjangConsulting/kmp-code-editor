@@ -1,0 +1,142 @@
+{
+  "tools": [
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Swipe in a direction from screen center or a specific element. This is the canonical workflow for a swipe on one row of a list with per-row actions (e.g. SwiftUI List .swipeActions): call find_elements for the target row, then call this tool with that row's element_id (preferred) or element_label. The companion fails rather than guessing when the id/label does not uniquely identify one element, and the recorded step keeps the row's identity, so generated code emits an element-scoped gesture (e.g. groceriesTaskRow.swipeLeft()). Only when the row has no stable id or label, fall back to the coordinate `swipe` tool with the point-space coordinates from find_elements \u2014 the recorder then binds that gesture to the resolved element. Never read coordinates off a screenshot. To aim at a point without computing an end point, pass from_x/from_y: the swipe starts there and travels distance in direction.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "direction": {
+            "description": "Swipe direction: up, down, left, or right",
+            "enum": [
+              "up",
+              "down",
+              "left",
+              "right"
+            ],
+            "type": "string"
+          },
+          "distance": {
+            "description": "Swipe distance in points. Defaults to 300.",
+            "type": "string"
+          },
+          "duration_ms": {
+            "description": "Swipe duration in milliseconds. Defaults to 400.",
+            "type": "string"
+          },
+          "element_id": {
+            "description": "Accessibility ID of element to swipe on. Omit for screen-center swipe.",
+            "type": "string"
+          },
+          "element_label": {
+            "description": "Accessibility label of element to swipe on.",
+            "type": "string"
+          },
+          "first": {
+            "description": "true picks the first match when several elements match. Generated XCUITest uses .firstMatch. Not combinable with index.",
+            "type": "string"
+          },
+          "from_x": {
+            "description": "Optional start X, e.g. a cell's hitPoint from find_elements. Requires from_y; cannot be combined with element_id or element_label.",
+            "type": "string"
+          },
+          "from_y": {
+            "description": "Optional start Y. Requires from_x.",
+            "type": "string"
+          },
+          "index": {
+            "description": "0-based index among elements matching the selector, in the order the device reports them. For duplicates the selector cannot tell apart (an iPadOS tab bar that exposes each tab twice). Generated XCUITest uses .element(boundBy:). Not combinable with first.",
+            "type": "string"
+          },
+          "session_id": {
+            "description": "Optional session id; routes this call to that session's driver and records it in the session's action history",
+            "type": "string"
+          },
+          "unit": {
+            "description": "Coordinate space for from_x/from_y: points (default), pixels, or normalized. distance is always in points.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "direction"
+        ],
+        "type": "object"
+      },
+      "name": "swipe_in_direction"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Tap a UI element by accessibility ID, label, or partial text match. For a control inside a list with per-row actions (e.g. SwiftUI List .swipeActions), resolving by label can be unreliable if the label isn't unique or the tree has shifted since the label was read \u2014 this can tap the wrong row. For row-specific or otherwise precise taps, call find_elements first and pass the resolved element's id here; only when the row has no stable id or label, use the coordinate `tap` tool with the point from find_elements.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "bundle_id": {
+            "description": "Explicit bundle/package id to resolve the element in.",
+            "type": "string"
+          },
+          "check_effect": {
+            "description": "Compare the screen before and after the tap and report observable_change=false ('No observable change') when nothing moved. Runs by default within effect_timeout_ms; 'true' makes it required, 'false' skips it.",
+            "type": "string"
+          },
+          "check_hittable": {
+            "description": "Before tapping, read the hierarchy and refuse a target another control (keyboard, sheet) covers, a clipping container cuts off, or that is off-screen. Runs by default, giving up after hittable_timeout_ms; 'true' makes it required, 'false' skips it. Android flat inspection cannot establish occlusion: the default proceeds unchecked, while 'true' returns an unsupported-check error.",
+            "type": "string"
+          },
+          "contains_text": {
+            "description": "Partial text to match in the element label",
+            "type": "string"
+          },
+          "effect_timeout_ms": {
+            "description": "Budget for the default effect check, in milliseconds (default 1500). A hierarchy read that takes longer is abandoned and the result carries no effect report; 0 disables.",
+            "type": "string"
+          },
+          "first": {
+            "description": "true picks the first match when several elements match. Generated XCUITest uses .firstMatch. Not combinable with index.",
+            "type": "string"
+          },
+          "hittable_timeout_ms": {
+            "description": "Budget for the default check, in milliseconds (default 1500). A hierarchy read that takes longer is abandoned and the tap proceeds unchecked; 0 disables.",
+            "type": "string"
+          },
+          "id": {
+            "description": "Accessibility identifier of the element",
+            "type": "string"
+          },
+          "index": {
+            "description": "0-based index among elements matching the selector, in the order the device reports them. For duplicates the selector cannot tell apart (an iPadOS tab bar that exposes each tab twice). Generated XCUITest uses .element(boundBy:). Not combinable with first.",
+            "type": "string"
+          },
+          "label": {
+            "description": "Exact accessibility label of the element",
+            "type": "string"
+          },
+          "parent_id": {
+            "description": "Restrict to descendants of this identifier",
+            "type": "string"
+          },
+          "scope": {
+            "description": "Which process to resolve the element in: 'app' (default) or 'system' for system UI. Not usually needed \u2014 a lookup that finds nothing in the app retries against system UI automatically, so a button in a permission alert or the Sign in with Apple sheet is tappable by label without naming its process.",
+            "enum": [
+              "app",
+              "system"
+            ],
+            "type": "string"
+          },
+          "session_id": {
+            "description": "Optional session id; routes this call to that session's driver and records it in the session's action history",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "tap_element"
+    }
+  ]
+}

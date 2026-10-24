@@ -14,6 +14,8 @@ import androidx.compose.runtime.Immutable
  *
  * Methods are called from [LanguageServiceOptions.dispatcher] (by default `Dispatchers.Default`), so
  * an implementation must be safe to call off the main thread and should support cancellation.
+ * Hosts with mutable runtime context should change [CodeEditor]'s `languageServiceRevision` after
+ * execution or a session switch so results from the previous context are discarded.
  */
 public interface LanguageService {
     /** Characters that open completion immediately, like `.` or `=`. */

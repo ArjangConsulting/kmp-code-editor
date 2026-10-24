@@ -215,6 +215,24 @@ class RstaEditorPanelTest {
     }
 
     @Test
+    fun `yaml highlighting carries block indentation through the swing document`() {
+        panel.applyConfig(config(language = YamlRules))
+        state.setText("script: |-\n  # literal body\nnext: true")
+        panel.syncFromState()
+        val document = panel.textArea.document as RSyntaxDocument
+        val body = document.getTokenListForLine(1)
+        assertEquals(TokenTypes.LITERAL_STRING_DOUBLE_QUOTE, body.type)
+        val next = document.getTokenListForLine(2)
+        assertEquals(TokenTypes.MARKUP_TAG_ATTRIBUTE, next.type)
+        assertEquals("next", next.lexeme)
+        state.setText("script:\n  # literal body\nnext: true")
+        panel.syncFromState()
+        val changed = generateSequence(document.getTokenListForLine(1)) { it.nextToken }
+            .first { it.type == TokenTypes.COMMENT_EOL }
+        assertEquals("# literal body", changed.lexeme)
+    }
+
+    @Test
     fun `folds come from the shared folding computation`() {
         state.setText("{\n  \"a\": [\n    1\n  ],\n  \"b\": 2\n}")
         panel.syncFromState()

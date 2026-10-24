@@ -58,16 +58,27 @@ CodeEditor(value = text, onValueChange = { text = it }, language = KotlinRules)
 A REPL prompt:
 
 ```kotlin
+val replService = remember { KeywordLanguageService(KotlinRules) }
+var sessionRevision by remember { mutableStateOf(0L) }
 CodeEditor(
     value = command,
     onValueChange = { command = it },
     singleLine = true,
-    language = CommandRules,
-    languageService = commandService,
-    onSubmit = { run(it); command = "" },
+    language = KotlinRules,
+    languageService = replService,
+    languageServiceRevision = sessionRevision,
+    onSubmit = {
+        run(it)
+        sessionRevision++
+        command = ""
+    },
     onHistory = { delta -> command = history.step(delta) },
 )
 ```
+
+Use the same rules with `CodeSnippet(command, language = KotlinRules)` for highlighted submitted
+commands. Keep ordinary runtime output as text. The sample REPL includes command, Kotlin, Swift,
+and shell modes, highlighted transcript entries that retain their original language, and a session reset.
 
 Read-only snippets in lists (one `BasicText`, no editor machinery):
 
@@ -80,15 +91,21 @@ val annotated = highlightedText(code, KotlinRules, CodeEditorDefaults.colorsFrom
 
 | Type | Purpose |
 | --- | --- |
-| `CodeEditor(state, …)` / `CodeEditor(value, onValueChange, …)` | The editor. Parameters: `language`, `languageService`, `engine`, `readOnly`, `singleLine`, `onSubmit`, `onHistory`, `showLineNumbers`, `folding`, `lineHighlights`, `diagnostics`, `revealLine`, `revealRange`, `onCaretChange`, `onLineClick`, `tabBehavior`, `colors`, `textStyle`, `labels`, `options`, `serviceOptions`, `logger`. |
+| `CodeEditor(state, …)` / `CodeEditor(value, onValueChange, …)` | The editor. Parameters: `language`, `languageService`, `engine`, `readOnly`, `singleLine`, `onSubmit`, `onHistory`, `showLineNumbers`, `folding`, `lineHighlights`, `diagnostics`, `revealLine`, `revealRange`, `onCaretChange`, `onLineClick`, `tabBehavior`, `colors`, `textStyle`, `labels`, `options`, `serviceOptions`, `logger`, `languageServiceRevision`. |
 | `CodeEditorState`, `rememberCodeEditorState` | Text, selection, monotonically increasing `version`, folding, undo/redo, `visibleLines`, `revealLine`/`revealRange`, `edit(List<TextEdit>)`, `snapshot()`. |
 | `TextPosition`, `TextRange`, `TextEdit`, `applyTextEdits`, `DocumentSnapshot` | LSP-shaped text model: 0-based lines, UTF-16 characters. `TextRange` is position based; it is not `androidx.compose.ui.text.TextRange`. |
 | `LanguageService` | `triggerCharacters`, `complete`, `resolveCompletionItem`, `diagnostics`, `format`, `hover`, `semanticTokens`, `foldingRanges`. All default to no-ops. |
+| `KeywordLanguageService(language)` | Local completion from the highlighting vocabulary, including keywords, constants, and known types. |
+| `CompletionBackend`, `BackendLanguageService` | Adapts native tool endpoints and external add-ons to completion in both engines. |
+| `CompletionContext`, `CompletionRequest`, `CompletionResponse`, `CompletionProtocol` | Versioned, correlated completion messages and a transport-independent JSON codec. |
+| `ToolCommandCatalog`, `ToolCommand`, `ToolParameter`, `ToolValueKind` | External command metadata, MCP `tools/list` import, and matching highlighting rules. |
+| `ToolCompletionBackend`, `ToolValueProvider`, `ToolValueRequest`, `ToolCompletionLabels` | Command/argument/enum suggestions plus optional runtime value completion. |
 | `FormattingOptions`, `FormatResult`, `CodeEditorState.format` | Explicit, asynchronous formatting with timeout, stale-result rejection, and one undo step. |
 | `JsonLanguageService`, `JsonLanguageServiceLabels` | Local JSON syntax validation and whitespace-only formatting, with localizable diagnostic messages. |
+| `YamlLanguageService`, `YamlLanguageServiceLabels` | Local YAML syntax validation and formatting for `.yaml` and `.yml`, with localizable diagnostic messages. |
 | `CompletionItem`, `CompletionList`, `CompletionTrigger`, `Diagnostic`, `Hover`, `MarkupContent`, `SemanticToken`, `FoldingRange` | Mirrors of the LSP types. |
 | `LineHighlight(lines, role)` | Full-width line tint: `SELECTED`, `HOVER`, `WARNING`, `ERROR`, `INFO`. |
-| `TokenRules`, `tokenRules { }`, `PlainText`, `JsonRules`, `KotlinRules`, `SwiftRules`, `ShellRules` | Language definitions: lexer rules plus brackets, comment prefix, indentation. |
+| `TokenRules`, `tokenRules { }`, `PlainText`, `JsonRules`, `YamlRules`, `KotlinRules`, `SwiftRules`, `ShellRules` | Language definitions: lexer rules plus brackets, comment prefix, indentation. |
 | `highlightedText`, `rememberHighlightedText`, `CodeSnippet` | Lightweight read-only highlighting. |
 | `FuzzyMatcher`, `filterAndRankCompletions` | The client-side completion filter, reusable elsewhere. |
 | `CodeEditorSyntaxTheme` (`Default`, `HighContrast`), `CodeEditorSyntaxColors`, `contrastRatio`, `isDarkBackground` | Token color palettes; see [Colors](#colors). |
@@ -135,11 +152,18 @@ other settings.
 
 ## Languages
 
-The library includes four highlighting presets: JSON, Kotlin, Swift, and shell (sh/Bash), plus
+The library includes five highlighting presets: JSON, YAML, Kotlin, Swift, and shell (sh/Bash), plus
 plain text. Choose `language` explicitly; filename/content detection is left to the host. Highlighting
 and generated-test line highlights work without a language service. Shell rules cover control words,
 common builtins, assignments, flags, variables, comments, and quoted strings. Heredocs, nested command
 substitutions, and context-sensitive shell comments are not fully modeled.
+
+`YamlRules` supports both `.yaml` and `.yml`: block and flow mappings/sequences, keys, quoted and
+plain scalars, numbers, booleans/null, comments, document markers, anchors/aliases, tags, and multiline
+block strings. Both editor engines use the same indentation-aware YAML lexer. Highlighting is
+lexical; complex keys and multiline plain scalar context are not fully modeled. YAML uses a
+dedicated scanner, so token patterns added through `tokenRules(base = YamlRules)` are not applied;
+editing metadata such as indentation and auto-closing pairs can still be customized.
 
 `tokenRules` builds a line-based incremental lexer. Rules are tried in order: line comments,
 delimited constructs (strings and block comments, longest opening delimiter first), regex
@@ -166,6 +190,42 @@ line ends in the same state as before. Semantic tokens from the service (`Semant
 over lexer tokens in the Compose engine.
 
 ## Language services
+
+`KeywordLanguageService(rules)` supplies lexical completion without a language server, including
+in single-line REPL prompts. Pass the same `rules` as the editor's `language` for matching syntax
+highlighting. It returns the full vocabulary for local filtering and suppresses suggestions inside
+strings, escapes, and comments, and after a member-access dot. It does not infer scopes, runtime
+members, or context-specific keyword legality. Host services can call its `complete` method and
+merge the returned items with their own proposals; the host owns backend failure and latency policy.
+
+Change `languageServiceRevision` whenever runtime context changes, such as after command execution,
+session reset, or device switch. This cancels outstanding service requests and clears completion,
+hover, diagnostics, semantic tokens, and service folds even when the document is unchanged.
+Analysis is refreshed automatically; completion reopens on typing or Ctrl+Space. The document,
+selection, undo history, and host-supplied diagnostics are preserved. The signal works in both
+engines and both editor overloads. Explicit host formatting calls have their own document version
+checks and are not cancelled by this signal.
+
+### Tool backends and external add-ons
+
+`BackendLanguageService` connects the editor to a `CompletionBackend`. The backend can live in the
+tool itself, in the consuming app, or in an external completion add-on. It receives document text,
+UTF-16 caret position, language ID, session identity, and runtime revision, and returns correlated
+`CompletionItem`s. `CompletionProtocol` supplies a versioned JSON codec for remote implementations;
+the host supplies HTTP, stdio, WebSocket, or another transport.
+
+Tools do not need source changes when they already expose useful metadata. `ToolCommandCatalog`
+imports MCP `tools/list` responses, and `ToolCompletionBackend` turns the catalog into suggestions
+for a `command name=value` prompt. An optional `ToolValueProvider` adds values obtained from public
+runtime APIs or host snapshots. The included amoo example uses its existing MCP schemas; the sample
+REPL's **Tools (schema)** mode demonstrates command names, arguments, enums, and fixture element IDs
+through a JSON boundary. It runs offline and displays submissions locally.
+
+See [Completion providers and add-ons](docs/COMPLETION_PROTOCOL.md) for integration code, the JSON
+contract, source-free amoo discovery, capabilities, and limitations. The exporter in
+`examples/completion/export_mcp_tools.py` reads paginated MCP catalogs using an installed tool binary
+and Python 3.11+. Runtime variables and type members require an existing introspection/completion
+surface or a native provider; a command schema supplies command and argument knowledge.
 
 The editor owns orchestration so services can be simple, slow, remote, or flaky:
 
@@ -198,7 +258,7 @@ The editor owns orchestration so services can be simple, slow, remote, or flaky:
 
 Highlighting is the core feature; services are optional plugins. A service can implement only
 `format`, only `diagnostics`, or both, without providing completion or other IDE features. The
-library bundles JSON syntax validation and formatting. Kotlin, Swift, and shell have highlighting
+library bundles JSON and YAML syntax validation and formatting. Kotlin, Swift, and shell have highlighting
 and smart typing, but no bundled formatter or validator. Host adapters may supply local tools or
 LSP-backed implementations. There is no bundled LSP client or server process.
 
@@ -219,7 +279,7 @@ runs on typing or automatically on save; this library owns no persistence. Call 
 the UI thread. The provider runs on the configured service dispatcher, with a timeout; the result
 returns to the caller before edits are applied. Newer typing makes the result `STALE`. Successful
 edits are one undo step, and selection is mapped through them. `UNAVAILABLE` means the provider
-cannot format this document (including invalid JSON), `FAILED` means an exception/timeout/invalid
+cannot format this document (including invalid JSON/YAML), `FAILED` means an exception/timeout/invalid
 edit response, and `UNCHANGED` means no change was needed. Cancellation propagates to the caller.
 
 For format-before-save, the host can use this sequence inside its UI coroutine; `saveDocument` and
@@ -240,15 +300,31 @@ The first line-ending style and presence of a final line ending are retained; em
 stay compact. Nesting is limited to 128 objects/arrays by default, configurable downward. Use
 `JsonLanguageServiceLabels` to localize diagnostic messages.
 
+For YAML, use `language = YamlRules` and `languageService = remember { YamlLanguageService() }`,
+then call `state.format(service, FormattingOptions(tabSize = 2))` as above. No filename detection is
+required: the same service handles `.yaml` and `.yml`. The formatter uses
+[SnakeYAML Engine KMP](https://github.com/krzema12/snakeyaml-engine-kmp)'s parser/emitter events,
+preserving scalar values, mapping order, duplicate keys, comments, anchors/aliases, tags, and
+multiple documents without constructing objects or expanding aliases. It normalizes indentation
+and spacing while retaining flow/block collection styles; scalar spelling, quoting, and block
+indicators may be normalized. Output uses the first input line-ending style and ends with a line
+break; empty and comment-only input is unchanged. Edits use the smallest single replacement, so
+selection inside the reformatted region may move to its end.
+
+YAML indentation must use spaces: requests with `insertSpaces = false` or `tabSize` outside 1..10
+return `UNAVAILABLE`, as does invalid syntax. Syntax validation does not resolve aliases or check
+schemas or duplicate keys. Documents are limited to 3 Mi UTF-16 code units, and collection nesting
+to 128 levels by default (configurable downward). Use `YamlLanguageServiceLabels` to localize errors.
+
 The editor requests `diagnostics` after edits when a service is installed; a host can also explicitly
 call `service.diagnostics(state.snapshot())` to validate before saving. Reject stale results when
 managing validation yourself. For multiple validators, combine their diagnostics in your service,
 or pass a combined list through the editor's `diagnostics` parameter. Direct diagnostics are owned
 by the host and do not receive the controller's version checks. The sample layers mock-server schema
-checks over the built-in JSON service and demonstrates Format, Validate, and an in-memory Save snapshot.
+checks over the built-in JSON service. JSON and YAML demonstrate Format, Validate, and an in-memory Save snapshot.
 
 Smart typing already pairs `{` with `}`, and Enter between them creates an indented blank line.
-JSON uses two spaces by default; Kotlin, Swift, and shell use four. Configure this through
+JSON and YAML use two spaces by default; Kotlin, Swift, and shell use four. Configure this through
 `TokenRules.indentUnit` and `CodeEditorOptions.autoIndent`/`autoCloseBrackets`. This is lightweight
 bracket-based indentation rather than whole-document formatting.
 
@@ -358,6 +434,7 @@ Markdown beyond escaped paragraphs, `TokenRules.indentUnit` other than tabs or s
 | Indent / outdent | Tab / ⇧Tab (or focus traversal with `TabBehavior.MOVE_FOCUS`) | same |
 | Fold / unfold region | ⌘⌥[ / ⌘⌥] | Ctrl+Shift+[ / Ctrl+Shift+] |
 | Completion popup | ↑/↓, PageUp/PageDown, Enter/Tab accept, Esc closes | same |
+| REPL (`singleLine`) | Enter submits when no suggestion is selected; ↑/↓ browse history when the popup is closed | same |
 
 Editing helpers: auto-indent (and splitting `{|}` onto three lines), auto-closing and overtyping of
 brackets and quotes, wrapping a selection in a pair, re-indenting a closing bracket typed on a blank

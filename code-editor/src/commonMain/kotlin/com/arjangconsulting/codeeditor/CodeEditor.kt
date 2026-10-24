@@ -47,6 +47,9 @@ internal data class EditorConfig(
  * adds completion, diagnostics, hover, semantic tokens, and folding ranges; the editor debounces,
  * cancels, and drops stale results (tune with [serviceOptions]), and logs failures to [logger].
  * [diagnostics] are merged with the service's.
+ * Change [languageServiceRevision] after execution, a session reset, or a device switch to cancel
+ * pending requests and clear service results even when the document is unchanged. Analysis is
+ * refreshed; completion opens again on typing or Ctrl+Space. Host-supplied [diagnostics] are unaffected.
  *
  * **Single-line (REPL) mode.** With [singleLine], Enter calls [onSubmit] with the text (Enter still
  * accepts an open completion first), and Up/Down call [onHistory] with -1 (older) or +1 (newer)
@@ -97,13 +100,15 @@ public fun CodeEditor(
     options: CodeEditorOptions = CodeEditorOptions(),
     serviceOptions: LanguageServiceOptions = LanguageServiceOptions(),
     logger: CodeEditorLogger = CodeEditorLogger.None,
+    languageServiceRevision: Long = 0,
 ) {
     val scope = rememberCoroutineScope()
     val controller = remember(state) { LanguageServiceController(scope, languageService, serviceOptions, language, logger) }
     SideEffect {
-        controller.service = languageService
         controller.options = serviceOptions
         controller.rules = language
+        controller.service = languageService
+        controller.serviceRevision = languageServiceRevision
     }
     DisposableEffect(controller) { onDispose { controller.dispose() } }
 
@@ -154,6 +159,7 @@ public fun CodeEditor(
  * A [CodeEditor] for a plain [value]. Edits are reported through [onValueChange]; when [value]
  * changes from outside, the editor text is replaced (as one undoable change) and the caret moves to
  * the end. Selection, folding, and undo history live inside and survive recomposition.
+ * [languageServiceRevision] invalidates service results as in the state-based overload.
  */
 @Composable
 public fun CodeEditor(
@@ -182,6 +188,7 @@ public fun CodeEditor(
     options: CodeEditorOptions = CodeEditorOptions(),
     serviceOptions: LanguageServiceOptions = LanguageServiceOptions(),
     logger: CodeEditorLogger = CodeEditorLogger.None,
+    languageServiceRevision: Long = 0,
 ) {
     val state = remember { CodeEditorState(value) }
     val currentOnValueChange by rememberUpdatedState(onValueChange)
@@ -226,6 +233,7 @@ public fun CodeEditor(
         options = options,
         serviceOptions = serviceOptions,
         logger = logger,
+        languageServiceRevision = languageServiceRevision,
     )
 }
 

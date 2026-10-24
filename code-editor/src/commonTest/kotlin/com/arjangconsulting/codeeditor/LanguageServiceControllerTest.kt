@@ -403,6 +403,138 @@ class LanguageServiceControllerTest {
     }
 
     @Test
+    fun `session revision clears published results and refreshes analysis without editing`() = runTest {
+        var context = "old"
+        val controller = controller(object : LanguageService {
+            override suspend fun complete(doc: DocumentSnapshot, position: TextPosition, trigger: CompletionTrigger): CompletionList =
+                CompletionList(listOf(CompletionItem("value$context")))
+
+            override suspend fun diagnostics(doc: DocumentSnapshot): List<Diagnostic> =
+                listOf(Diagnostic(TextRange.at(TextPosition.Zero), context))
+
+            override suspend fun semanticTokens(doc: DocumentSnapshot): List<SemanticToken> =
+                listOf(SemanticToken(0, 0, 1, TokenKind.KEYWORD))
+
+            override suspend fun foldingRanges(doc: DocumentSnapshot): List<FoldingRange> = listOf(FoldingRange(0, 1))
+
+            override suspend fun hover(doc: DocumentSnapshot, position: TextPosition): Hover = Hover(MarkupContent.plain(context))
+        })
+        val snapshot = DocumentSnapshot("v\nx", 1)
+        controller.documentChanged(snapshot, 1, 'v')
+        controller.requestHover(snapshot, TextPosition(0, 1))
+        advanceUntilIdle()
+        assertNotNull(controller.completion.value)
+        assertNotNull(controller.hover.value)
+        assertNotNull(controller.semanticTokens.value)
+        assertNotNull(controller.foldingRanges.value)
+        assertEquals("old", controller.diagnostics.value.value.single().message)
+
+        context = "new"
+        controller.serviceRevision++
+        assertNull(controller.completion.value)
+        assertNull(controller.hover.value)
+        assertNull(controller.semanticTokens.value)
+        assertNull(controller.foldingRanges.value)
+        assertTrue(controller.diagnostics.value.value.isEmpty())
+        advanceUntilIdle()
+        assertNull(controller.completion.value)
+        assertEquals("new", controller.diagnostics.value.value.single().message)
+        controller.requestCompletion(snapshot, 1)
+        advanceUntilIdle()
+        assertEquals("valuenew", controller.completion.value?.selected?.label)
+        controller.serviceRevision = controller.serviceRevision
+        assertNotNull(controller.completion.value)
+    }
+
+    @Test
+    fun `session revision cancels pending completion and allows a fresh request at the same version`() = runTest {
+        val cancelled = CompletableDeferred<Unit>()
+        var context = "old"
+        val controller = controller(object : LanguageService {
+            override suspend fun complete(doc: DocumentSnapshot, position: TextPosition, trigger: CompletionTrigger): CompletionList {
+                val captured = context
+                try {
+                    delay(500)
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    cancelled.complete(Unit)
+                    throw e
+                }
+                return CompletionList(listOf(CompletionItem("value$captured")))
+            }
+        })
+        val snapshot = DocumentSnapshot("v", 1)
+        controller.requestCompletion(snapshot, 1)
+        runCurrent()
+        context = "new"
+        controller.serviceRevision++
+        runCurrent()
+        assertTrue(cancelled.isCompleted)
+        advanceUntilIdle()
+        assertNull(controller.completion.value)
+        controller.requestCompletion(snapshot, 1)
+        advanceUntilIdle()
+        assertEquals("valuenew", controller.completion.value?.selected?.label)
+    }
+
+    @Test
+    fun `session revision cancels pending resolve hover and analysis for unchanged text`() = runTest {
+        val started = mutableSetOf<String>()
+        val cancelled = mutableSetOf<String>()
+        var context = "old"
+        suspend fun response(kind: String): String {
+            val captured = context
+            started += kind
+            try {
+                delay(1_000)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                cancelled += kind
+                throw e
+            }
+            return captured
+        }
+        val controller = controller(object : LanguageService {
+            override suspend fun complete(doc: DocumentSnapshot, position: TextPosition, trigger: CompletionTrigger): CompletionList =
+                CompletionList(listOf(CompletionItem("value")))
+
+            override suspend fun resolveCompletionItem(item: CompletionItem): CompletionItem =
+                item.copy(documentation = MarkupContent.plain(response("resolve")))
+
+            override suspend fun hover(doc: DocumentSnapshot, position: TextPosition): Hover = Hover(MarkupContent.plain(response("hover")))
+
+            override suspend fun diagnostics(doc: DocumentSnapshot): List<Diagnostic> =
+                listOf(Diagnostic(TextRange.at(TextPosition.Zero), response("diagnostics")))
+
+            override suspend fun semanticTokens(doc: DocumentSnapshot): List<SemanticToken> {
+                response("tokens")
+                return listOf(SemanticToken(0, 0, 1, TokenKind.KEYWORD))
+            }
+
+            override suspend fun foldingRanges(doc: DocumentSnapshot): List<FoldingRange> {
+                response("folds")
+                return listOf(FoldingRange(0, 1))
+            }
+        })
+        val snapshot = DocumentSnapshot("v\nx", 1)
+        controller.documentChanged(snapshot, 1)
+        controller.requestCompletion(snapshot, 1)
+        controller.requestHover(snapshot, TextPosition(0, 1))
+        advanceTimeBy(500)
+        runCurrent()
+        assertEquals(setOf("resolve", "hover", "diagnostics", "tokens", "folds"), started)
+        context = "new"
+        controller.serviceRevision++
+        runCurrent()
+        assertEquals(started, cancelled)
+        advanceUntilIdle()
+        assertNull(controller.completion.value)
+        assertNull(controller.hover.value)
+        assertEquals("new", controller.diagnostics.value.value.single().message)
+        controller.requestCompletion(snapshot, 1)
+        advanceUntilIdle()
+        assertEquals("new", controller.completion.value?.selected?.documentation?.value)
+    }
+
+    @Test
     fun `an additional insertion at the prefix start stays an insertion after typing`() = runTest {
         val item = CompletionItem("scroll", additionalTextEdits = listOf(TextEdit.insert(TextPosition.Zero, "import x\n")))
         val controller = controller(FakeService(completions = { _, _, _ -> CompletionList(listOf(item)) }))

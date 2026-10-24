@@ -16,13 +16,14 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
 
 - Prioritize readable syntax highlighting and generated-test line highlighting over IDE features.
 - Keep language definitions and language services pluggable. Include shell highlighting alongside
-  JSON, Kotlin, and Swift; do not require a language server just to display text.
+  JSON, YAML, Kotlin, and Swift; do not require a language server just to display text.
 - Format only on an explicit host action, such as Format or before Save. Saving and persistence
   belong to the consuming app. Formatting must be undoable and reject results for an older document.
-- Provide JSON syntax validation and formatting locally. Kotlin and Swift validation/formatting
+- Provide JSON and YAML syntax validation and formatting locally. Kotlin and Swift validation/formatting
   may be supplied by adapters; do not bundle an LSP runtime or imply compiler-level validation.
 - Retain lightweight smart typing, including bracket pairing and indentation on Enter.
-- Keep REPL-specific product decisions separate until the amoo-studio workflow is defined.
+- Keep tool execution, session ownership, transport, and product-specific REPL behavior in consuming
+  apps. Completion providers support native endpoints and source-free add-ons using public metadata.
 
 ## Repository map
 
@@ -31,13 +32,18 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
     incremental `Highlighter`, pure `EditingOps` and `EditHistory`, `CodeEditorState`,
     `LanguageService` + `LanguageServiceController` (orchestration), the Compose engine
     (`ComposeCodeEditor`, `EditorModel`, `EditorOverlays`), `HighlightedText`, defaults/labels.
-    `Formatting` handles explicit format actions; `JsonLanguageService` supplies local JSON tooling.
+    `Formatting` handles explicit format actions; `JsonLanguageService` and `YamlLanguageService`
+    supply local syntax validation and formatting. `YamlLexer` handles indentation-aware YAML highlighting.
+    `CompletionProtocol` and `BackendLanguageService` bridge tool completion providers;
+    `ToolCommandCatalog` and `ToolCompletionBackend` support schema-based external add-ons.
   - `jvmMain/` — the opt-in RSyntaxTextArea engine (`RstaEditorPanel`, `RstaCodeEditor`).
   - `commonTest/` — pure logic and virtual-time controller tests, run on every target.
   - `jvmTest/` — Compose UI tests (`runComposeUiTest`) and headless RSyntaxTextArea panel tests.
 - `sample/` — unpublished desktop sample app with every feature (`./gradlew :sample:run`).
 - `verification/` — standalone Android/iOS harness for native input and accessibility checks; a
   separate Gradle build that includes this repo (see `verification/README.md`).
+- `examples/completion/export_mcp_tools.py` — source-free MCP catalog export with Python 3.11+.
+- `docs/COMPLETION_PROTOCOL.md` — native/provider integration and the versioned JSON contract.
 - `docs/ARCHITECTURE.md` — internals. `README.md` — public API, engines, keyboard, known gaps.
 - `.github/workflows/` — `ci.yml`, `release-please.yml` -> `release.yml` (Maven Central publish),
   `dependabot-auto-merge.yml`. `.github/dependabot.yml` configures dependency updates.
