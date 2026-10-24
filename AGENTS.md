@@ -51,6 +51,10 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
 
 ## API rules
 
+The reasoning behind these rules, plus build-graph, release, and UI-verification guidance shared with
+KMPComponents and kommon, is in the `kmp-library-conventions` skill (from the KMPComponents repo's
+`skills/`). Load it when installed; the rules below are this repo's binding form.
+
 1. **Stateless-first.** `CodeEditor(state, …)` with hoisted `CodeEditorState`, plus the
    `value`/`onValueChange` overload. Keep only ephemeral UI state internal.
 2. **Parameter order:** required, `modifier: Modifier = Modifier`, optional, trailing content.
