@@ -11,6 +11,7 @@ kotlin {
     sourceSets {
         jvmMain.dependencies {
             implementation(project(":code-editor"))
+            implementation(libs.kmp.components)
             implementation(libs.compose.material3)
             implementation(compose.desktop.currentOs)
         }

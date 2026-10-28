@@ -83,3 +83,13 @@ RSTA's undo/redo, Ctrl+Space, Cmd/Ctrl+F, Enter, Up/Down, and Tab are rebound in
 implementations. The language is installed by building an `RSyntaxDocument` with a
 `TokenMakerFactory` that returns `SharedLexerTokenMaker`, and by registering `SharedFoldParser`
 under the style key `text/x-kmpcodeeditor-<name>`. See the README for why this engine is opt-in.
+
+## Sample host
+
+The unpublished `sample` module depends on KMPComponents for its theme, theme modes, spacing
+tokens, and section cards. The sample uses the library's `ThemeModeSelector` to select the
+`KmpTheme` mode.
+`KmpTheme` supplies Material roles that flow into `CodeEditorDefaults.colors`; syntax palettes
+remain editor-specific. KMPComponents is absent from the published `code-editor` dependency graph.
+The sample uses the catalog artifact by default; `useLocalKmpComponents` enables composite-build
+substitution for a sibling checkout, with `kmpComponentsDir` overriding its location.

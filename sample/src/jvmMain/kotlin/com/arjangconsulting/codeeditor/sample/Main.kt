@@ -3,6 +3,7 @@ package com.arjangconsulting.codeeditor.sample
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,6 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import io.github.maniramezan.kmpcomponents.KmpTheme
+import io.github.maniramezan.kmpcomponents.ThemeMode
+import io.github.maniramezan.kmpcomponents.ThemeModeSelector
+import io.github.maniramezan.kmpcomponents.kmpSpacing
 
 /** Desktop sample: every editor feature on one screen. Run with `./gradlew :sample:run`. */
 fun main() = application {
@@ -22,10 +27,10 @@ fun main() = application {
         state = rememberWindowState(width = 1280.dp, height = 900.dp),
     ) {
         var themeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
-        SampleTheme(themeMode) {
+        KmpTheme(mode = themeMode) {
             Surface(Modifier.fillMaxSize()) {
                 Column {
-                    Column(Modifier.padding(horizontal = SampleSpacing.large, vertical = SampleSpacing.small)) {
+                    Column(Modifier.padding(horizontal = MaterialTheme.kmpSpacing.large, vertical = MaterialTheme.kmpSpacing.small)) {
                         ThemeModeSelector(selected = themeMode, onSelect = { themeMode = it })
                     }
                     CodeEditorScreen()

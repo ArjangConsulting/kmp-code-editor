@@ -71,6 +71,8 @@ import com.arjangconsulting.codeeditor.YamlLanguageService
 import com.arjangconsulting.codeeditor.YamlRules
 import com.arjangconsulting.codeeditor.format
 import com.arjangconsulting.codeeditor.rememberCodeEditorState
+import io.github.maniramezan.kmpcomponents.SectionCard
+import io.github.maniramezan.kmpcomponents.kmpSpacing
 import kotlinx.coroutines.launch
 
 private enum class DemoLanguage(val label: String, val rules: TokenRules, val sample: String) {
@@ -125,21 +127,25 @@ fun CodeEditorScreen() {
         completionOnTyping = completionOnTyping,
         hover = hover,
     )
-    val spacing = SampleSpacing
+    val spacing = MaterialTheme.kmpSpacing
 
     Row(Modifier.fillMaxSize().padding(spacing.large), horizontalArrangement = Arrangement.spacedBy(spacing.large)) {
         Column(
-            Modifier.width(spacing.large * 18).fillMaxHeight().verticalScroll(rememberScrollState()),
+            Modifier.width(spacing.medium * 18).fillMaxHeight().verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(spacing.medium),
         ) {
-            SectionCard(title = "Language") {
+            SectionCard(title = "Language", modifier = Modifier.fillMaxWidth()) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
                     DemoLanguage.entries.forEach {
                         FilterChip(selected = language == it, onClick = { language = it }, label = { Text(it.label) })
                     }
                 }
             }
-            SectionCard(title = "Engine", description = "RSyntaxTextArea is desktop-only and heavyweight; see the overlay check.") {
+            SectionCard(
+                title = "Engine",
+                modifier = Modifier.fillMaxWidth(),
+                description = "RSyntaxTextArea is desktop-only and heavyweight; see the overlay check.",
+            ) {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     listOf(CodeEditorEngine.COMPOSE, CodeEditorEngine.RSYNTAX_TEXT_AREA).forEachIndexed { index, option ->
                         SegmentedButton(
@@ -150,7 +156,7 @@ fun CodeEditorScreen() {
                     }
                 }
             }
-            SectionCard(title = "Options") {
+            SectionCard(title = "Options", modifier = Modifier.fillMaxWidth()) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
                     Toggle("Read-only", readOnly) { readOnly = it }
                     Toggle("Line numbers", showLineNumbers) { showLineNumbers = it }
@@ -271,7 +277,7 @@ fun CodeEditorScreen() {
             )
             ReplDemo(engine, commandService, colors)
         }
-        Column(Modifier.width(spacing.large * 22).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(spacing.medium)) {
+        Column(Modifier.width(spacing.medium * 22).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(spacing.medium)) {
             GeneratedTestDemo(engine, colors)
             SnippetDemo(colors)
         }
@@ -303,10 +309,11 @@ private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors:
     val keywordService = remember(language) { KeywordLanguageService(language.rules) }
     val toolService = remember(serviceRevision) { toolDemoService("schema-repl", serviceRevision) }
     SectionCard(
+        modifier = Modifier.fillMaxWidth(),
         title = "REPL",
         description = "Tools (schema) uses amoo metadata and fixture element IDs; submissions are displayed locally. Enter accepts a suggestion before submitting.",
     ) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(SampleSpacing.small)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kmpSpacing.small)) {
             listOf(
                 DemoLanguage.Commands, DemoLanguage.Tools, DemoLanguage.Kotlin, DemoLanguage.Swift, DemoLanguage.Shell,
             ).forEach { choice ->
@@ -395,7 +402,7 @@ private fun ColumnScope.GeneratedTestDemo(engine: CodeEditorEngine, colors: Code
     var selected by remember { mutableStateOf<TestStep?>(null) }
     var hovered by remember { mutableStateOf<TestStep?>(null) }
     val state = rememberCodeEditorState(SWIFT_TEST_SAMPLE)
-    val spacing = SampleSpacing
+    val spacing = MaterialTheme.kmpSpacing
     Text("Generated test", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
     LazyColumn(Modifier.fillMaxWidth().padding(vertical = spacing.small)) {
         items(steps) { step ->
@@ -445,7 +452,7 @@ private val snippets = listOf(
 @Composable
 private fun ColumnScope.SnippetDemo(colors: CodeEditorColors) {
     Text("Snippets", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
-    LazyColumn(Modifier.fillMaxWidth().weight(0.6f), verticalArrangement = Arrangement.spacedBy(SampleSpacing.small)) {
+    LazyColumn(Modifier.fillMaxWidth().weight(0.6f), verticalArrangement = Arrangement.spacedBy(MaterialTheme.kmpSpacing.small)) {
         items(List(40) { snippets[it % snippets.size] }) { (rules, code) ->
             CodeSnippet(code, language = rules, colors = colors, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
@@ -458,10 +465,11 @@ private fun OverlayCheck() {
     var dialog by remember { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
     SectionCard(
+        modifier = Modifier.fillMaxWidth(),
         title = "Overlay check",
         description = "Switch to RSTA, then open these. A heavyweight SwingPanel can draw over Compose popups.",
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(SampleSpacing.small)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kmpSpacing.small)) {
             Button(onClick = { dialog = true }) { Text("Dialog") }
             Box {
                 OutlinedButton(onClick = { menu = true }) { Text("Menu") }

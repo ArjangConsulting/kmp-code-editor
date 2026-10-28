@@ -35,6 +35,20 @@ tiny schema, a read-only Swift test whose lines highlight from a clickable step 
 `CodeSnippet` list, light/dark themes, a syntax color editor (palette presets, per-token colors
 with a contrast check), and a dialog-over-editor overlay check.
 
+The sample uses [KMPComponents](https://github.com/ArjangConsulting/KMPComponents) 0.2.0 for `KmpTheme`,
+kommon spacing tokens, `ThemeModeSelector`, and section cards. The
+published editor has no KMPComponents dependency; its Material theme roles inherit the host's
+colors when placed inside `KmpTheme`.
+
+To try changes from a sibling KMPComponents checkout:
+
+```bash
+./gradlew :sample:run -PuseLocalKmpComponents=true
+```
+
+Add `-PkmpComponentsDir=/path/to/KMPComponents` for another checkout location. Without the opt-in,
+the sample resolves the catalog version from Maven Central, including in CI.
+
 ## Quick start
 
 ```kotlin

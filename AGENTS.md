@@ -39,7 +39,10 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
   - `jvmMain/` — the opt-in RSyntaxTextArea engine (`RstaEditorPanel`, `RstaCodeEditor`).
   - `commonTest/` — pure logic and virtual-time controller tests, run on every target.
   - `jvmTest/` — Compose UI tests (`runComposeUiTest`) and headless RSyntaxTextArea panel tests.
-- `sample/` — unpublished desktop sample app with every feature (`./gradlew :sample:run`).
+- `sample/` — unpublished desktop sample app with every feature (`./gradlew :sample:run`), using
+  KMPComponents for host theming, spacing, and section cards. `-PuseLocalKmpComponents=true` uses a sibling
+  KMPComponents checkout; `-PkmpComponentsDir=<path>` overrides its location. Keep that dependency
+  in the sample, outside the published editor module.
 - `verification/` — standalone Android/iOS harness for native input and accessibility checks; a
   separate Gradle build that includes this repo (see `verification/README.md`).
 - `examples/completion/export_mcp_tools.py` — source-free MCP catalog export with Python 3.11+.

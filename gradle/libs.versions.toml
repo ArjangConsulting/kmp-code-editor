@@ -11,8 +11,10 @@ rstaAutocomplete = "4.0.0"
 androidxActivity = "1.13.0"
 snakeyaml = "5.0.0"
 serialization = "1.12.0"
+kmpComponents = "0.2.0"
 
 [libraries]
+kmp-components = { module = "io.github.maniramezan.kmpcomponents:components", version.ref = "kmpComponents" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }

@@ -38,6 +38,8 @@ import com.arjangconsulting.codeeditor.CodeEditorSyntaxTheme
 import com.arjangconsulting.codeeditor.TokenKind
 import com.arjangconsulting.codeeditor.contrastRatio
 import com.arjangconsulting.codeeditor.isDarkBackground
+import io.github.maniramezan.kmpcomponents.SectionCard
+import io.github.maniramezan.kmpcomponents.kmpSpacing
 
 /** Built-in syntax palettes offered by the sample. */
 enum class SyntaxPreset(val label: String, val theme: CodeEditorSyntaxTheme) {
@@ -72,6 +74,7 @@ fun SyntaxColorsEditor(
     val variant = if (dark) theme.dark else theme.light
     val lowContrast = variant.lowContrastKinds(colors.background)
     SectionCard(
+        modifier = Modifier.fillMaxWidth(),
         title = "Syntax colors",
         description = "Pick a palette, then click a token kind to recolor it. Edits apply to the " +
             (if (dark) "dark" else "light") + " variant.",
@@ -127,8 +130,8 @@ private fun TokenRow(
             .fillMaxWidth()
             .background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
             .clickable(role = Role.Button, onClickLabel = "Edit $label color", onClick = onClick)
-            .padding(horizontal = SampleSpacing.small, vertical = SampleSpacing.small / 2),
-        horizontalArrangement = Arrangement.spacedBy(SampleSpacing.small),
+            .padding(horizontal = MaterialTheme.kmpSpacing.small, vertical = MaterialTheme.kmpSpacing.extraSmall),
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kmpSpacing.small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Swatch(color)
@@ -154,7 +157,7 @@ private fun TokenColorEditor(
 ) {
     var hex by remember(kind, current) { mutableStateOf(if (current.isSpecified) current.toHex() else "") }
     val parsed = parseHexColor(hex)
-    Column(verticalArrangement = Arrangement.spacedBy(SampleSpacing.small)) {
+    Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.kmpSpacing.small)) {
         OutlinedTextField(
             value = hex,
             onValueChange = { text ->
@@ -175,8 +178,8 @@ private fun TokenColorEditor(
             )
         }
         FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(SampleSpacing.small / 2),
-            verticalArrangement = Arrangement.spacedBy(SampleSpacing.small / 2),
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kmpSpacing.extraSmall),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.kmpSpacing.extraSmall),
         ) {
             quickColors.forEach { color ->
                 Swatch(
@@ -187,7 +190,7 @@ private fun TokenColorEditor(
                 )
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(SampleSpacing.small)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kmpSpacing.small)) {
             TextButton(onClick = { onColorChange(presetColor) }) { Text("Reset") }
             TextButton(onClick = { onColorChange(Color.Unspecified) }) { Text("Use text color") }
         }
@@ -198,7 +201,7 @@ private fun TokenColorEditor(
 private fun Swatch(color: Color, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .size(SampleSpacing.large)
+            .size(MaterialTheme.kmpSpacing.medium)
             .background(color, CircleShape)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
     )
