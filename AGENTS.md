@@ -84,6 +84,7 @@ KMPComponents and kommon, is in the `kmp-library-conventions` skill (from the KM
 ```
 
 CI runs `:code-editor:allTests :code-editor:assemble :sample:compileKotlinJvm` on macOS with JDK 21.
+Test reports and results are uploaded as the `test-reports` artifact even when verification fails.
 The build needs Google Maven for the Android Gradle plugin. Versions live in
 `gradle/libs.versions.toml` only; declare Compose libraries through catalog entries. Keep Kotlin/JVM
 bytecode at `JvmTarget.JVM_17`. `.editorconfig` holds the house style.

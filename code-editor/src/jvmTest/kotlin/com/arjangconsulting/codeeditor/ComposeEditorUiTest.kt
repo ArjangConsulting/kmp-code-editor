@@ -318,21 +318,34 @@ class ComposeEditorUiTest {
     }
 
     @Test
-    fun `typing at the end of a 5000 line document stays fast`() = runComposeUiTest {
-        val text = (1..5_000).joinToString("\n") { "    val value$it = compute(argument, \"literal\", $it) // note" }
+    fun `typing at the end of a 5000 line document only relexes the edited line`() = runComposeUiTest {
+        val text = (1..5_000).joinToString("\n") { "    val value$it = compute(argument, \"literal\", $it)" }
+        val lexedLines = mutableListOf<String>()
+        val language = tokenRules("counted-kotlin", base = KotlinRules) {
+            lineTokenizer = { line, lexerState ->
+                lexedLines += line
+                KotlinRules.tokenizeLine(line, lexerState)
+            }
+        }
         val state = CodeEditorState(text, text.length until text.length)
-        setContent { Themed { CodeEditor(state, Modifier.size(600.dp, 400.dp), language = KotlinRules) } }
+        setContent { Themed { CodeEditor(state, Modifier.size(600.dp, 400.dp), language = language) } }
         focusEditor()
         input().performTextInput("x")
         waitForIdle()
-        val start = System.nanoTime()
-        repeat(20) {
+        repeat(20) { index ->
+            runOnIdle { lexedLines.clear() }
             input().performTextInput("y")
             waitForIdle()
+            runOnIdle {
+                val expected = text + "x" + "y".repeat(index + 1)
+                val expectedLastLine = expected.substringAfterLast('\n')
+                assertEquals(expected, state.text)
+                assertEquals(TextPosition(4_999, expectedLastLine.length), state.caret)
+                assertTrue(4_999 in state.visibleLines, "the caret line stays visible")
+                assertTrue(lexedLines.size in 1..2, "drawing and folding lexed ${lexedLines.size} lines")
+                assertTrue(lexedLines.all { it == expectedLastLine }, "only the edited line is lexed again")
+            }
         }
-        val perKeyMillis = (System.nanoTime() - start) / 20 / 1_000_000.0
-        assertTrue(text.length + 21 == state.text.length)
-        assertTrue(perKeyMillis < 50, "typing took $perKeyMillis ms per key")
     }
 
     @Test
