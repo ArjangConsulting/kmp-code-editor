@@ -159,4 +159,18 @@ class FormattingTest {
         assertFalse(returned)
         assertEquals("original", state.text)
     }
+    @Test
+    fun identicalFormattingReplacementPreservesSelection() = runTest {
+        val state = CodeEditorState("{\"value\":1}")
+        state.select(2, 5)
+        val service = object : LanguageService {
+            override suspend fun format(doc: DocumentSnapshot, options: FormattingOptions): List<TextEdit> =
+                listOf(TextEdit(doc.fullRange, doc.text))
+        }
+        assertEquals(FormatResult.UNCHANGED, state.format(service, serviceOptions = LanguageServiceOptions(dispatcher = StandardTestDispatcher(testScheduler))))
+        assertEquals(2, state.selectionStart)
+        assertEquals(5, state.selectionEnd)
+        assertFalse(state.canUndo)
+    }
+
 }

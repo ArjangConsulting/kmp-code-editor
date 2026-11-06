@@ -1,0 +1,4 @@
+shape,bytes,iteration,operation,milliseconds
+pretty,4999954,1,format,263.387375
+minified,4999985,1,format,252.135792
+string,5000000,1,format,26.715708

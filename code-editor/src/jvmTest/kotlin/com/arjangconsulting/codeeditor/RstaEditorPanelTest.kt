@@ -328,4 +328,13 @@ class RstaEditorPanelTest {
         assertEquals(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED, panel.scrollPane.horizontalScrollBarPolicy)
     }
 
+    @Test
+    fun `soft wrapping is optional and ignored for single line input`() {
+        panel.applyConfig(config().copy(options = CodeEditorOptions(softWrap = true)))
+        assertTrue(panel.textArea.lineWrap)
+        assertFalse(panel.textArea.wrapStyleWord)
+        panel.applyConfig(config(singleLine = true).copy(options = CodeEditorOptions(softWrap = true)))
+        assertFalse(panel.textArea.lineWrap)
+    }
+
 }

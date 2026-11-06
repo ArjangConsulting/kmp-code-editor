@@ -93,6 +93,7 @@ fun CodeEditorScreen() {
     var engine by remember { mutableStateOf(CodeEditorEngine.COMPOSE) }
     var readOnly by remember { mutableStateOf(false) }
     var showLineNumbers by remember { mutableStateOf(true) }
+    var softWrap by remember { mutableStateOf(false) }
     var folding by remember { mutableStateOf(true) }
     var autoIndent by remember { mutableStateOf(true) }
     var autoClose by remember { mutableStateOf(true) }
@@ -126,6 +127,7 @@ fun CodeEditorScreen() {
         matchBrackets = matchBrackets,
         completionOnTyping = completionOnTyping,
         hover = hover,
+        softWrap = softWrap,
     )
     val spacing = MaterialTheme.kmpSpacing
 
@@ -160,6 +162,7 @@ fun CodeEditorScreen() {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
                     Toggle("Read-only", readOnly) { readOnly = it }
                     Toggle("Line numbers", showLineNumbers) { showLineNumbers = it }
+                    Toggle("Soft wrap", softWrap) { softWrap = it }
                     Toggle("Folding", folding) { folding = it }
                     Toggle("Auto-indent", autoIndent) { autoIndent = it }
                     Toggle("Auto-close", autoClose) { autoClose = it }

@@ -1,0 +1,9 @@
+Relevant frames captured with jstack from the first exploratory baseline worker (PID 17939).
+2026-11-06 12:36:47 local time
+Test worker @coroutine#40: RUNNABLE, CPU 115819.13 ms, elapsed 176.15 s
+    com.arjangconsulting.codeeditor.CodeEditorState.apply(CodeEditorState.kt:282)
+    com.arjangconsulting.codeeditor.CodeEditorState.apply$default(CodeEditorState.kt:260)
+    com.arjangconsulting.codeeditor.CodeEditorState.edit(CodeEditorState.kt:157)
+    com.arjangconsulting.codeeditor.FormattingKt.format(Formatting.kt:85)
+The baseline's line 282 is builder.setRange(start, end, r.text).
+The final delivered baseline CSVs come from successful subsequent complete runs.

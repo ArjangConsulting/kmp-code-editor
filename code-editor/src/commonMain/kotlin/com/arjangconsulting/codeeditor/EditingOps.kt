@@ -100,7 +100,7 @@ private fun scanBackward(text: String, from: Int, pair: Pair<Char, Char>, tokens
  * A closing bracket that starts its line stays visible (VS Code style). At most one range is kept
  * per start line, the largest. The result is sorted by start line.
  */
-internal fun computeFoldingRanges(snapshot: DocumentSnapshot, rules: TokenRules, highlighter: Highlighter): List<FoldingRange> {
+internal fun computeFoldingRanges(snapshot: DocumentSnapshot, rules: TokenRules, highlighter: Highlighter, checkCancelled: () -> Unit = {}): List<FoldingRange> {
     val byStart = HashMap<Int, FoldingRange>()
     fun offer(range: FoldingRange) {
         val existing = byStart[range.startLine]
@@ -111,9 +111,11 @@ internal fun computeFoldingRanges(snapshot: DocumentSnapshot, rules: TokenRules,
     val stack = ArrayList<Pair<Char, Int>>()
     var commentStart = -1
     for (lineIndex in 0 until snapshot.lineCount) {
+        checkCancelled()
         val lexed = highlighter.line(lineIndex)
         val line = snapshot.line(lineIndex)
-        for (token in lexed.tokens) {
+        for ((tokenIndex, token) in lexed.tokens.withIndex()) {
+            if (tokenIndex % 4096 == 0) checkCancelled()
             if (token.kind != TokenKind.PUNCTUATION || token.end - token.start != 1) continue
             val c = line[token.start]
             if (c in openers) {
@@ -249,6 +251,7 @@ internal fun typeCharacterOutcome(
         val wrapped = c + text.substring(start, end) + pair.second
         return EditOutcome(listOf(Replacement(start, end, wrapped)), Selection(start + 1, end + 1), EditKind.OTHER)
     }
+    if (pair == null && closingPair == null) return typed
     val next = text.getOrNull(end)
     val inCode = start == 0 || tokens.kindAt(start - 1).isCode() || isAtStringEnd(text, start, tokens)
     if (selection.collapsed && closingPair != null && next == c) {

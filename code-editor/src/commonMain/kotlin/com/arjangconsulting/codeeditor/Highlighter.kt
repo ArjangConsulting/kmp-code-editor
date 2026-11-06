@@ -8,7 +8,7 @@ package com.arjangconsulting.codeeditor
  * ends in the same state the old copy started the next line with. Not thread-safe: use from one
  * thread (the UI thread in the Compose engine, the EDT in the Swing engine).
  */
-internal class Highlighter(val rules: TokenRules) {
+internal class Highlighter(val rules: TokenRules, private val checkCancelled: () -> Unit = {}) {
     private var snapshot: DocumentSnapshot = DocumentSnapshot("", -1)
     private var lines: Array<LexedLine?> = arrayOfNulls(1)
 
@@ -32,10 +32,16 @@ internal class Highlighter(val rules: TokenRules) {
         val newCount = next.lineCount
         var prefix = 0
         val maxPrefix = minOf(oldCount, newCount, validUpTo)
-        while (prefix < maxPrefix && sameLine(old, prefix, next, prefix)) prefix++
+        while (prefix < maxPrefix && sameLine(old, prefix, next, prefix)) {
+            if (prefix % 256 == 0) checkCancelled()
+            prefix++
+        }
         var suffix = 0
         val maxSuffix = minOf(oldCount, newCount) - prefix
-        while (suffix < maxSuffix && sameLine(old, oldCount - 1 - suffix, next, newCount - 1 - suffix)) suffix++
+        while (suffix < maxSuffix && sameLine(old, oldCount - 1 - suffix, next, newCount - 1 - suffix)) {
+            if (suffix % 256 == 0) checkCancelled()
+            suffix++
+        }
         val newLines = arrayOfNulls<LexedLine>(newCount)
         oldLines.copyInto(newLines, 0, 0, prefix)
         for (k in 0 until suffix) {
@@ -68,6 +74,7 @@ internal class Highlighter(val rules: TokenRules) {
 
     private fun ensureValid(target: Int) {
         while (validUpTo <= target) {
+            checkCancelled()
             val index = validUpTo
             val state = if (index == 0) LexerState.Initial else lines[index - 1]?.endState ?: LexerState.Initial
             val candidate = lines[index]
@@ -83,7 +90,7 @@ internal class Highlighter(val rules: TokenRules) {
                 validUpTo = end
                 continue
             }
-            lines[index] = rules.tokenizeLine(snapshot.line(index), state)
+            lines[index] = rules.tokenizeLineChecked(snapshot.line(index), state, checkCancelled)
             lexedLineCount++
             validUpTo = index + 1
         }

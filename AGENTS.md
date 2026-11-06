@@ -32,6 +32,7 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
     incremental `Highlighter`, pure `EditingOps` and `EditHistory`, `CodeEditorState`,
     `LanguageService` + `LanguageServiceController` (orchestration), the Compose engine
     (`ComposeCodeEditor`, `EditorModel`, `EditorOverlays`), `HighlightedText`, defaults/labels.
+    `VisualLayout` supplies bounded rendering tiles and logical-to-visual wrapping geometry.
     `Formatting` handles explicit format actions; `JsonLanguageService` and `YamlLanguageService`
     supply local syntax validation and formatting. `YamlLexer` handles indentation-aware YAML highlighting.
     `CompletionProtocol` and `BackendLanguageService` bridge tool completion providers;
@@ -43,6 +44,7 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
   KMPComponents for host theming, spacing, and section cards. `-PuseLocalKmpComponents=true` uses a sibling
   KMPComponents checkout; `-PkmpComponentsDir=<path>` overrides its location. Keep that dependency
   in the sample, outside the published editor module.
+- `benchmarks/` — reproducible large-document JVM operation and Compose frame measurements; see `benchmarks/RESULTS.md`.
 - `verification/` — standalone Android/iOS harness for native input and accessibility checks; a
   separate Gradle build that includes this repo (see `verification/README.md`).
 - `examples/completion/export_mcp_tools.py` — source-free MCP catalog export with Python 3.11+.

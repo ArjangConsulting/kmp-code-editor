@@ -7,7 +7,7 @@ CodeEditor (public composable)
  ├─ DocumentObserver / FoldingRangeUpdater (effects feeding the controller and fold ranges)
  └─ engine
      ├─ ComposeCodeEditor (all targets)
-     │    EditorModel ── metrics, scroll, Highlighter, line layout cache, commands, find
+     │    EditorModel ── metrics, scroll, Highlighter, VisualLayout, tile cache, commands, find
      │    InputBridge ── hidden BasicTextField ↔ document window
      │    Gutter / TextArea draw passes, CompletionPopup, HoverPopup, FindBar, Scrollbars
      └─ RstaCodeEditor (desktop) ── RstaEditorPanel (RSyntaxTextArea in SwingPanel)
@@ -23,6 +23,7 @@ CodeEditor (public composable)
 | `YamlLexer.kt` | Dedicated incremental YAML scanner selected by `YamlRules`. Positive line state packs flow depth/quote mode or block scalar indentation/inference mode; both engines consume it through `TokenRules.tokenizeLine`. | `YamlLexerTest`, `RstaEditorPanelTest` |
 | `Highlighter.kt` | Incremental, lazy line cache. An update keeps the common prefix lines, carries the common suffix as candidates, and re-lexes from the first changed line until a re-lexed line ends in the state its old successor started in. | `LexerTest` (`lexedLineCount`) |
 | `EditingOps.kt` | Pure editing commands returning `EditOutcome` (replacements in original coordinates plus the resulting selection): newline with auto-indent, typing with auto-close/overtype/wrap/outdent, backspace, indent/outdent, toggle comment, word boundaries, bracket matching, folding computation, `FoldLayout` (row ↔ line), find, snippets. | `EditingOpsTest`, `FoldingTest` |
+| `VisualLayout.kt` | Sparse advance checkpoints, bounded glyph tiles, logical-to-visual row mapping, tab expansion, Unicode cluster boundaries, fold header wrapping, and reuse of unchanged line geometry. | `VisualLayoutTest`, `LargeDocumentEditorUiTest` |
 | `EditHistory.kt` | Undo stack of `(start, removed, inserted)` fragments with typing/deletion coalescing. | `CodeEditorStateTest` |
 | `CodeEditorState.kt` | Snapshot-state holder. `apply(outcome)` is the single mutation path: it records history, bumps `version`, remaps folds, and notifies listeners synchronously (the value overload depends on that). | `CodeEditorStateTest` |
 | `LanguageServiceController.kt` | Per-editor orchestration on the composition's scope. One job each for completion, resolve, analysis (diagnostics + semantic tokens + folding ranges), and hover. Service replacement or `languageServiceRevision` changes advance an internal generation, cancel jobs, clear published results, and refresh analysis. Requests check their generation and document version before publishing to a `StateFlow`; completion also checks the caret. | `LanguageServiceControllerTest` (virtual time) |
@@ -40,16 +41,35 @@ CodeEditor (public composable)
 
 ## Compose engine
 
-**Rendering.** Lines have a fixed height (measured from `"M"` in the text style), so a visual row's
-top is `paddingTop + row × lineHeight − scrollY`, and folding is just a row → line map
-(`FoldLayout`). Each draw pass lays out only visible rows. `EditorModel.lineLayout` caches a
-`TextLayoutResult` per `LexedLine` instance; unchanged lines keep their instance across edits, so
-typing re-measures one line. Tabs are expanded for display (`DisplayLine` maps columns both ways).
-Every per-keystroke cost is O(document size) or less with small constants: string copy, line index,
-prefix/suffix line comparison, and widest-line scan.
+**Rendering.** `FoldLayout` first removes hidden logical lines; `VisualLayout` maps the remaining
+lines to fixed-height visual rows. Wrapping uses glyph advances and logical tab stops, without
+changing UTF-16 source coordinates. Sparse checkpoints every 256 units bound hit-testing work;
+row and line prefix indices support binary search. Double-precision advances avoid accumulating
+rounding error along multi-megabyte lines. Unchanged lines share immutable geometry arrays across
+versions; rebased line objects reference only the current source. Resize invalidates wrapping.
+
+Only tiles intersecting the viewport are shaped into `TextLayoutResult`s. Selection, find,
+diagnostics, brackets, folding placeholders, caret placement, and pointer mapping share the same
+row geometry. The bounded cache keys include version, source slice, syntax, semantics, and style.
+Ligatures and kerning are disabled so measured advances match tile boundaries. Complex bidi
+shaping across tiles and oversized grapheme sequences remain limitations.
+
+Long lines (>4,096 units) and documents over 10,000 lines use an incremental background
+highlighter guarded by a mutex. Replacement cancels obsolete work; cooperative lexer checkpoints
+and version/language checks prevent stale publication. Initial tiles can render plain text until
+colors arrive. Folding uses `collectLatest`, a background dispatcher for large documents, lexer
+checkpoints, and version checks. Normal typing avoids unnecessary token lookup when the character
+cannot trigger smart pairing. Small documents retain synchronous incremental highlighting.
+
+Text remains string-backed. A mutation assembles a builder and immutable result in one forward
+pass, builds the primitive line index lazily, and compares line content for geometry/highlighting
+reuse. Multi-edit application and
+history replay append fragments in one pass rather than shifting/replacing a full string for each
+formatting edit. Explicit formatting validates and applies once. The benchmark suite records both
+model operation latency and an actual captured first Compose frame.
 
 **Input.** A transparent `BasicTextField` exposes the editor's full bounds to accessibility while
-its text layout is placed over the lines it mirrors. The drawing layer hides its redundant scroll
+its native caret is placed over the rendered caret, including wrapping and horizontal scrolling. The drawing layer hides its redundant scroll
 semantics so it cannot obscure the input field in the native accessibility tree. IME candidate
 windows and iOS marked text follow the mirrored caret. Its
 `InputTransformation`:
@@ -60,7 +80,9 @@ windows and iOS marked text follow the mirrored caret. Its
 3. runs the matching editing command on the document;
 4. rewrites the buffer to the new window inside the same transaction.
 
-Selections spanning more than 60 lines detach (the field holds only the caret line and the first
+The window is capped at 4,096 UTF-16 units with surrogate-boundary adjustments. It stays anchored
+while the caret is safely inside, preserving native marked text during composition. Selections
+spanning more than 60 lines or the character budget detach (the field holds caret context and the first
 keystroke replaces the selection). Key events for navigation and commands are intercepted at the
 editor root, before the field, so the field only sees text input. A pointer layer above the field
 owns mouse and touch: click, double and triple click, drag selection with auto-scroll, touch tap

@@ -270,7 +270,7 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
                 .thenByDescending { it.value.end }
                 .thenByDescending { it.index },
         ).map { it.value }
-        val builder = StringBuilder(oldText)
+        val builder = StringBuilder(oldText.length + sorted.sumOf { it.text.length - (it.end - it.start) })
         val changes = ArrayList<EditHistory.Change>(sorted.size)
         var previousStart = Int.MAX_VALUE
         for (r in sorted) {
@@ -279,8 +279,16 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
             require(end <= previousStart) { "Overlapping replacements" }
             previousStart = start
             changes += EditHistory.Change(start, oldText.substring(start, end), r.text)
-            builder.setRange(start, end, r.text)
         }
+        var cursor = 0
+        for (replacement in sorted.asReversed()) {
+            val start = replacement.start.coerceIn(0, oldText.length)
+            val end = replacement.end.coerceIn(start, oldText.length)
+            builder.append(oldText, cursor, start)
+            builder.append(replacement.text)
+            cursor = end
+        }
+        builder.append(oldText, cursor, oldText.length)
         val newText = builder.toString()
         if (newText == oldText) {
             selectionInternal = outcome.selection

@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -96,6 +97,7 @@ private const val CARET_BLINK_MILLIS = 530L
 internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServiceController, config: EditorConfig, modifier: Modifier) {
     val scope = rememberCoroutineScope()
     val model = remember(state, controller) { EditorModel(state, controller, scope, config) }
+    DisposableEffect(model) { onDispose { model.dispose() } }
     val textMeasurer = rememberTextMeasurer(cacheSize = 0)
     val density = LocalDensity.current
     val clipboard = rememberEditorClipboard()
@@ -111,7 +113,7 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
     val metrics = remember(config.textStyle, config.singleLine, density, textMeasurer) {
         val measured = textMeasurer.measure("M", config.textStyle)
         val lineHeight = measured.size.height.toFloat()
-        val charWidth = measured.size.width.toFloat().coerceAtLeast(1f)
+        val charWidth = measured.getHorizontalPosition(1, true).coerceAtLeast(1f)
         EditorMetrics(
             lineHeight = lineHeight,
             charWidth = charWidth,
@@ -120,6 +122,13 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
         )
     }
     SideEffect { model.metrics = metrics }
+
+    LaunchedEffect(config.options.softWrap, config.options.tabSize, config.textStyle, config.folding, state.foldedLines, state.foldingRanges) {
+        if (config.folding) state.keepSelectionVisible()
+        model.clampScroll()
+        if (model.focused) model.ensureCaretVisible()
+        model.bridge.sync()
+    }
 
     val semantic by controller.semanticTokens.collectAsState()
     LaunchedEffect(semantic, state.version) {
@@ -153,7 +162,7 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
             if (m.lineHeight <= 0f || model.viewportHeight <= 0f) {
                 0..0
             } else {
-                val fold = model.foldLayout()
+                val fold = model.visualLayout()
                 val (first, last) = visibleRows(model, model.viewportHeight, fold.rowCount)
                 fold.lineAt(first)..fold.lineAt(last)
             }
@@ -222,9 +231,11 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
                     .layout { measurable, constraints ->
                         val placeable = measurable.measure(Constraints())
                         layout(constraints.maxWidth, constraints.maxHeight) {
-                            val row = model.foldLayout().rowOf(model.bridge.windowFirstLine)
-                            val x = (if (showGutter) gutterLayout.width else 0f) + model.metrics.paddingLeft - model.scrollX
-                            placeable.place(x.roundToInt(), model.rowTop(row).roundToInt())
+                            val target = model.caretRect()
+                            val nativeLayout = model.inputLayout?.invoke()
+                            val nativeCaret = nativeLayout?.getCursorRect(model.bridge.field.selection.end.coerceIn(0, nativeLayout.layoutInput.text.length)) ?: Rect.Zero
+                            val x = (if (showGutter) gutterLayout.width else 0f) + target.left - nativeCaret.left
+                            placeable.place(x.roundToInt(), (target.top - nativeCaret.top).roundToInt())
                         }
                     }
                     .focusRequester(fieldFocus)
@@ -233,6 +244,7 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
                         if (!it.isFocused) controller.closeCompletion()
                     },
                 readOnly = config.readOnly,
+                onTextLayout = { model.inputLayout = it },
                 inputTransformation = model.bridge.inputTransformation,
                 textStyle = config.textStyle.copy(color = Color.Transparent),
                 cursorBrush = SolidColor(Color.Transparent),
@@ -310,7 +322,7 @@ private fun Gutter(model: EditorModel, layout: GutterLayout, diagnosticsByLine: 
                     up.consume()
                     val m = model.metrics
                     val row = ((down.position.y + model.scrollY - m.paddingTop) / m.lineHeight).toInt()
-                    val fold = model.foldLayout()
+                    val fold = model.visualLayout()
                     if (row !in 0 until fold.rowCount) return@awaitEachGesture
                     val line = fold.lineAt(row)
                     val inFoldArea = down.position.x >= layout.markerWidth + layout.numbersWidth
@@ -333,7 +345,7 @@ private fun Gutter(model: EditorModel, layout: GutterLayout, diagnosticsByLine: 
                             PointerEventType.Move -> {
                                 val m = model.metrics
                                 val row = ((change.position.y + model.scrollY - m.paddingTop) / m.lineHeight).toInt()
-                                val fold = model.foldLayout()
+                                val fold = model.visualLayout()
                                 val line = if (row in 0 until fold.rowCount) fold.lineAt(row) else null
                                 model.gutterHoverLine = line?.takeIf { it in diagnosticsByLine && change.position.x < layout.markerWidth + layout.numbersWidth }
                             }
@@ -347,7 +359,7 @@ private fun Gutter(model: EditorModel, layout: GutterLayout, diagnosticsByLine: 
                 if (m.lineHeight <= 0f) return@drawBehind
                 val state = model.state
                 val snapshot = state.snapshot()
-                val fold = model.foldLayout()
+                val fold = model.visualLayout()
                 val caretLine = snapshot.positionOf(state.selectionInternal.caret).line
                 val foldStarts = if (config.folding) state.foldingRanges.associateBy { it.startLine } else emptyMap()
                 val (first, last) = visibleRows(model, size.height, fold.rowCount)
@@ -357,14 +369,14 @@ private fun Gutter(model: EditorModel, layout: GutterLayout, diagnosticsByLine: 
                     highlightFor(config.lineHighlights, line)?.let {
                         drawRect(config.colors.lineHighlightColor(it), Offset(0f, top), Size(size.width, m.lineHeight))
                     }
-                    diagnosticsByLine[line]?.minByOrNull { it.severity.ordinal }?.let { worst ->
+                    diagnosticsByLine[line]?.takeIf { fold.isFirstRow(row) }?.minByOrNull { it.severity.ordinal }?.let { worst ->
                         drawCircle(
                             config.colors.diagnosticColor(worst.severity),
                             radius = m.charWidth * 0.3f,
                             center = Offset(layout.markerWidth / 2f, top + m.lineHeight / 2f),
                         )
                     }
-                    if (config.showLineNumbers) {
+                    if (config.showLineNumbers && fold.isFirstRow(row)) {
                         val active = line == caretLine
                         val number = numberCache.getOrPut((line + 1) to active) {
                             textMeasurer.measure(
@@ -377,7 +389,7 @@ private fun Gutter(model: EditorModel, layout: GutterLayout, diagnosticsByLine: 
                         val x = layout.markerWidth + layout.numbersWidth - number.size.width - m.charWidth * 0.25f
                         drawText(number, topLeft = Offset(x, top + (m.lineHeight - number.size.height) / 2f))
                     }
-                    if (line in foldStarts) {
+                    if (line in foldStarts && fold.isFirstRow(row)) {
                         drawFoldChevron(
                             center = Offset(layout.markerWidth + layout.numbersWidth + layout.foldWidth / 2f, top + m.lineHeight / 2f),
                             size = m.charWidth * 0.7f,
@@ -436,9 +448,7 @@ private fun TextArea(
         modifier
             .onGloballyPositioned { model.textAreaPositionInRoot = it.positionInRoot() }
             .onSizeChanged {
-                model.viewportWidth = it.width.toFloat()
-                model.viewportHeight = it.height.toFloat()
-                model.clampScroll()
+                model.resize(it.width.toFloat(), it.height.toFloat())
             }
             .clearAndSetSemantics { hideFromAccessibility() }
             .scrollable(vertical, Orientation.Vertical, enabled = !config.singleLine, reverseDirection = true)
@@ -507,7 +517,7 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectEd
             when {
                 clickCount >= 3 -> model.selectLineAt(offset)
                 clickCount == 2 -> model.selectWordAt(offset)
-                else -> model.moveCaret(offset, extend = shift)
+                else -> model.moveCaretAt(down.position, extend = shift)
             }
             down.consume()
             val anchor = model.state.selectionInternal
@@ -535,7 +545,7 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectEd
         } else {
             val up = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) { waitForUpOrCancellation() }
             if (up != null) {
-                model.moveCaret(model.offsetAt(up.position), extend = false)
+                model.moveCaretAt(up.position, extend = false)
                 return@awaitEachGesture
             }
             // Either a long press or a scroll drag took over the pointer.
@@ -561,12 +571,13 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectEd
 private fun handleFoldPlaceholderClick(model: EditorModel, position: Offset, placeholder: TextLayoutResult?): Boolean {
     if (placeholder == null || !model.config.folding) return false
     val m = model.metrics
-    val fold = model.foldLayout()
+    val fold = model.visualLayout()
     val row = ((position.y + model.scrollY - m.paddingTop) / m.lineHeight).toInt()
     if (row !in 0 until fold.rowCount) return false
     val line = fold.lineAt(row)
     if (line !in fold.collapsedRanges) return false
-    val start = m.paddingLeft + model.lineLayout(line).layout.size.width + m.charWidth * 0.5f - model.scrollX
+    if (!fold.isLastRow(row)) return false
+    val start = m.paddingLeft + fold.xAt(row, fold.end(row)) + m.charWidth * 0.5f - model.scrollX
     val end = start + placeholder.size.width + m.charWidth
     if (position.x !in start..end) return false
     model.state.unfold(line)
@@ -602,7 +613,7 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
     val state = model.state
     model.beginFrame(LineStyleKey(config.textStyle, colors, config.options.tabSize))
     val snapshot = state.snapshot()
-    val fold = model.foldLayout()
+    val fold = model.visualLayout()
     val selection = state.selectionInternal
     val caretLine = snapshot.positionOf(selection.caret).line
     val brackets = if (config.options.matchBrackets && model.focused && selection.collapsed) model.matchingBracket() else null
@@ -614,19 +625,20 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
         for (row in first..last) {
             val line = fold.lineAt(row)
             val top = model.rowTop(row)
-            val lineStart = snapshot.lineStart(line)
-            val lineEnd = snapshot.lineEnd(line)
+            val lineStart = fold.start(row)
+            val lineEnd = fold.end(row)
             highlightFor(config.lineHighlights, line)?.let {
                 drawRect(colors.lineHighlightColor(it), Offset(0f, top), Size(size.width, m.lineHeight))
             }
             if (line == caretLine && config.options.highlightCurrentLine && selection.collapsed && model.focused) {
                 drawRect(colors.currentLineBackground, Offset(0f, top), Size(size.width, m.lineHeight))
             }
-            val cached = model.lineLayout(line)
-            fun x(offset: Int): Float = textLeft + model.columnX(line, offset - lineStart)
+            fun x(offset: Int): Float = textLeft + fold.xAt(row, offset)
+            val visibleStart = fold.offsetAt(row, (model.scrollX - m.paddingLeft - m.charWidth).coerceAtLeast(0f))
+            val visibleEnd = fold.offsetAt(row, model.scrollX + size.width - m.paddingLeft + m.charWidth)
             if (matches.isNotEmpty()) {
-                var index = lowerBound(matches, lineStart)
-                while (index < matches.size && matches[index].first <= lineEnd) {
+                var index = lowerBound(matches, visibleStart)
+                while (index < matches.size && matches[index].first <= visibleEnd) {
                     val match = matches[index]
                     val color = if (match == currentMatch) colors.findCurrentMatchBackground else colors.findMatchBackground
                     val s = match.first.coerceAtLeast(lineStart)
@@ -638,7 +650,7 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
             if (!selection.collapsed && selection.start <= lineEnd && selection.end >= lineStart) {
                 val s = selection.start.coerceAtLeast(lineStart)
                 val e = selection.end.coerceAtMost(lineEnd)
-                val newlineSelected = selection.end > lineEnd
+                val newlineSelected = fold.isLastRow(row) && selection.end > lineEnd
                 val right = x(e) + if (newlineSelected) m.charWidth * 0.6f else 0f
                 drawRect(colors.selectionBackground, Offset(x(s), top), Size((right - x(s)).coerceAtLeast(0f), m.lineHeight))
             }
@@ -649,9 +661,17 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
                     }
                 }
             }
-            drawText(cached.layout, topLeft = Offset(textLeft, top + (m.lineHeight - cached.layout.size.height) / 2f))
-            if (placeholder != null && line in fold.collapsedRanges) {
-                val px = textLeft + cached.layout.size.width + m.charWidth * 0.5f
+            val geometry = fold.geometry(line)
+            var tileStart = maxOf(lineStart, lineStart + ((visibleStart - lineStart) / RENDER_TILE_CHARS) * RENDER_TILE_CHARS)
+            tileStart = geometry.tileStart(tileStart)
+            while (tileStart < lineEnd && x(tileStart) <= size.width + m.charWidth) {
+                val tileEnd = geometry.tileEnd(tileStart, lineEnd)
+                val cached = model.tileLayout(line, tileStart, tileEnd)
+                drawText(cached.layout, topLeft = Offset(x(tileStart), top + (m.lineHeight - cached.layout.size.height) / 2f))
+                tileStart = tileEnd
+            }
+            if (placeholder != null && line in fold.collapsedRanges && fold.isLastRow(row)) {
+                val px = x(lineEnd) + m.charWidth * 0.5f
                 drawRoundRect(
                     colors.foldPlaceholderBackground,
                     topLeft = Offset(px, top + m.lineHeight * 0.1f),
@@ -664,9 +684,13 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
                 val start = snapshot.offsetOf(d.range.start).coerceIn(lineStart, lineEnd)
                 var end = snapshot.offsetOf(d.range.end).coerceIn(lineStart, lineEnd)
                 if (end <= start) end = (start + 1).coerceAtMost(lineEnd)
-                val x1 = x(start)
-                val x2 = if (end > start) x(end) else x1 + m.charWidth
-                drawSquiggle(x1, x2, top + m.lineHeight - m.lineHeight * 0.12f, m, colors.diagnosticColor(d.severity))
+                val diagnosticStart = snapshot.offsetOf(d.range.start)
+                val diagnosticEnd = snapshot.offsetOf(d.range.end)
+                if ((diagnosticStart < lineEnd && diagnosticEnd > lineStart) || (diagnosticStart == diagnosticEnd && diagnosticStart >= lineStart && (diagnosticStart < lineEnd || fold.isLastRow(row) && diagnosticStart == lineEnd))) {
+                    val x1 = x(start)
+                    val x2 = if (end > start) x(end) else x1 + m.charWidth
+                    drawSquiggle(x1.coerceAtLeast(0f), x2.coerceAtMost(size.width), top + m.lineHeight - m.lineHeight * 0.12f, m, colors.diagnosticColor(d.severity))
+                }
             }
         }
         if (model.focused && model.caretBlinkOn && !config.readOnly) {

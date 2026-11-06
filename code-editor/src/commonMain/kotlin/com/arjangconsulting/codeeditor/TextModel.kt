@@ -99,6 +99,8 @@ public data class TextEdit(val range: TextRange, val newText: String) {
 public class DocumentSnapshot(public val text: String, public val version: Long) {
     private val index: LineIndex by lazy(LazyThreadSafetyMode.PUBLICATION) { LineIndex(text) }
 
+    internal val longestLineLength: Int get() = index.longestLineLength
+
     /** Number of lines; an empty document has one empty line. */
     public val lineCount: Int get() = index.lineCount
 
@@ -141,23 +143,29 @@ internal class LineIndex(text: String) {
     private val length: Int = text.length
 
     init {
-        val startList = ArrayList<Int>()
-        val endList = ArrayList<Int>()
-        startList.add(0)
+        var startArray = IntArray(256)
+        var endArray = IntArray(256)
+        var count = 1
         var i = 0
         while (i < text.length) {
             val c = text[i]
             if (c == '\n' || c == '\r') {
-                endList.add(i)
+                if (count == startArray.size) {
+                    startArray = startArray.copyOf(count * 2)
+                    endArray = endArray.copyOf(count * 2)
+                }
+                endArray[count - 1] = i
                 if (c == '\r' && i + 1 < text.length && text[i + 1] == '\n') i++
-                startList.add(i + 1)
+                startArray[count++] = i + 1
             }
             i++
         }
-        endList.add(text.length)
-        starts = startList.toIntArray()
-        ends = endList.toIntArray()
+        endArray[count - 1] = text.length
+        starts = startArray.copyOf(count)
+        ends = endArray.copyOf(count)
     }
+
+    val longestLineLength: Int by lazy { starts.indices.maxOf { ends[it] - starts[it] } }
 
     val lineCount: Int get() = starts.size
 

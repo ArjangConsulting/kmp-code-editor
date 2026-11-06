@@ -123,7 +123,7 @@ val annotated = highlightedText(code, KotlinRules, CodeEditorDefaults.colorsFrom
 | `highlightedText`, `rememberHighlightedText`, `CodeSnippet` | Lightweight read-only highlighting. |
 | `FuzzyMatcher`, `filterAndRankCompletions` | The client-side completion filter, reusable elsewhere. |
 | `CodeEditorSyntaxTheme` (`Default`, `HighContrast`), `CodeEditorSyntaxColors`, `contrastRatio`, `isDarkBackground` | Token color palettes; see [Colors](#colors). |
-| `CodeEditorColors` / `CodeEditorDefaults.colors(syntaxTheme)` / `colorsFrom(scheme, syntaxTheme)`, `CodeEditorLabels`, `CodeEditorOptions`, `LanguageServiceOptions`, `CodeEditorLogger`, `TabBehavior`, `CodeEditorEngine` | Configuration. |
+| `CodeEditorColors` / `CodeEditorDefaults.colors(syntaxTheme)` / `colorsFrom(scheme, syntaxTheme)`, `CodeEditorLabels`, `CodeEditorOptions`, `LanguageServiceOptions`, `CodeEditorLogger`, `TabBehavior`, `CodeEditorEngine` | Configuration; `CodeEditorOptions.softWrap` defaults to `false`. |
 
 Enum entries use SCREAMING_CASE (house style), e.g. `DiagnosticSeverity.ERROR`.
 
@@ -370,21 +370,50 @@ from `diagnostics(doc)` alone does not trigger another analysis when the push ar
 
 ### Compose engine
 
-The Compose engine is virtualized and draws its own text. `BasicTextField` was measured first: it
-re-lays out the whole text on every keystroke, about 80 ms per key for 5,000 lines and about 900 ms
-once highlight spans are added through `OutputTransformation`. So the engine:
+The Compose engine draws viewport tiles of at most 256 UTF-16 units, with small extensions to
+keep ordinary Unicode clusters together. Long logical lines have no display truncation. Horizontal
+scrolling, hit testing, selection, diagnostics, and search use the complete source, including
+minified JSON and long string values. Layout never reformats or inserts source line breaks.
 
-- Measures and caches one `TextLayoutResult` per visible line, keyed by the lexed line, and draws
-  only the visible rows. Lines, highlights, selection, find matches, squiggles, the caret, and the
-  gutter are all drawn in one pass.
-- Routes platform text input (hardware keys, IME composition, soft keyboards, iOS keyboard cursor
-  control) through a hidden `BasicTextField`. That field mirrors the selected lines plus one line of
-  context, which lets Backspace at a line start work on Android. Edits are diffed back into the
-  document.
-- Handles navigation and editing keys itself (see the keymap below).
+Enable character wrapping for request/response bodies with:
 
-A UI test types into the end of a 5,000-line Kotlin file and asserts under 50 ms per key, including
-test-harness overhead.
+```kotlin
+CodeEditor(
+    state = bodyState,
+    language = JsonRules,
+    languageService = JsonLanguageService(),
+    options = CodeEditorOptions(softWrap = true),
+    tabBehavior = TabBehavior.MOVE_FOCUS,
+    labels = CodeEditorLabels(editorDescription = "Response body"),
+)
+```
+
+Use `PlainText` and omit the language service for raw bodies. Set `readOnly = true` for previews;
+selection, copying, find, and folding remain available. Existing callers keep unwrapped behavior.
+`softWrap` works through both public overloads and is ignored with `singleLine = true`.
+
+Wrapping is visual and breaks at character clusters rather than word boundaries. Positions,
+service ranges, callbacks, and line numbers remain logical source positions; only the first row
+of a logical line gets a gutter number and fold control. Up/Down and PageUp/PageDown follow visual
+rows, and Home/End target the visual row edges. Document start/end still target source boundaries.
+Tabs use logical-line tab stops and move intact to the next row when necessary. Resizing reflows
+the view and keeps the focused caret visible. Content that fits the wrapped viewport has no
+horizontal scrollbar; an indivisible glyph, tab, or fold label wider than the viewport can overflow.
+Folding hides whole source lines and wraps the visible header, reserving space for its placeholder.
+
+A hidden `BasicTextField` preserves native text input, composition, and accessibility. It mirrors
+at most 4,096 UTF-16 units (with surrogate-boundary adjustments) around the selection/caret,
+including line context when it fits. Large selections detach from this window; editor copy/cut
+still use the complete logical selection. Native IME geometry is aligned to the drawn caret.
+Highlighting and folding for long lines or more than 10,000 lines run off the UI thread, cancel
+on replacement, and reject stale versions. Text can appear briefly without syntax colors while
+analysis catches up. Formatting happens only through the host's explicit `state.format` action.
+
+The default monospace style is recommended. The tiled renderer measures glyph advances and
+turns off ligatures and kerning for consistent geometry. Bidirectional shaping across tile
+boundaries and pathological combining sequences longer than a tile are not full-paragraph
+shaping. See [benchmark evidence](benchmarks/RESULTS.md) for reproducible performance measurements
+and their limits.
 
 ### RSyntaxTextArea engine (desktop, opt-in)
 
@@ -400,6 +429,8 @@ in a `SwingPanel` with:
 - the find bar as Compose above the panel.
 
 `CodeEditorState` stays the source of truth for text, selection, and undo.
+`CodeEditorOptions.softWrap` also enables character wrapping in RSTA; Swing owns its native
+wrapping, glyph shaping, and caret affinity, so exact row breaks can differ from Compose.
 
 ### Why RSyntaxTextArea is not the desktop default
 
@@ -461,7 +492,8 @@ caret, long press selects a word and shows the platform text toolbar, and drag s
   (`CodeEditorLabels.editorDescription`), and `stateDescription` with the caret's line and column.
   The drawing layer is hidden from accessibility so it does not obscure the text field.
 - Screen readers read the hidden input field, which holds the lines around the caret, not the whole
-  document.
+  document. Native screen-reader speech and navigation need platform-specific verification; the
+  automated semantics and composition tests do not establish a VoiceOver or TalkBack journey.
 - The completion list and find bar controls have labels. The Compose input field exposes localized
   Fold, Unfold, Fold all, and Unfold all accessibility actions when folding is enabled. Region actions
   choose the innermost applicable range at the caret. Collapsing moves a hidden selection to its header;
@@ -474,9 +506,7 @@ caret, long press selects a word and shows the platform text toolbar, and drag s
 
 ## Known gaps
 
-- Lines longer than 10,000 characters are truncated for display (editing still works). Format huge
-  minified JSON before showing it.
-- No soft wrap, no multi-cursor, no regex find, and no replace.
+- No multi-cursor, regex find, or replace. Find currently retains the first 10,000 matches.
 - Snippets support only the first tab stop; there is no tab-stop navigation.
 - Mobile has no selection handles. Long press shows the platform text toolbar instead.
 - IME composition text is drawn inline without an underline.

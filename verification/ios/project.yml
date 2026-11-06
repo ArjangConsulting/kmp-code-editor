@@ -33,3 +33,8 @@ targets:
         CODE_SIGNING_ALLOWED: NO
         FRAMEWORK_SEARCH_PATHS: $(inherited) $(SRCROOT)/../build/bin/iosSimulatorArm64/debugFramework
         OTHER_LDFLAGS: $(inherited) -framework EditorVerificationKit -lc++
+schemes:
+  EditorVerification:
+    build:
+      targets:
+        EditorVerification: all

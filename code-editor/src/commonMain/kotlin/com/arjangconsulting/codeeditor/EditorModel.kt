@@ -19,15 +19,20 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.TextRange as ComposeTextRange
-
-/** Lines longer than this are truncated for display; editing still works on the full text. */
-internal const val MAX_RENDERED_LINE_CHARS = 10_000
 
 /** Pixel metrics derived from the text style. */
 internal data class EditorMetrics(
@@ -42,7 +47,7 @@ internal data class EditorMetrics(
 }
 
 /** A line as displayed: tabs expanded to spaces, with column mapping back to the document. */
-internal class DisplayLine(val text: String, private val docToDisplay: IntArray?, val truncated: Boolean) {
+internal class DisplayLine(val text: String, private val docToDisplay: IntArray?) {
     fun toDisplay(column: Int): Int = docToDisplay?.let { it[column.coerceIn(0, it.size - 1)] } ?: column.coerceAtMost(text.length)
 
     fun toDocument(displayColumn: Int): Int {
@@ -60,22 +65,15 @@ internal class DisplayLine(val text: String, private val docToDisplay: IntArray?
 
     companion object {
         fun of(line: String, tabSize: Int): DisplayLine {
-            val truncated = line.length > MAX_RENDERED_LINE_CHARS
-            val source = if (truncated) line.substring(0, MAX_RENDERED_LINE_CHARS) else line
-            if ('\t' !in source) return DisplayLine(source, null, truncated)
-            val map = IntArray(source.length + 1)
-            val builder = StringBuilder(source.length + 16)
-            for (i in source.indices) {
+            if ('\t' !in line) return DisplayLine(line, null)
+            val map = IntArray(line.length + 1)
+            val builder = StringBuilder(line.length + 16)
+            for (i in line.indices) {
                 map[i] = builder.length
-                if (source[i] == '\t') {
-                    val spaces = tabSize - (builder.length % tabSize)
-                    repeat(spaces) { builder.append(' ') }
-                } else {
-                    builder.append(source[i])
-                }
+                if (line[i] == '\t') repeat(tabSize - builder.length % tabSize) { builder.append(' ') } else builder.append(line[i])
             }
-            map[source.length] = builder.length
-            return DisplayLine(builder.toString(), map, truncated)
+            map[line.length] = builder.length
+            return DisplayLine(builder.toString(), map)
         }
     }
 }
@@ -98,6 +96,7 @@ internal class EditorModel(
     var clipboard: EditorClipboard? = null
     var focusManager: FocusManager? = null
     var textMeasurer: TextMeasurer? = null
+    var inputLayout: (() -> TextLayoutResult?)? = null
     var onRequestFocus: () -> Unit = {}
 
     var metrics: EditorMetrics by mutableStateOf(EditorMetrics.Zero)
@@ -132,7 +131,8 @@ internal class EditorModel(
     private val lineCache = HashMap<Any, CachedLine>()
     private var frame = 0
     private var cacheStyleKey: Any? = null
-    private var preferredDisplayColumn: Int? = null
+    private var preferredDisplayColumn: Float? = null
+    private var upstreamAffinity: Boolean by mutableStateOf(false)
     private var revealJob: Job? = null
 
     val bridge: InputBridge = InputBridge(this)
@@ -147,6 +147,52 @@ internal class EditorModel(
             highlighterInstance.update(state.snapshot())
             return highlighterInstance
         }
+
+    private val syntaxMutex = Mutex()
+    private var syntaxCancellation: () -> Unit = {}
+    private var backgroundHighlighter: Highlighter? = null
+    private var syntaxRequest: Pair<Long, TokenRules>? = null
+    private var syntaxJob: Job? = null
+    private var syntaxResult: Pair<Long, List<LexedLine>>? by mutableStateOf(null)
+
+    private fun syntaxLine(line: Int): LexedLine {
+        val snapshot = state.snapshot()
+        if (snapshot.longestLineLength <= 4096 && snapshot.lineCount <= 10_000) {
+            syntaxJob?.cancel()
+            syntaxRequest = null
+            return highlighter.line(line)
+        }
+        val request = snapshot.version to config.language
+        if (request != syntaxRequest) {
+            syntaxJob?.cancel()
+            syntaxRequest = request
+            syntaxResult = null
+            val language = config.language
+            syntaxJob = scope.launch {
+                try {
+                    val lines = withContext(Dispatchers.Default) {
+                        val context = currentCoroutineContext()
+                        syntaxMutex.withLock {
+                            syntaxCancellation = { context.ensureActive() }
+                            val highlighter = backgroundHighlighter?.takeIf { it.rules === language }
+                                ?: Highlighter(language) { syntaxCancellation() }.also { backgroundHighlighter = it }
+                            highlighter.update(snapshot)
+                            List(snapshot.lineCount) {
+                                context.ensureActive()
+                                highlighter.line(it)
+                            }
+                        }
+                    }
+                    if (syntaxRequest == request && state.version == snapshot.version) syntaxResult = snapshot.version to lines
+                } catch (failure: CancellationException) {
+                    throw failure
+                } catch (failure: Exception) {
+                    config.logger.error("Syntax highlighting failed", failure)
+                }
+            }
+        }
+        return syntaxResult?.takeIf { it.first == snapshot.version }?.second?.getOrNull(line) ?: PLAIN_LINE
+    }
 
     private var foldCacheKey: Any? = null
     private var foldCache: FoldLayout = FoldLayout.unfolded(1)
@@ -164,33 +210,56 @@ internal class EditorModel(
         return foldCache
     }
 
-    private var widthCacheVersion = -1L
-    private var widthCacheTabSize = -1
-    private var maxLineColumns = 0
+    private var visualKey: Any? = null
+    private var visualCache: VisualLayout? = null
+    private val glyphWidths = HashMap<String, Float>()
+    private var geometrySettings: Any? = null
+    private var asciiWidths: FloatArray? = null
+    private var glyphStyle: TextStyle? = null
 
-    /** Widest line in columns (tabs expanded), cached per version. */
-    fun maxColumns(): Int {
+    fun visualLayout(): VisualLayout {
         val snapshot = state.snapshot()
-        val tabSize = config.options.tabSize
-        if (snapshot.version != widthCacheVersion || tabSize != widthCacheTabSize) {
-            var max = 0
-            for (line in 0 until snapshot.lineCount) {
-                val start = snapshot.lineStart(line)
-                val end = snapshot.lineEnd(line)
-                var columns = 0
-                for (i in start until end) columns += if (snapshot.text[i] == '\t') tabSize - columns % tabSize else 1
-                if (columns > max) max = columns
+        val fold = foldLayout()
+        val wrapWidth = if (config.options.softWrap && !config.singleLine && viewportWidth > 0f) {
+            (viewportWidth - metrics.paddingLeft * 2 - metrics.charWidth).coerceAtLeast(metrics.charWidth)
+        } else 0f
+        val key = listOf(snapshot.version, fold, config.options.tabSize, metrics.charWidth, wrapWidth, config.textStyle, config.labels.foldedPlaceholder)
+        if (key != visualKey) {
+            if (glyphStyle != config.textStyle) {
+                glyphWidths.clear()
+                glyphStyle = config.textStyle
+                asciiWidths = if (config.textStyle.fontFamily == FontFamily.Monospace) null else textMeasurer?.let { measurer ->
+                    FloatArray(95) { index ->
+                        measurer.measure((index + 32).toChar().toString(), geometryTextStyle(), softWrap = false).getHorizontalPosition(1, true)
+                    }
+                }
             }
-            maxLineColumns = max.coerceAtMost(MAX_RENDERED_LINE_CHARS)
-            widthCacheVersion = snapshot.version
-            widthCacheTabSize = tabSize
+            val settings = listOf(config.options.tabSize, metrics.charWidth, wrapWidth, config.textStyle)
+            val previous = visualCache.takeIf { geometrySettings == settings }
+            visualCache = VisualLayout(snapshot, fold, config.options.tabSize, metrics.charWidth.coerceAtLeast(1f), wrapWidth, { glyph ->
+                glyphWidths.getOrPut(glyph) {
+                    textMeasurer?.measure(glyph, geometryTextStyle(), softWrap = false)?.let {
+                        it.getHorizontalPosition(glyph.length, true)
+                    } ?: metrics.charWidth
+                }
+            }, asciiWidths, previous, if (fold.collapsedRanges.isEmpty()) 0f else {
+                (textMeasurer?.measure(config.labels.foldedPlaceholder, config.textStyle)?.size?.width ?: 0).toFloat() + metrics.charWidth * 2
+            })
+            geometrySettings = settings
+            visualKey = key
         }
-        return maxLineColumns
+        return visualCache!!
     }
 
-    val contentHeight: Float get() = metrics.paddingTop * 2 + foldLayout().rowCount * metrics.lineHeight
+    private fun geometryTextStyle(): TextStyle = config.textStyle.copy(
+        fontFeatureSettings = listOfNotNull(config.textStyle.fontFeatureSettings, "liga=0", "kern=0").joinToString(","),
+    )
 
-    val contentWidth: Float get() = metrics.paddingLeft * 2 + (maxColumns() + 2) * metrics.charWidth
+    fun maxColumns(): Int = (visualLayout().width / metrics.charWidth.coerceAtLeast(1f)).toInt()
+
+    val contentHeight: Float get() = metrics.paddingTop * 2 + visualLayout().rowCount * metrics.lineHeight
+
+    val contentWidth: Float get() = metrics.paddingLeft * 2 + visualLayout().width + metrics.charWidth
 
     val maxScrollY: Float get() = (contentHeight - viewportHeight).coerceAtLeast(0f)
 
@@ -206,6 +275,19 @@ internal class EditorModel(
         val old = scrollX
         scrollX = (scrollX + delta).coerceIn(0f, maxScrollX)
         return scrollX - old
+    }
+
+    fun resize(width: Float, height: Float) {
+        revealJob?.cancel()
+        val old = visualCache
+        val topRow = if (metrics.lineHeight > 0f) ((scrollY - metrics.paddingTop) / metrics.lineHeight).toInt().coerceAtLeast(0) else 0
+        val anchor = old?.let { it.snapshot.positionOf(it.start(topRow.coerceAtMost(it.rowCount - 1))) }
+        val rowFraction = if (metrics.lineHeight > 0f) scrollY % metrics.lineHeight else 0f
+        viewportWidth = width
+        viewportHeight = height
+        if (anchor != null && config.options.softWrap) scrollY = visualLayout().rowOf(anchor.line, anchor.character) * metrics.lineHeight + rowFraction
+        clampScroll()
+        if (focused) ensureCaretVisible()
     }
 
     fun clampScroll() {
@@ -225,22 +307,40 @@ internal class EditorModel(
         if (lineCache.size > 600) lineCache.entries.removeAll { it.value.lastUsedFrame < frame - 1 }
     }
 
-    /** The cached display text and layout of [line]. */
-    fun lineLayout(line: Int): CachedLine {
-        val lexed = highlighter.line(line)
+    /** Only viewport tiles are shaped; no native paragraph contains a whole long source line. */
+    fun tileLayout(line: Int, start: Int, end: Int): CachedLine {
+        val lexed = syntaxLine(line)
         val semantic = semanticTokens[line]
-        val key: Any = if (semantic == null) lexed else Pair(lexed, semantic)
+        val key = listOf(state.version, lexed, semantic, start, end, config.textStyle, config.colors, config.options.tabSize)
         lineCache[key]?.let {
             it.lastUsedFrame = frame
             return it
         }
-        val text = state.snapshot().line(line)
-        val display = DisplayLine.of(text, config.options.tabSize)
-        val annotated = buildLineText(display, lexed, semantic)
-        val measurer = textMeasurer ?: error("textMeasurer not set")
-        val layout = measurer.measure(
-            annotated,
-            style = config.textStyle.copy(color = config.colors.foreground),
+        val snapshot = state.snapshot()
+        val display = visualLayout().geometry(line).display(start, end)
+        val builder = AnnotatedString.Builder(display.text)
+        val lineStart = snapshot.lineStart(line)
+        fun span(tokenStart: Int, tokenEnd: Int, kind: TokenKind) {
+            val s = (tokenStart + lineStart - start).coerceIn(0, end - start)
+            val e = (tokenEnd + lineStart - start).coerceIn(0, end - start)
+            if (e > s && kind != TokenKind.PLAIN) builder.addStyle(
+                SpanStyle(color = config.colors.tokenColor(kind)), display.toDisplay(s), display.toDisplay(e),
+            )
+        }
+        var low = 0
+        var high = lexed.tokens.size
+        while (low < high) {
+            val mid = (low + high) ushr 1
+            if (lexed.tokens[mid].end <= start - lineStart) low = mid + 1 else high = mid
+        }
+        while (low < lexed.tokens.size && lexed.tokens[low].start < end - lineStart) {
+            val token = lexed.tokens[low++]
+            span(token.start, token.end, token.kind)
+        }
+        semantic?.forEach { span(it.startCharacter, it.startCharacter + it.length, it.kind) }
+        val layout = (textMeasurer ?: error("textMeasurer not set")).measure(
+            builder.toAnnotatedString(),
+            style = geometryTextStyle().copy(color = config.colors.foreground),
             overflow = TextOverflow.Clip,
             softWrap = false,
             maxLines = 1,
@@ -249,29 +349,15 @@ internal class EditorModel(
         return CachedLine(display, layout, frame).also { lineCache[key] = it }
     }
 
-    private fun buildLineText(display: DisplayLine, lexed: LexedLine, semantic: List<SemanticToken>?): AnnotatedString {
-        val colors = config.colors
-        val builder = AnnotatedString.Builder(display.text)
-        val length = display.text.length
-        fun span(start: Int, end: Int, kind: TokenKind) {
-            val s = display.toDisplay(start).coerceAtMost(length)
-            val e = display.toDisplay(end).coerceAtMost(length)
-            if (e > s && kind != TokenKind.PLAIN) builder.addStyle(SpanStyle(color = colors.tokenColor(kind)), s, e)
-        }
-        lexed.tokens.forEach { span(it.start, it.end, it.kind) }
-        semantic?.forEach { span(it.startCharacter, it.startCharacter + it.length, it.kind) }
-        return builder.toAnnotatedString()
+    fun lineLayout(line: Int): CachedLine {
+        val geometry = visualLayout().geometry(line)
+        return tileLayout(line, geometry.start, geometry.tileEnd(geometry.start, geometry.end))
     }
 
-    /** X of [column] in [line], relative to the text start (before scrolling and padding). */
     fun columnX(line: Int, column: Int): Float {
-        val cached = lineLayout(line)
-        val display = cached.display.toDisplay(column)
-        if (display >= cached.display.text.length) {
-            val overflow = column - (state.snapshot().lineLength(line))
-            return cached.layout.size.width + overflow.coerceAtLeast(0) * metrics.charWidth
-        }
-        return cached.layout.getHorizontalPosition(display, usePrimaryDirection = true)
+        val visual = visualLayout()
+        val row = visual.rowOf(line, column)
+        return visual.xAt(row, state.snapshot().lineStart(line) + column)
     }
 
     /** Top of visual [row] in text-area coordinates. */
@@ -281,32 +367,40 @@ internal class EditorModel(
     fun caretRect(offset: Int = state.selectionInternal.caret): Rect {
         val snapshot = state.snapshot()
         val position = snapshot.positionOf(offset)
-        val row = foldLayout().rowOf(position.line)
-        val x = metrics.paddingLeft + columnX(position.line, position.character) - scrollX
+        val visual = visualLayout()
+        var row = visual.rowOf(position.line, position.character)
+        if (offset == state.selectionInternal.caret && upstreamAffinity && row > 0 && !visual.isFirstRow(row) && offset == visual.start(row)) row--
+        val x = metrics.paddingLeft + visual.xAt(row, offset) - scrollX
         val top = rowTop(row)
         return Rect(x, top, x + maxOf(1f, metrics.charWidth / 8f), top + metrics.lineHeight)
     }
 
-    /** Document offset nearest to [point] in text-area coordinates. */
-    fun offsetAt(point: Offset): Int {
-        val snapshot = state.snapshot()
-        val layout = foldLayout()
-        val row = ((point.y + scrollY - metrics.paddingTop) / metrics.lineHeight).toInt().coerceIn(0, layout.rowCount - 1)
-        val line = layout.lineAt(row)
-        val cached = lineLayout(line)
-        val x = point.x + scrollX - metrics.paddingLeft
-        val displayColumn = if (x <= 0f) 0 else cached.layout.getOffsetForPosition(Offset(x, metrics.lineHeight / 2))
-        val column = cached.display.toDocument(displayColumn).coerceAtMost(snapshot.lineLength(line))
-        return snapToCodePointBoundary(snapshot.text, snapshot.lineStart(line) + column)
+    private fun caretVisualRow(): Int {
+        val visual = visualLayout()
+        val row = visual.rowOf(state.caret.line, state.caret.character)
+        return if (upstreamAffinity && row > 0 && !visual.isFirstRow(row) && state.selectionInternal.caret == visual.start(row)) row - 1 else row
     }
 
-    /** True when [point] is over actual characters (not past the end of the line). */
+    fun moveCaretAt(point: Offset, extend: Boolean) {
+        val offset = offsetAt(point)
+        val visual = visualLayout()
+        val row = ((point.y + scrollY - metrics.paddingTop) / metrics.lineHeight).toInt().coerceIn(0, visual.rowCount - 1)
+        moveCaret(offset, extend, upstream = offset == visual.end(row) && !visual.isLastRow(row))
+    }
+
+    /** Document offset nearest to [point], using the same row geometry as drawing. */
+    fun offsetAt(point: Offset): Int {
+        val layout = visualLayout()
+        val row = ((point.y + scrollY - metrics.paddingTop) / metrics.lineHeight).toInt().coerceIn(0, layout.rowCount - 1)
+        return layout.offsetAt(row, point.x + scrollX - metrics.paddingLeft)
+    }
+
     fun isOverText(point: Offset): Boolean {
-        val layout = foldLayout()
+        val layout = visualLayout()
         val row = ((point.y + scrollY - metrics.paddingTop) / metrics.lineHeight).toInt()
         if (row !in 0 until layout.rowCount) return false
         val x = point.x + scrollX - metrics.paddingLeft
-        return x >= 0f && x <= lineLayout(layout.lineAt(row)).layout.size.width
+        return x >= 0f && x <= layout.xAt(row, layout.end(row))
     }
 
     // endregion
@@ -319,7 +413,8 @@ internal class EditorModel(
     }
 
     /** Moves the caret to [offset], extending the selection when [extend]. */
-    fun moveCaret(offset: Int, extend: Boolean, keepPreferredColumn: Boolean = false) {
+    fun moveCaret(offset: Int, extend: Boolean, keepPreferredColumn: Boolean = false, upstream: Boolean = false) {
+        upstreamAffinity = upstream
         val text = state.text
         val target = snapToCodePointBoundary(text, offset.coerceIn(0, text.length))
         val current = state.selectionInternal
@@ -331,6 +426,7 @@ internal class EditorModel(
     }
 
     fun adoptFieldSelection(selection: Selection) {
+        upstreamAffinity = false
         state.selectionInternal = selection
         preferredDisplayColumn = null
         if (config.folding) state.unfoldToShow(state.caret.line)
@@ -363,9 +459,9 @@ internal class EditorModel(
             state.unfoldToShow(range.end.line)
         }
         if (viewportHeight <= 0f || metrics.lineHeight <= 0f) return
-        val layout = foldLayout()
-        val startRow = layout.rowOf(range.start.line)
-        val endRow = layout.rowOf(range.end.line)
+        val layout = visualLayout()
+        val startRow = layout.rowOf(range.start.line, range.start.character)
+        val endRow = layout.rowOf(range.end.line, range.end.character)
         val top = metrics.paddingTop + startRow * metrics.lineHeight
         val bottom = metrics.paddingTop + (endRow + 1) * metrics.lineHeight
         val visible = top >= scrollY && bottom <= scrollY + viewportHeight
@@ -400,12 +496,20 @@ internal class EditorModel(
 
     // region Editing
 
-    private fun tokens(): TokenLookup = TokenLookup.of(state.snapshot(), highlighter)
+    private fun tokens(): TokenLookup {
+        val snapshot = state.snapshot()
+        var lookup: TokenLookup? = null
+        return TokenLookup { offset ->
+            val current = lookup ?: TokenLookup.of(snapshot, highlighter).also { lookup = it }
+            current.kindAt(offset)
+        }
+    }
 
     /** Applies an editing outcome and keeps the caret visible. Returns true when the text changed. */
     fun applyOutcome(outcome: EditOutcome?, typed: Char? = null): Boolean {
         if (outcome == null) return false
         if (config.readOnly) return false
+        upstreamAffinity = false
         preferredDisplayColumn = null
         val changed = state.apply(outcome, typed)
         afterCaretChange()
@@ -512,8 +616,16 @@ internal class EditorModel(
             )
             EditorCommand.WORD_LEFT -> moveCaret(previousWordBoundary(text, selection.caret, rules), binding.extend)
             EditorCommand.WORD_RIGHT -> moveCaret(nextWordBoundary(text, selection.caret, rules), binding.extend)
-            EditorCommand.LINE_START -> moveCaret(smartHome(snapshot, selection.caret), binding.extend)
-            EditorCommand.LINE_END -> moveCaret(snapshot.lineEnd(snapshot.positionOf(selection.caret).line), binding.extend)
+            EditorCommand.LINE_START -> {
+                val row = caretVisualRow()
+                moveCaret(if (config.options.softWrap) visualLayout().start(row) else smartHome(snapshot, selection.caret), binding.extend)
+            }
+            EditorCommand.LINE_END -> {
+                val visual = visualLayout()
+                val row = caretVisualRow()
+                val end = visual.end(row)
+                moveCaret(end, binding.extend, upstream = config.options.softWrap && !visual.isLastRow(row))
+            }
             EditorCommand.DOCUMENT_START -> moveCaret(0, binding.extend)
             EditorCommand.DOCUMENT_END -> moveCaret(text.length, binding.extend)
             EditorCommand.UP, EditorCommand.DOWN -> {
@@ -597,18 +709,15 @@ internal class EditorModel(
         val snapshot = state.snapshot()
         val caret = state.selectionInternal.caret
         val position = snapshot.positionOf(caret)
-        val layout = foldLayout()
-        val row = layout.rowOf(position.line)
+        val layout = visualLayout()
+        val row = caretVisualRow()
         val targetRow = row + rows
         if (targetRow < 0) return moveCaret(0, extend)
         if (targetRow >= layout.rowCount) return moveCaret(snapshot.text.length, extend)
-        val currentDisplay = lineLayout(position.line).display.toDisplay(position.character)
-        val column = preferredDisplayColumn ?: currentDisplay
-        preferredDisplayColumn = column
-        val targetLine = layout.lineAt(targetRow)
-        val targetCached = lineLayout(targetLine)
-        val documentColumn = targetCached.display.toDocument(column).coerceAtMost(snapshot.lineLength(targetLine))
-        moveCaret(snapshot.lineStart(targetLine) + documentColumn, extend, keepPreferredColumn = true)
+        val x = preferredDisplayColumn ?: layout.xAt(row, caret)
+        preferredDisplayColumn = x
+        val target = layout.offsetAt(targetRow, x)
+        moveCaret(target, extend, keepPreferredColumn = true, upstream = target == layout.end(targetRow) && !layout.isLastRow(targetRow))
     }
 
     private fun copy(cut: Boolean) {
@@ -662,6 +771,15 @@ internal class EditorModel(
             bracketKey = key
         }
         return bracketCache
+    }
+
+    fun dispose() {
+        syntaxJob?.cancel()
+        revealJob?.cancel()
+    }
+
+    private companion object {
+        val PLAIN_LINE = LexedLine(emptyList(), LexerState.Initial, LexerState.Initial)
     }
 
     // region Find
@@ -735,6 +853,7 @@ internal class EditorModel(
     }
 
     private fun selectMatch(matches: List<IntRange>, index: Int) {
+        upstreamAffinity = false
         findIndex = index
         val match = matches[index]
         state.selectionInternal = Selection(match.first, match.last + 1)
@@ -757,6 +876,7 @@ internal class EditorModel(
 internal class InputBridge(private val model: EditorModel) {
     val field: TextFieldState = TextFieldState()
     private var windowStart = 0
+    val windowStartOffset: Int get() = windowStart
     private var windowText = ""
     private var detached = false
     private var syncedVersion = -1L
@@ -774,21 +894,38 @@ internal class InputBridge(private val model: EditorModel) {
         val selection = state.selectionInternal
         val firstSelected = snapshot.positionOf(selection.start).line
         val lastSelected = snapshot.positionOf(selection.end).line
-        val detached = lastSelected - firstSelected > MAX_WINDOW_LINES
+        val detached = lastSelected - firstSelected > MAX_WINDOW_LINES || selection.end - selection.start > MAX_WINDOW_CHARS
         val caretLine = snapshot.positionOf(selection.caret).line
         val first = (if (detached) caretLine else firstSelected) - 1
         val last = (if (detached) caretLine else lastSelected) + 1
         val firstLine = first.coerceAtLeast(0)
         val lastLine = last.coerceAtMost(snapshot.lineCount - 1)
-        val start = snapshot.lineStart(firstLine)
-        val end = snapshot.lineEnd(lastLine)
-        val text = snapshot.text.substring(start, end)
+        var start = snapshot.lineStart(firstLine)
+        var end = snapshot.lineEnd(lastLine)
+        if (end - start > MAX_WINDOW_CHARS) {
+            val stableStart = windowText.isNotEmpty() && windowStart >= start && windowStart <= selection.start &&
+                selection.end - windowStart <= MAX_WINDOW_CHARS - 128 &&
+                (selection.start - windowStart >= 128 || windowStart == start)
+            start = if (stableStart) windowStart else (selection.caret - MAX_WINDOW_CHARS / 2).coerceAtLeast(start)
+            end = minOf(end, start + MAX_WINDOW_CHARS)
+            if (!detached) {
+                start = minOf(start, selection.start)
+                end = maxOf(end, selection.end)
+                if (end - start > MAX_WINDOW_CHARS) {
+                    start = selection.start
+                    end = selection.end
+                }
+            }
+            start = snapToCodePointBoundary(snapshot.text, start)
+            end = snapToCodePointBoundary(snapshot.text, end, forward = true)
+        }
+        val text = if (syncedVersion == state.version && start == windowStart && end == windowStart + windowText.length) windowText else snapshot.text.substring(start, end)
         val fieldSelection = if (detached) {
             ComposeTextRange(selection.caret - start)
         } else {
             ComposeTextRange(selection.anchor - start, selection.caret - start)
         }
-        return Window(start, text, firstLine, fieldSelection, detached)
+        return Window(start, text, snapshot.positionOf(start).line, fieldSelection, detached)
     }
 
     /** Pushes the current document window into the field when it differs. */
@@ -897,6 +1034,7 @@ internal class InputBridge(private val model: EditorModel) {
 
     private companion object {
         const val MAX_WINDOW_LINES = 60
+        const val MAX_WINDOW_CHARS = 4096
     }
 }
 

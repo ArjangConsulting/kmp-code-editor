@@ -51,3 +51,12 @@ The editor starts below controls so toolbar placement is checked with a nonzero 
 The JVM UI tests independently inject platform composition commands and assert marked ranges,
 invoke localized folding semantics, exercise fold shortcuts, and check toolbar root coordinates.
 Use `./gradlew :code-editor:jvmTest` from the repository root for those checks.
+
+## Long-line and wrapping fixture
+
+Long JSON loads a 15,000-character string and reveals its tail without formatting. Wrap/Unwrap
+changes only visual layout. Check the marker at the tail in each mode, edit it, select/copy/paste,
+and rotate or resize the viewport. Selection, Text length, and Tail expose exact source results.
+Run the composition probe on Empty as above; separately type with a real native IME near the
+long-line tail. Verify that keyboard dismissal and read-only selection remain usable. Native
+hierarchy checks establish labels and actions, not spoken screen-reader navigation.

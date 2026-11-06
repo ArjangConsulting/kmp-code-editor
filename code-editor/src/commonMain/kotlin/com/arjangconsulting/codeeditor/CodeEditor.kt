@@ -13,6 +13,11 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.withContext
 
 /** Everything an engine needs besides the state and controller. Internal; built by [CodeEditor]. */
 internal data class EditorConfig(
@@ -267,14 +272,22 @@ private fun FoldingRangeUpdater(state: CodeEditorState, controller: LanguageServ
             state.foldingRanges = emptyList()
             return@LaunchedEffect
         }
-        val highlighter = Highlighter(language)
-        snapshotFlow { state.version }.collect {
-            // Folding needs every line lexed; debounce so typing in large files stays cheap.
+        var checkCancelled: () -> Unit = {}
+        val highlighter = Highlighter(language) { checkCancelled() }
+        snapshotFlow { state.version }.collectLatest {
             if (state.foldingRanges.isNotEmpty()) delay(FOLDING_DEBOUNCE_MILLIS)
             val snapshot = state.snapshot()
             val fromService = serviceRanges?.takeIf { it.version == snapshot.version }?.value
-            state.foldingRanges = fromService?.filter { it.endLine < snapshot.lineCount }
-                ?: computeFoldingRanges(snapshot, language, highlighter.also { h -> h.update(snapshot) })
+            suspend fun compute(): List<FoldingRange> {
+                val context = currentCoroutineContext()
+                checkCancelled = { context.ensureActive() }
+                highlighter.update(snapshot)
+                return computeFoldingRanges(snapshot, language, highlighter, checkCancelled)
+            }
+            val ranges = fromService?.filter { it.endLine < snapshot.lineCount } ?: if (
+                snapshot.longestLineLength > 4096 || snapshot.lineCount > 10_000
+            ) withContext(Dispatchers.Default) { compute() } else compute()
+            if (state.version == snapshot.version) state.foldingRanges = ranges
         }
     }
 }

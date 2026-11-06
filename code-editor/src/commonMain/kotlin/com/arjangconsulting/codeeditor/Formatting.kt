@@ -75,13 +75,16 @@ public suspend fun CodeEditorState.format(
     }
     if (version != requested.version) return FormatResult.STALE
     if (edits == null) return FormatResult.UNAVAILABLE
-    val formatted = try {
-        applyTextEdits(requested.text, edits)
+    val originalSelection = selectionInternal
+    try {
+        edit(edits)
     } catch (failure: IllegalArgumentException) {
         logger.error("LanguageService.format returned invalid edits", failure)
         return FormatResult.FAILED
     }
-    if (formatted == requested.text) return FormatResult.UNCHANGED
-    edit(edits)
+    if (version == requested.version) {
+        selectionInternal = originalSelection
+        return FormatResult.UNCHANGED
+    }
     return FormatResult.APPLIED
 }

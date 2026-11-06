@@ -120,6 +120,13 @@ public class TokenRules internal constructor(
     public fun tokenizeLine(line: String, state: LexerState = LexerState.Initial): LexedLine =
         lineTokenizer?.invoke(line, state) ?: Lexer(this, line, state).run()
 
+    internal fun tokenizeLineChecked(line: String, state: LexerState, checkCancelled: () -> Unit): LexedLine {
+        checkCancelled()
+        val result = lineTokenizer?.invoke(line, state) ?: Lexer(this, line, state, checkCancelled).run()
+        checkCancelled()
+        return result
+    }
+
     /** Tokenizes a whole text line by line (`\n`, `\r\n`, and `\r` all end a line). */
     public fun tokenize(text: String): List<LexedLine> {
         val snapshot = DocumentSnapshot(text, 0)
@@ -333,10 +340,18 @@ public fun tokenRules(name: String, base: TokenRules? = null, block: TokenRulesB
 private const val STATE_RULE_SHIFT = 8
 private const val STATE_DEPTH_MASK = 0xFF
 
-private class Lexer(private val rules: TokenRules, private val line: String, private val startState: LexerState) {
+private class Lexer(private val rules: TokenRules, private val line: String, private val startState: LexerState, private val checkCancelled: () -> Unit = {}) {
     private val tokens = ArrayList<Token>()
     private var pos = 0
+    private var nextCancellationCheck = 0
     private var state = LexerState.Initial
+
+    private fun checkpoint(offset: Int) {
+        if (offset >= nextCancellationCheck) {
+            checkCancelled()
+            nextCancellationCheck = offset + 4096
+        }
+    }
 
     fun run(): LexedLine {
         if (startState.value != 0) continueDelimited(startState)
@@ -356,6 +371,7 @@ private class Lexer(private val rules: TokenRules, private val line: String, pri
     }
 
     private fun step() {
+        checkpoint(pos)
         val c = line[pos]
         if (c == ' ' || c == '\t') {
             pos++
@@ -403,7 +419,10 @@ private class Lexer(private val rules: TokenRules, private val line: String, pri
     private fun scanIdentifier() {
         val start = pos
         pos++
-        while (pos < line.length && rules.identifierPart(line[pos])) pos++
+        while (pos < line.length && rules.identifierPart(line[pos])) {
+            checkpoint(pos)
+            pos++
+        }
         val word = line.substring(start, pos)
         val key = if (rules.caseInsensitiveKeywords) word.lowercase() else word
         val keywordKind = rules.keywordKinds[key]
@@ -430,26 +449,44 @@ private class Lexer(private val rules: TokenRules, private val line: String, pri
         val isDigitOrUnderscore = { ch: Char -> ch.isDigit() || ch == '_' }
         if (line[i] == '0' && i + 1 < line.length && (line[i + 1] == 'x' || line[i + 1] == 'X')) {
             i += 2
-            while (i < line.length && (line[i].isDigit() || line[i] in 'a'..'f' || line[i] in 'A'..'F' || line[i] == '_')) i++
+            while (i < line.length && (line[i].isDigit() || line[i] in 'a'..'f' || line[i] in 'A'..'F' || line[i] == '_')) {
+                checkpoint(i)
+                i++
+            }
         } else if (line[i] == '0' && i + 1 < line.length && (line[i + 1] == 'b' || line[i + 1] == 'B')) {
             i += 2
-            while (i < line.length && (line[i] == '0' || line[i] == '1' || line[i] == '_')) i++
+            while (i < line.length && (line[i] == '0' || line[i] == '1' || line[i] == '_')) {
+                checkpoint(i)
+                i++
+            }
         } else {
-            while (i < line.length && isDigitOrUnderscore(line[i])) i++
+            while (i < line.length && isDigitOrUnderscore(line[i])) {
+                checkpoint(i)
+                i++
+            }
             if (i + 1 < line.length && line[i] == '.' && line[i + 1].isDigit()) {
                 i++
-                while (i < line.length && isDigitOrUnderscore(line[i])) i++
+                while (i < line.length && isDigitOrUnderscore(line[i])) {
+                    checkpoint(i)
+                    i++
+                }
             }
             if (i < line.length && (line[i] == 'e' || line[i] == 'E')) {
                 var j = i + 1
                 if (j < line.length && (line[j] == '+' || line[j] == '-')) j++
                 if (j < line.length && line[j].isDigit()) {
                     i = j
-                    while (i < line.length && isDigitOrUnderscore(line[i])) i++
+                    while (i < line.length && isDigitOrUnderscore(line[i])) {
+                        checkpoint(i)
+                        i++
+                    }
                 }
             }
         }
-        while (i < line.length && line[i] in "uUlLfFdD") i++
+        while (i < line.length && line[i] in "uUlLfFdD") {
+            checkpoint(i)
+            i++
+        }
         return i
     }
 
@@ -463,6 +500,7 @@ private class Lexer(private val rules: TokenRules, private val line: String, pri
         var segmentStart = start
         val interpolation = rule.interpolation
         while (i < line.length) {
+            checkpoint(i)
             val ch = line[i]
             if (rule.escape != null && ch == rule.escape && i + 1 < line.length) {
                 add(segmentStart, i, rule.kind)
@@ -543,6 +581,7 @@ private class Lexer(private val rules: TokenRules, private val line: String, pri
         var depth = 1
         var i = from
         while (i < line.length) {
+            checkpoint(i)
             val ch = line[i]
             if (open != null && ch == open) depth++
             if (ch == close) {

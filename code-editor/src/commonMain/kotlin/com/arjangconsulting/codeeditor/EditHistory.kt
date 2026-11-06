@@ -88,10 +88,18 @@ internal class EditHistory(
     /** Undoes the last entry against [text]; returns the new text and selection, or null. */
     fun undo(text: String): Pair<String, Selection>? {
         val entry = undoStack.removeLastOrNull() ?: return null
-        var result = text
+        val builder = StringBuilder(text.length)
+        var cursor = 0
+        var delta = 0
         for (change in entry.changes.asReversed()) {
-            result = result.replaceRange(change.start, change.start + change.inserted.length, change.removed)
+            val start = change.start + delta
+            builder.append(text, cursor, start)
+            builder.append(change.removed)
+            cursor = start + change.inserted.length
+            delta += change.inserted.length - change.removed.length
         }
+        builder.append(text, cursor, text.length)
+        val result = builder.toString()
         redoStack.addLast(entry)
         sealed = true
         return result to entry.selectionBefore
@@ -100,10 +108,15 @@ internal class EditHistory(
     /** Re-applies the last undone entry against [text]; returns the new text and selection, or null. */
     fun redo(text: String): Pair<String, Selection>? {
         val entry = redoStack.removeLastOrNull() ?: return null
-        var result = text
-        for (change in entry.changes) {
-            result = result.replaceRange(change.start, change.start + change.removed.length, change.inserted)
+        val builder = StringBuilder(text.length)
+        var cursor = 0
+        for (change in entry.changes.asReversed()) {
+            builder.append(text, cursor, change.start)
+            builder.append(change.inserted)
+            cursor = change.start + change.removed.length
         }
+        builder.append(text, cursor, text.length)
+        val result = builder.toString()
         undoStack.addLast(entry)
         sealed = true
         return result to entry.selectionAfter

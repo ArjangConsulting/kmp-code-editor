@@ -502,6 +502,8 @@ internal class RstaEditorPanel(
         textArea.insertPairedCharacters = config.options.autoCloseBrackets
         textArea.isBracketMatchingEnabled = config.options.matchBrackets
         textArea.highlightCurrentLine = config.options.highlightCurrentLine && !config.singleLine
+        textArea.lineWrap = config.options.softWrap && !config.singleLine
+        textArea.wrapStyleWord = false
         textArea.tabSize = config.options.tabSize
         textArea.tabsEmulated = config.language.indentUnit.all { it == ' ' }
         textArea.isCodeFoldingEnabled = config.folding

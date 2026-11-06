@@ -147,6 +147,7 @@ public enum class CodeEditorEngine {
  * @property completionOnTyping Opens completion while typing identifiers (trigger characters and
  *   Ctrl+Space always work).
  * @property hover Requests hover on pointer rest and shows diagnostic tooltips.
+ * @property softWrap Visually wraps at the viewport without changing logical lines or document text. Ignored in single-line mode.
  * @property tabSize Display width of a tab character, in columns.
  */
 @Immutable
@@ -158,6 +159,7 @@ public data class CodeEditorOptions(
     val completionOnTyping: Boolean = true,
     val hover: Boolean = true,
     val tabSize: Int = 4,
+    val softWrap: Boolean = false,
 ) {
     init {
         require(tabSize > 0) { "tabSize must be positive" }
