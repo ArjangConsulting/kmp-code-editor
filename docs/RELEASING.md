@@ -87,3 +87,21 @@ them in command arguments.
 
 For a failed publish, fix its cause and rerun the Release workflow with the existing tag. Maven
 Central releases are immutable; never move a published tag or reuse a published version.
+
+## Current readiness evidence
+
+The `0.1.0` [preflight at `7c04f6e`](https://github.com/ArjangConsulting/kmp-code-editor/actions/runs/42304177088)
+completed the release checks, ABI checks, authenticated Central read-only request, and signing.
+All five publications passed local POM/archive checks with 29 signature files. The six environment
+secrets were present. The App installation accepted its identity but token creation failed because
+it had Contents and Pull requests write without Workflows write. Add Workflows write to the App
+registration, then approve the updated installation permissions and rerun preflight. See
+[GitHub's registration guide](https://docs.github.com/en/apps/maintaining-github-apps/modifying-a-github-app-registration)
+and [installation approval guide](https://docs.github.com/en/apps/using-github-apps/approving-updated-permissions-for-a-github-app).
+
+The release gate remains unset. `0.1.0` is absent from Maven Central, so Studio's source fallback
+must remain. Central token authentication and local signing do not establish the account's verified
+`com.arjangconsulting` namespace, public-keyserver availability, or acceptance by Central's
+publication validator. Those remain release prerequisites; no deployment was uploaded to test them.
+Native evidence and remaining coverage limitations are in
+[benchmarks/VERIFICATION.md](../benchmarks/VERIFICATION.md).

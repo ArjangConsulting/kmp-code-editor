@@ -1,0 +1,97 @@
+{
+  "actionCount" : 83,
+  "actions" : [
+
+  ],
+  "appID" : "com.arjangconsulting.codeeditor.verification",
+  "artifactSnapshot" : {
+    "path" : "\/Users\/maniramezan\/Library\/Application Support\/Amoo\/sessions\/64D140FF-96C5-41FB-A790-A13CA094949F\/build\/EditorVerification.app",
+    "sha256" : "d8f6ea78dea6c7ef8a31761706be406a2704a210b0459e1c9e46fa90ca91059d",
+    "sourcePath" : "\/Users\/maniramezan\/Developer\/manman\/kmp-code-editor\/verification\/build\/ios\/Build\/Products\/Debug-iphonesimulator\/EditorVerification.app"
+  },
+  "deviceID" : "9F4D0975-6277-4825-8117-F1CE9CB25ED9",
+  "durationSeconds" : 516.6927299499512,
+  "errorCount" : 6,
+  "isActive" : true,
+  "launchArguments" : [
+
+  ],
+  "launchEnvironment" : {
+
+  },
+  "platform" : "ios",
+  "provenance" : {
+    "companion_fingerprint" : "unavailable: companion protocol does not expose a build fingerprint",
+    "device_os" : "27.2",
+    "locale" : "unavailable: device locale is not exposed by the companion",
+    "locale_source" : "unavailable",
+    "run_id" : "98251A99-FF4B-4E3A-8858-E4AB31043796"
+  },
+  "sessionID" : "64D140FF-96C5-41FB-A790-A13CA094949F",
+  "startedAt" : "2026-11-06T22:17:50.902Z",
+  "startup" : {
+    "installation" : "installed",
+    "launch" : {
+      "app_id" : "com.arjangconsulting.codeeditor.verification",
+      "environment_delivery" : "not_requested",
+      "environment_keys" : [
+
+      ],
+      "fresh_process" : true
+    },
+    "render_readiness" : "unverified",
+    "semantic_readiness" : "queryable"
+  },
+  "verification" : {
+    "checks" : [
+      {
+        "evidence" : [
+
+        ],
+        "id" : "clipboard-native",
+        "outcome" : "untested",
+        "reason" : "No explicit assertion completed"
+      },
+      {
+        "evidence" : [
+
+        ],
+        "id" : "real-ime-candidate",
+        "outcome" : "untested",
+        "reason" : "No explicit assertion completed"
+      },
+      {
+        "evidence" : [
+
+        ],
+        "id" : "voiceover-journey",
+        "outcome" : "untested",
+        "reason" : "No explicit assertion completed"
+      }
+    ]
+  },
+  "verificationMetrics" : {
+    "clientCalls" : 85,
+    "evidenceImageBytes" : 1850669,
+    "imageBytes" : 277671,
+    "imageDimensions" : [
+      "1640x2360",
+      "820x1180",
+      "1640x2360",
+      "820x1180",
+      "1640x2360",
+      "1640x2360",
+      "1640x2360",
+      "1640x2360",
+      "1640x2360",
+      "820x1180",
+      "1640x2360",
+      "1640x2360",
+      "1640x2360"
+    ],
+    "operations" : 83,
+    "recoveryMilliseconds" : 0,
+    "responseBytes" : 615131,
+    "setupMilliseconds" : 37159
+  }
+}

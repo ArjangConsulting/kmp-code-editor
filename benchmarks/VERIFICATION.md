@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-The complete matrix passed: 258 JVM tests, 190 Android host tests, and 190 iOS simulator tests;
+The complete matrix passed: 264 JVM tests, 191 Android host tests, and 191 iOS simulator tests;
 zero failures/errors. JVM totals include opt-in benchmark entry points that return without running
 when their benchmark environment variables are absent.
 
@@ -55,38 +55,77 @@ screen-reader evidence. Black space outside popup roots is the test scene's unus
 
 ## Amoo native observations
 
-Managed simulator/emulator sessions were used and released. The busy Android emulator 5554 was
-left alone; a separate Medium_Phone_API_35 emulator 5556 was leased for the recheck. iOS ran on an
-iPad simulator with iOS 27.2. Native evidence was inspected separately from the desktop captures.
+The follow-up used the current harness built with `verification/build-apps.sh all`, Android 15
+API 35 emulator 5556, an iOS 27.2 iPad simulator, and an iOS 27.2 iPhone 18 Pro simulator. Emulator
+5554 was left alone. Screenshots below were inspected for the actual captured layout. These are
+bounded observations, not a comprehensive accessibility pass.
 
 | Check | iOS | Android |
 | --- | --- | --- |
-| Synthetic native composition に→にほ→日本 | Passed; `UITextInput` marks true,true, exact text 日本 | Passed; `InputConnection` stages and exact text 日本, selection 2 |
-| 15,023-character JSON tail, wrapping, unchanged source length | Passed | Not established by completed evidence |
-| Native insertion beyond 15,000, wrapped and unwrapped | Passed with individual native A/B/C keys and exact selection/length | Untested with native keystrokes |
-| Read-only Copy/Select All affordance; no typing mutation | Observed | Untested |
-| Rotation preserves wrapped source/tail | Passed | Untested |
-| Actual non-Latin keyboard candidate journey | Untested | Untested |
-| Actual VoiceOver/TalkBack traversal and spoken output | Untested | Untested |
+| Synthetic native composition に→にほ→日本 | Previously passed; native marked ranges and exact text | Previously passed; native InputConnection stages and exact text |
+| Long JSON tail and unchanged source when toggling wrapping | Previously passed | Passed; 15,023-character fixture |
+| Individual native key insertion beyond 15,000 | Previously passed, wrapped and unwrapped | Passed; abc advanced length/selection to 15,026 unwrapped, def to 15,029 wrapped |
+| Editable native Copy/Paste and Cut/Paste | Passed; exact greet suffix removed and restored, caret 74→69→74 | Passed; message copied into Empty, length/caret 7; Cut/Paste restored exactly |
+| Read-only Copy and non-editing menu | Passed; Copy/Select All only, unchanged 72-character source; copied greet pasted into editable source | Passed; Copy/Select all only (Cut and Paste absent), source unchanged after Copy then Delete, copied greet pasted with native Ctrl+V into Empty (Text: greet, length 5) |
+| Rotation preserves wrapped source/tail | Previously passed | Untested |
+| Real non-Latin keyboard candidate | Passed; Japanese native n/i/h/o/n keys and candidate tap committed 日本, selection 2..2 | Passed; Gboard composing input, conversion/candidate selection committed にほん, length/caret 3 |
+| Actual assistive-technology traversal and speech | Passed within the bounded VoiceOver journey described below | Not established; TalkBack startup failed three times, and a retry was blocked by the `amoo doctor` preflight |
 
-Native screenshots: [iOS composition](evidence/ios-composition.png),
-[iOS wrapped insertion](evidence/ios-wrapped-native-keys.png),
-[iOS unwrapped insertion](evidence/ios-unwrapped-native-keys.png),
-[Android composition](evidence/android-composition.png),
-[iOS rotation](evidence/ios-landscape.png), [iOS read-only menu](evidence/ios-readonly-menu.png).
+Android read-only clipboard captures: [menu](evidence/native-20261106/android-final/readonly-menu.png)
+and [pasted result](evidence/native-20261106/android-final/readonly-copied-pasted.png); the
+[action report](evidence/native-20261106/android-final/android-final-action-reports.json) also retains
+the three failed TalkBack attempts (notification-permission prompt, no initial app-owned focus,
+dropped companion transport with cleanup unknown).
+Android captures: [unwrapped native insertion](evidence/native-20261106/android/long-json-insert-unwrapped.png),
+[wrapped native insertion](evidence/native-20261106/android/long-json-wrap-insert.png),
+[editable clipboard result](evidence/native-20261106/android/clipboard-cut-paste.png),
+[Japanese composition](evidence/native-20261106/android/japanese-composing.png), and
+[committed candidate](evidence/native-20261106/android/japanese-candidate-commit.png).
+The [Android observations](evidence/native-20261106/android/final-observations.json) and
+[paginated raw reports](evidence/native-20261106/android/android-native-action-reports.json) retain
+exact postconditions and failed TalkBack startup. Both added Japanese Gboard layouts were removed,
+restoring English (US) QWERTY; the managed sessions ended.
+The tests used individual native keys for insertion; Android `type_text` whole-field assignment is
+not counted as native typing evidence.
 
-The first iOS probe failed because the verification flow dismissed the keyboard, resigning the
-native responder before probing. Keeping it active passed. Amoo's iOS `type_text` retaps the field
-before typing; individual `press_key` calls were used to verify exact caret→insertion mapping.
-For wrapped insertion, caret 15022 became selection 15025 and length 15026 after ABC. For unwrapped
-end insertion, caret 15023 became selection 15026 and length 15026.
+iOS clipboard captures: [read-only menu](evidence/native-20261106/ios/readonly-menu.png),
+[read-only Copy into editable source](evidence/native-20261106/ios/readonly-paste-result.png),
+[after Cut](evidence/native-20261106/ios/editable-after-cut.png),
+[after Paste](evidence/native-20261106/ios/editable-after-paste.png).
+A first exploratory paste received a pre-existing large JSON clip while desktop clipboard tests
+were running. Repeating the native Copy/Paste sequence after those tests stopped established the
+exact transferred text. Avoid shared host clipboard writes during simulator clipboard journeys.
 
-Android `type_text` uses a whole-field accessibility text assignment rather than native insertion.
-That assignment replaced the mirrored input window, so it is not evidence for native keystroke
-insertion or an app typing regression. Companion timeouts and the bounded session budget prevented
-completion with individual keys. Android long-line typing, mobile read-only clipboard journeys,
-real IME candidate interaction, and actual assistive-technology journeys remain coverage gaps.
-The native report is therefore partial, not a comprehensive accessibility pass.
+The iOS Japanese retry used actual system keyboard candidates:
+[candidate strip](evidence/native-20261106/ios-ime/candidates.png),
+[committed source](evidence/native-20261106/ios-ime/committed.png), and
+[committed hierarchy](evidence/native-20261106/ios-ime/committed-hierarchy.json).
+The first Settings attempt timed out in a system overlay; binding Preferences directly on a
+separate leased simulator enabled the candidate journey. Synthetic composition was not substituted
+for this check. The original English (US), Persian and Emoji keyboard list was restored; see the
+[IME report](evidence/native-20261106/ios-ime/report.json) and
+[restoration assertion](evidence/native-20261106/ios-ime/restoration-assertion.json). The runtime was
+released and its companion stopped.
+
+The [VoiceOver journey](evidence/native-20261106/ios/voiceover-journey.json) retained actual spoken
+output while VoiceOver was enabled: Reset, Empty, Make read only, Long JSON, Wrap, Probe composition,
+Probe result, Selection, Folds, then “Code editor Text field Is editing Line 1, column 1 Actions
+available”. A targeted double tap changed caret metadata to line 2, column 17, and speech recovered;
+all six authored expectations passed. The role export was unsupported when requested separately.
+The gesture is an ordinary targeted XCTest gesture during a VoiceOver lifetime; it does not certify
+screen-reader activation semantics, rotor or custom actions. VoiceOver's original off state was
+restored. The [raw session report](evidence/native-20261106/ios/amoo-session-report.json) retains
+exploratory failures as well as the final passing journey; its pre-cleanup summary is not an overall
+coverage verdict.
+
+Android TalkBack spoken traversal remains a gap. Three attempts failed in tooling (a notification
+permission prompt, no initial app-owned focus, a dropped companion transport with cleanup unknown),
+and a later retry was blocked before setup because `amoo doctor` reported stale foreign MCP servers
+and an unresponsive companion on another emulator. Those are tooling findings, not editor
+accessibility defects. Rerun after the owners of those clients stop them. Earlier reviewed iOS long-line captures remain available in this directory:
+[iOS wrapped native keys](evidence/ios-wrapped-native-keys.png),
+[iOS unwrapped native keys](evidence/ios-unwrapped-native-keys.png), and
+[iOS rotation](evidence/ios-landscape.png).
 
 ## Consumption notes
 
@@ -96,7 +135,7 @@ the default remains unwrapped. `TabBehavior.MOVE_FOCUS` suits form fields; read-
 remain available. Formatting is explicit and undoable through `state.format`.
 
 Existing source callers retain their behavior. Adding a data-class constructor field changes
-binary constructor/copy signatures, so binary consumers need recompilation; Studio's sibling
-composite build already recompiles from source. Wrapped rows do not change logical ranges or
+binary constructor/copy signatures, so binary consumers need recompilation; Studio's explicitly enabled
+source fallback recompiles from source. Wrapped rows do not change logical ranges or
 persisted text. Complex bidi shaping across tiles, oversized combining sequences, and the existing
 first 10,000 find matches cap are documented limitations.

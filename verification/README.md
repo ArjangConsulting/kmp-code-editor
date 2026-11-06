@@ -30,8 +30,9 @@ The editor starts below controls so toolbar placement is checked with a nonzero 
    and Selection. Use a built-in Japanese or Chinese keyboard for candidate replacement, saving and
    restoring the original keyboard list afterward. Scripted `type_text` alone does not cover IME
    composition.
-2. Empty. Focus the editor, dismiss the keyboard, then select Probe composition. Expect Text to be
-   exactly `日本`, with no duplicated fragments. The probe sends native composing replacements
+2. Empty. Focus the editor, then select Probe composition. On Android, dismiss the keyboard first;
+   on iOS, keep the native text responder active. Expect Text to be exactly `日本`, with no duplicated
+   fragments. The probe sends native composing replacements
    `に` → `にほ` → `日本` across frames using Android `InputConnection` or iOS `UITextInput`.
    Android hides Gboard before creating its probe connection so the real IME cannot finish the
    synthetic composition midway. Its extracted-text API does not export marked spans, so stages
@@ -60,3 +61,23 @@ and rotate or resize the viewport. Selection, Text length, and Tail expose exact
 Run the composition probe on Empty as above; separately type with a real native IME near the
 long-line tail. Verify that keyboard dismissal and read-only selection remain usable. Native
 hierarchy checks establish labels and actions, not spoken screen-reader navigation.
+
+## Evidence and input paths
+
+Record native source postconditions, including Text, Selection, Text length and Tail, after each
+insertion or clipboard action. On Android, Amoo `type_text` assigns the mirrored field as a whole;
+use individual native `press_key` calls or actual on-screen keys to establish caret insertion.
+A synthetic composition probe proves the native composing-replacement path, not candidate selection
+through an installed non-Latin keyboard. For mobile clipboard checks, avoid concurrent host
+clipboard tests because simulator clipboard sharing can replace the copied fixture between actions.
+
+When configuring a built-in keyboard, save the original list and restore it afterward. Settings is
+an app: bind `com.apple.Preferences` on iOS or the appropriate Android Settings package when navigating
+its controls. System scope is for system-owned overlays. After a timeout, inspect the current app
+and postcondition before repeating the action.
+
+Capture actual VoiceOver/TalkBack speech and traversal with the assistive technology enabled, then
+restore its original state. An authored journey with a targeted XCTest gesture establishes only
+that gesture and its observed speech/postconditions; it does not certify screen-reader activation,
+rotor or custom actions. Keep unsupported role exports and missing speech separate from app defects.
+The current matrix and reviewed captures are in [benchmarks/VERIFICATION.md](../benchmarks/VERIFICATION.md).

@@ -1,0 +1,297 @@
+{
+  "cleanupStatus": "restored",
+  "evaluatedChecks": [
+    "field.name",
+    "seek.seek",
+    "activate.before",
+    "activate.action",
+    "activate.destination",
+    "activate.recovery"
+  ],
+  "executionStatus": "succeeded",
+  "issues": [],
+  "journey": {
+    "checkpoints": [
+      {
+        "elementCaptures": [
+          {
+            "elements": [
+              {
+                "enabled": true,
+                "id": "CodeEditorInput",
+                "name": "Code editor",
+                "selected": false,
+                "value": "Line 1, column 1"
+              }
+            ],
+            "stage": "element"
+          }
+        ],
+        "elements": [
+          {
+            "enabled": true,
+            "id": "CodeEditorInput",
+            "name": "Code editor",
+            "selected": false,
+            "value": "Line 1, column 1"
+          }
+        ],
+        "id": "field",
+        "utterances": []
+      },
+      {
+        "elements": [],
+        "id": "seek",
+        "utterances": [
+          "Reset Button",
+          "Empty Button",
+          "Make read only Button",
+          "Long JSON Button",
+          "Wrap Button",
+          "Probe composition Button",
+          "Probe result: Not run",
+          "Selection: 0..0",
+          "Folds:",
+          "Code editor Text field Is editing Line 1, column 1 Actions available"
+        ]
+      },
+      {
+        "elementCaptures": [
+          {
+            "elements": [
+              {
+                "enabled": true,
+                "id": "CodeEditorInput",
+                "name": "Code editor",
+                "selected": false,
+                "value": "Line 1, column 1"
+              }
+            ],
+            "stage": "targetBefore"
+          },
+          {
+            "elements": [
+              {
+                "enabled": true,
+                "id": "CodeEditorInput",
+                "name": "Code editor",
+                "selected": false,
+                "value": "Line 1, column 1"
+              }
+            ],
+            "stage": "destinationBefore"
+          },
+          {
+            "elements": [
+              {
+                "enabled": true,
+                "id": "CodeEditorInput",
+                "name": "Code editor",
+                "selected": false,
+                "value": "Line 2, column 17"
+              }
+            ],
+            "stage": "destinationAfter"
+          }
+        ],
+        "elements": [
+          {
+            "enabled": true,
+            "id": "CodeEditorInput",
+            "name": "Code editor",
+            "selected": false,
+            "value": "Line 1, column 1"
+          },
+          {
+            "enabled": true,
+            "id": "CodeEditorInput",
+            "name": "Code editor",
+            "selected": false,
+            "value": "Line 1, column 1"
+          },
+          {
+            "enabled": true,
+            "id": "CodeEditorInput",
+            "name": "Code editor",
+            "selected": false,
+            "value": "Line 2, column 17"
+          }
+        ],
+        "id": "activate",
+        "utterances": [
+          "Code editor Text field Is editing Line 1, column 1 Actions available"
+        ]
+      }
+    ],
+    "checks": [
+      {
+        "actual": "Code editor",
+        "checkpointID": "field",
+        "elementID": "CodeEditorInput",
+        "expected": "Code editor",
+        "id": "field.name",
+        "outcome": "pass",
+        "reason": "Authored exported-metadata comparison",
+        "source": "exportedMetadata"
+      },
+      {
+        "actual": "Code editor Text field Is editing Line 1, column 1 Actions available",
+        "checkpointID": "seek",
+        "expected": "contains: Code editor Text field",
+        "id": "seek.seek",
+        "outcome": "pass",
+        "reason": "Authored speech comparison",
+        "source": "voiceOverSpeech"
+      },
+      {
+        "actual": "Code editor Text field Is editing Line 1, column 1 Actions available",
+        "checkpointID": "activate",
+        "expected": "contains: Code editor Text field",
+        "id": "activate.before",
+        "outcome": "pass",
+        "reason": "Authored speech comparison",
+        "source": "voiceOverSpeech",
+        "transitionID": "activate"
+      },
+      {
+        "actual": "Gesture completed",
+        "checkpointID": "activate",
+        "elementID": "CodeEditorInput",
+        "expected": "doubleTap",
+        "id": "activate.action",
+        "outcome": "pass",
+        "reason": "Authored exported-metadata comparison",
+        "source": "xctestGesture",
+        "transitionID": "activate"
+      },
+      {
+        "checkpointID": "activate",
+        "elementID": "CodeEditorInput",
+        "expected": "Changed destination matching authored metadata",
+        "id": "activate.destination",
+        "outcome": "pass",
+        "reason": "Destination changed to match authored metadata after the gesture",
+        "source": "exportedMetadata",
+        "transitionID": "activate"
+      },
+      {
+        "actual": "Code editor Text field Is editing Line 1, column 1 Actions available",
+        "checkpointID": "activate",
+        "expected": "contains: Code editor Text field",
+        "id": "activate.recovery",
+        "outcome": "pass",
+        "reason": "Authored speech comparison",
+        "source": "voiceOverSpeech",
+        "transitionID": "activate"
+      }
+    ],
+    "id": "code-editor-activate",
+    "schemaVersion": 1,
+    "specification": {
+      "id": "code-editor-activate",
+      "schemaVersion": 1,
+      "steps": [
+        {
+          "element": {
+            "id": "CodeEditorInput",
+            "name": "Code editor"
+          },
+          "id": "field",
+          "kind": "element"
+        },
+        {
+          "direction": "forward",
+          "id": "seek",
+          "kind": "seek",
+          "maxMoves": 12,
+          "speech": [
+            {
+              "contains": "Code editor Text field"
+            }
+          ]
+        },
+        {
+          "action": "doubleTap",
+          "after": {
+            "contains": "Code editor Text field"
+          },
+          "before": {
+            "contains": "Code editor Text field"
+          },
+          "destination": {
+            "id": "CodeEditorInput",
+            "value": "Line 2, column 17"
+          },
+          "element": {
+            "id": "CodeEditorInput",
+            "name": "Code editor"
+          },
+          "id": "activate",
+          "kind": "transition"
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Expectations are authored task checks, not whole-app accessibility conformance.",
+    "Name/role/state use exported XCTest metadata, not a complete raw accessibility trait set.",
+    "Speech matches are locale-specific; target element IDs are author associations, not observed focus IDs.",
+    "Transitions use ordinary targeted XCTest gestures; rotor, custom actions and screen-reader activation semantics are not certified.",
+    "Focus recovery polls current speech until the authored deadline, without moving or re-enabling VoiceOver. A match must be read by the deadline; a mismatch must be read at or after it.",
+    "Repeated recovery polls are retained once, and polling evidence is capped; decisive reads are kept.",
+    "A synchronous platform call cannot be interrupted; cancellation/deadlines are checked between calls."
+  ],
+  "notEvaluatedReasons": {},
+  "originalVoiceOverEnabled": false,
+  "outcome_status": "inconclusive",
+  "phases": [],
+  "postcondition_verified": false,
+  "provenance": {
+    "app_build": "d8f6ea78dea6c7ef8a31761706be406a2704a210b0459e1c9e46fa90ca91059d",
+    "app_build_source": "session-installed artifact SHA-256",
+    "app_id": "com.arjangconsulting.codeeditor.verification",
+    "app_locale": "unavailable from external inspection",
+    "capabilities": "accessibility.authoredJourney.v1,accessibility.nativeAudit,accessibility.voiceOverPhases,accessibility.voiceOverRecovery,accessibility.voiceOverTraversal,action.clearText,action.doubleTap,action.drag,action.longPress,action.pinch,action.pressBack,action.pressKey,action.scroll,action.setOrientation,action.setTargetApp,action.setText,action.swipe,action.swipeInDirection,action.tap,action.typeText,ai.screenContext,capture.screenshot,protocol.amoo.v1,query.currentApp,query.findElements,query.getViewHierarchy,query.isKeyboardVisible,query.screenInfo",
+    "capture_reference": "BD38AB82-AB7D-45FC-BD24-8EB72B2CDA3E",
+    "companion_build": "unknown",
+    "companion_bundle": "com.amoo.companion.uitests",
+    "companion_fingerprint": "d02873f4d82b4a56d542cde77689fa0cb56c421875f8e14ff951f1cf34e36c86",
+    "companion_locale": "en_US",
+    "device_id": "9F4D0975-6277-4825-8117-F1CE9CB25ED9",
+    "device_os": "27.2",
+    "host_binary": "/Users/maniramezan/Developer/manman/mobile-testing/.build/out/Products/Debug/amoo",
+    "host_commit": "e6de446b8e227211f5839bf73f1d391ed3be164a",
+    "host_sha256": "6f59c183f2e3f65136634b99ab88998ee798d9b8085858fcece6de039b75f4af",
+    "host_source_dirty": "true",
+    "host_source_fingerprint": "2f4cfa865de400b915c97eba88ade34702716895",
+    "host_version": "0.3.0+54.ge6de446b8e22.dirty",
+    "launch_configuration_sha256": "348a112cf036585800838b7f38df04e3d4bdfcda5bac1e6e35f0ca5954d8f03c",
+    "startup_voiceover_recovery": "none"
+  },
+  "provider": "authoredAccessibilityJourney",
+  "requestedChecks": [
+    "field.name",
+    "seek.seek",
+    "activate.before",
+    "activate.action",
+    "activate.destination",
+    "activate.recovery"
+  ],
+  "restoredVoiceOverEnabled": false,
+  "status": "observed",
+  "truncated": false,
+  "utterances": [
+    "Reset Button",
+    "Empty Button",
+    "Make read only Button",
+    "Long JSON Button",
+    "Wrap Button",
+    "Probe composition Button",
+    "Probe result: Not run",
+    "Selection: 0..0",
+    "Folds:",
+    "Code editor Text field Is editing Line 1, column 1 Actions available",
+    "Code editor Text field Is editing Line 1, column 1 Actions available"
+  ],
+  "verdict": "pass"
+}

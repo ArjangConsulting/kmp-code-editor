@@ -1,0 +1,58 @@
+{
+  "status": "pass",
+  "goal": "verify",
+  "transport": "cli",
+  "device": {
+    "platform": "ios",
+    "id": "C342D46C-5843-4208-A51A-A75A3F03406A",
+    "name": "iPhone 18 Pro",
+    "os": "27.2"
+  },
+  "app": {
+    "id": "com.arjangconsulting.codeeditor.verification",
+    "build": "verification/build/ios/Build/Products/Debug-iphonesimulator/EditorVerification.app"
+  },
+  "assertions": [
+    {
+      "name": "Real Japanese candidate replacement via native keyboard",
+      "status": "passed",
+      "native_keys": [
+        "n",
+        "i",
+        "h",
+        "o",
+        "n"
+      ],
+      "candidate": "日本",
+      "text": "日本",
+      "selection": "2..2",
+      "evidence": "benchmarks/evidence/native-20261106/ios-ime/committed.png"
+    },
+    {
+      "name": "Original keyboard list restored",
+      "status": "passed",
+      "keyboards": [
+        "English (US)",
+        "Persian",
+        "Emoji"
+      ],
+      "raw_assertion": {
+        "content": "Element is absent",
+        "ok": true,
+        "structured": {
+          "element_id": "",
+          "element_label": "",
+          "outcome_status": "target_state_confirmed",
+          "passed": true,
+          "postcondition_verified": true
+        },
+        "tool": "assert_absent"
+      }
+    }
+  ],
+  "cleanup": {
+    "runtime_id": "runtime-8389f79c",
+    "state": "stopped",
+    "companion_stopped": true
+  }
+}

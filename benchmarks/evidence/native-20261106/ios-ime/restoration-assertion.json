@@ -1,0 +1,1 @@
+{"content":"Element is absent","ok":true,"structured":{"element_id":"","element_label":"","outcome_status":"target_state_confirmed","passed":true,"postcondition_verified":true},"tool":"assert_absent"}
