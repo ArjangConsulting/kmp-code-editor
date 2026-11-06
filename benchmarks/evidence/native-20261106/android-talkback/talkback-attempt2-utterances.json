@@ -1,0 +1,31 @@
+{
+  "run_id_supplied": "editor-talkback-20261106b",
+  "amoo_session_run_id": "73334F88-E2A9-4DD0-8708-C829EEC04245",
+  "device": "emulator-5556 (Medium_Phone_API_35, Android 15 API 35, en-US)",
+  "tool": "test_talkback activate=true record_speech=true steps=14 (attempt 2 of 2)",
+  "executionStatus": "succeeded",
+  "verdict": "notAssessed",
+  "cleanupStatus": "restored",
+  "notEvaluated": {
+    "talkBack.activation": "Activation shortcut sent; assert an explicit app postcondition separately",
+    "talkBack.move.12": "Focus change and app-scoped synthesis speech were not both observed"
+  },
+  "talkback": "com.google.android.marvin.talkback 15.0.0.639625893",
+  "app_sha256": "a3e19ac8ea2a68743600eda983bcbd8eed8612043b46c0bf1ff579bdca5c746e",
+  "phases": [
+    ["Reset. Button", "Press Alt + ENTER to activate"],
+    ["Empty. Button", "Press Alt + ENTER to activate"],
+    ["Make read only. Button", "Press Alt + ENTER to activate"],
+    ["Long JSON. Button", "Press Alt + ENTER to activate"],
+    ["Wrap. Button", "Press Alt + ENTER to activate"],
+    ["Probe composition. Button", "Press Alt + ENTER to activate"],
+    ["Probe result: Not run"],
+    ["Selection: 0 2 Period0"],
+    ["Folds: "],
+    ["fun greet() {\n", "    val message = \"hello world\". Edit box. Code editor", "Press Alt + ENTER to edit text. Press Alt + Shift + ENTER to long press. Actions available, use Alt + SPACE to view"],
+    ["Text length: 72"],
+    ["Text: fun greet() {⏎    val message = \"hello world\"⏎    println(message)⏎}⏎end"],
+    [],
+    ["Editor verification"]
+  ]
+}

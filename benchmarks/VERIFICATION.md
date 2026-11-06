@@ -69,7 +69,7 @@ bounded observations, not a comprehensive accessibility pass.
 | Read-only Copy and non-editing menu | Passed; Copy/Select All only, unchanged 72-character source; copied greet pasted into editable source | Passed; Copy/Select all only (Cut and Paste absent), source unchanged after Copy then Delete, copied greet pasted with native Ctrl+V into Empty (Text: greet, length 5) |
 | Rotation preserves wrapped source/tail | Previously passed | Untested |
 | Real non-Latin keyboard candidate | Passed; Japanese native n/i/h/o/n keys and candidate tap committed 日本, selection 2..2 | Passed; Gboard composing input, conversion/candidate selection committed にほん, length/caret 3 |
-| Actual assistive-technology traversal and speech | Passed within the bounded VoiceOver journey described below | Not established; TalkBack startup failed three times, and a retry was blocked by the `amoo doctor` preflight |
+| Actual assistive-technology traversal and speech | Passed within the bounded VoiceOver journey described below | Passed for traversal and speech only (Android 15, TalkBack 15.0.0); activation and read-only state not assessed |
 
 Android read-only clipboard captures: [menu](evidence/native-20261106/android-final/readonly-menu.png)
 and [pasted result](evidence/native-20261106/android-final/readonly-copied-pasted.png); the
@@ -118,11 +118,19 @@ restored. The [raw session report](evidence/native-20261106/ios/amoo-session-rep
 exploratory failures as well as the final passing journey; its pre-cleanup summary is not an overall
 coverage verdict.
 
-Android TalkBack spoken traversal remains a gap. Three attempts failed in tooling (a notification
-permission prompt, no initial app-owned focus, a dropped companion transport with cleanup unknown),
-and a later retry was blocked before setup because `amoo doctor` reported stale foreign MCP servers
-and an unresponsive companion on another emulator. Those are tooling findings, not editor
-accessibility defects. Rerun after the owners of those clients stop them. Earlier reviewed iOS long-line captures remain available in this directory:
+A TalkBack traversal with recorded speech then succeeded on a fresh Android 15 emulator using the
+local amoo debug build ([utterances](evidence/native-20261106/android-talkback/talkback-attempt2-utterances.json),
+[final focus](evidence/native-20261106/android-talkback/04-after-talkback-attempt2.png)). Spoken in
+order: the six buttons ("Reset. Button" and so on), the status lines, then the editor as its text
+followed by "Edit box. Code editor" and "Actions available, use Alt + SPACE to view", then the title.
+Custom actions are announced as available but not enumerated, so they were not exercised. Step 12
+produced no observed speech and the activation step landed on the title, not the editor, so
+activation and any read-only state phrase are not assessed. The editor was editable in this run.
+The harness's own "Selection: 0..0" line is read as "0 2 Period0", which is a harness text quirk,
+not editor output. The first attempt failed with "Initial app-owned TalkBack focus unavailable"
+because Accessibility Suite's notification-permission prompt took the foreground; allowing it and
+relaunching fixed the retry. TalkBack was verified back to its original state through adb and the
+emulator was shut down. The earlier failures were tooling, not editor accessibility defects. Earlier reviewed iOS long-line captures remain available in this directory:
 [iOS wrapped native keys](evidence/ios-wrapped-native-keys.png),
 [iOS unwrapped native keys](evidence/ios-unwrapped-native-keys.png), and
 [iOS rotation](evidence/ios-landscape.png).

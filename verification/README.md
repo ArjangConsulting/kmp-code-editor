@@ -81,3 +81,9 @@ restore its original state. An authored journey with a targeted XCTest gesture e
 that gesture and its observed speech/postconditions; it does not certify screen-reader activation,
 rotor or custom actions. Keep unsupported role exports and missing speech separate from app defects.
 The current matrix and reviewed captures are in [benchmarks/VERIFICATION.md](../benchmarks/VERIFICATION.md).
+
+On a fresh Android emulator, grant `POST_NOTIFICATIONS` to `com.google.android.marvin.talkback` (or
+allow Accessibility Suite's prompt and relaunch the app) before the first TalkBack run. Otherwise the
+prompt takes the foreground and the run fails with the misleading "Initial app-owned TalkBack focus
+unavailable". A fresh emulator may also show a "Bluetooth keeps stopping" dialog that is absent from
+the accessibility tree; dismiss it by coordinates and confirm the foreground app before testing.
