@@ -128,14 +128,12 @@ class BackendLanguageServiceTest {
     }
 
     @Test
-    fun `candidates with out of bounds or overlapping edits are discarded`() = runTest {
+    fun `candidates with out of document edits are discarded`() = runTest {
         val outside = TextEdit(TextRange.at(TextPosition(0, 99)), "outside")
-        val overlap = TextEdit(TextRange(TextPosition.Zero, caret), "overlap")
         val items = listOf(
             CompletionItem("valid"),
             CompletionItem("outside", textEdit = outside),
             CompletionItem("additional outside", additionalTextEdits = listOf(outside)),
-            CompletionItem("overlap", textEdit = overlap, additionalTextEdits = listOf(overlap)),
         )
         val service = BackendLanguageService(
             CompletionBackend { it.response(CompletionList(items)) }, "tools", context,

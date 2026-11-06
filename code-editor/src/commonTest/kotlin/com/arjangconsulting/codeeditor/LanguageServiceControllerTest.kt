@@ -364,7 +364,7 @@ class LanguageServiceControllerTest {
         controller.documentChanged(grown, 3, 'r')
         val grownSession = assertNotNull(controller.completion.value)
         val grownState = CodeEditorState(grown.text)
-        grownState.apply(completionAcceptOutcome(grown, item, grownSession, 3))
+        grownState.apply(assertNotNull(completionAcceptOutcome(grown, item, grownSession, 3)))
         assertEquals("scroll tail!", grownState.text)
         assertEquals(6, grownState.selectionEnd)
         assertTrue(grownState.undo())
@@ -374,7 +374,7 @@ class LanguageServiceControllerTest {
         controller.documentChanged(shrunk, 1)
         val shrunkSession = assertNotNull(controller.completion.value)
         val shrunkState = CodeEditorState(shrunk.text)
-        shrunkState.apply(completionAcceptOutcome(shrunk, item, shrunkSession, 1))
+        shrunkState.apply(assertNotNull(completionAcceptOutcome(shrunk, item, shrunkSession, 1)))
         assertEquals("scroll tail!", shrunkState.text)
     }
 
@@ -544,9 +544,74 @@ class LanguageServiceControllerTest {
         controller.documentChanged(snapshot, 2, 'c')
         val session = assertNotNull(controller.completion.value)
         val state = CodeEditorState(snapshot.text)
-        state.apply(completionAcceptOutcome(snapshot, item, session, 2))
+        state.apply(assertNotNull(completionAcceptOutcome(snapshot, item, session, 2)))
         assertEquals("import x\nscroll", state.text)
         assertEquals(state.text.length, state.selectionEnd)
+    }
+
+    @Test
+    fun `overlapping completion edits from a direct service are discarded`() = runTest {
+        val snapshot = DocumentSnapshot("t abcdef", 1)
+        val invalid = CompletionItem(
+            "tap",
+            additionalTextEdits = listOf(
+                TextEdit(TextRange(TextPosition(0, 2), TextPosition(0, 5)), "first"),
+                TextEdit(TextRange(TextPosition(0, 4), TextPosition(0, 7)), "second"),
+            ),
+        )
+        val logger = RecordingLogger()
+        val controller = controller(FakeService(completions = { _, _, _ -> CompletionList(listOf(invalid, CompletionItem("type"))) }), logger)
+        controller.requestCompletion(snapshot, 1)
+        advanceUntilIdle()
+        assertEquals(listOf("type"), assertNotNull(controller.completion.value).items.map { it.item.label })
+        assertTrue(logger.debugs.any { "invalid edits" in it })
+    }
+
+    @Test
+    fun `completion edits beyond the document clamp like LSP positions`() = runTest {
+        val snapshot = DocumentSnapshot("t", 1)
+        val clamped = CompletionItem("tap", textEdit = TextEdit(TextRange(TextPosition.Zero, TextPosition(1, Int.MAX_VALUE)), "tap"))
+        val controller = controller(FakeService(completions = { _, _, _ -> CompletionList(listOf(clamped)) }))
+        controller.requestCompletion(snapshot, 1)
+        advanceUntilIdle()
+        val session = assertNotNull(controller.completion.value)
+        assertEquals(listOf("tap"), session.items.map { it.item.label })
+        val outcome = assertNotNull(completionAcceptOutcome(snapshot, clamped, session, 1))
+        assertEquals(listOf(Replacement(0, 1, "tap")), outcome.replacements)
+    }
+
+    @Test
+    fun `items whose additional edit overlaps the prefix are not offered`() = runTest {
+        val snapshot = DocumentSnapshot("ta", 1)
+        val conflicting = CompletionItem(
+            "tap",
+            additionalTextEdits = listOf(TextEdit(TextRange(TextPosition.Zero, TextPosition(0, 1)), "x")),
+        )
+        val logger = RecordingLogger()
+        val controller = controller(FakeService(completions = { _, _, _ -> CompletionList(listOf(conflicting, CompletionItem("tail"))) }), logger)
+        controller.requestCompletion(snapshot, 2)
+        advanceUntilIdle()
+        assertEquals(listOf("tail"), assertNotNull(controller.completion.value).items.map { it.item.label })
+        assertTrue(logger.debugs.any { "invalid edits" in it })
+    }
+
+    @Test
+    fun `resolved completion edits cannot overlap the implicit prefix replacement`() = runTest {
+        val snapshot = DocumentSnapshot("ta tail", 1)
+        val service = object : LanguageService {
+            override suspend fun complete(doc: DocumentSnapshot, position: TextPosition, trigger: CompletionTrigger): CompletionList =
+                CompletionList(listOf(CompletionItem("tap")))
+
+            override suspend fun resolveCompletionItem(item: CompletionItem): CompletionItem = item.copy(
+                additionalTextEdits = listOf(TextEdit(TextRange(TextPosition.Zero, TextPosition(0, 1)), "invalid")),
+            )
+        }
+        val controller = controller(service)
+        controller.requestCompletion(snapshot, 2)
+        advanceUntilIdle()
+        val session = assertNotNull(controller.completion.value)
+        val outcome = completionAcceptOutcome(snapshot, assertNotNull(session.selected), session, 2)
+        assertNull(outcome)
     }
 
 }

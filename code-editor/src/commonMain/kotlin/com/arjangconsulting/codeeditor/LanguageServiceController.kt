@@ -252,7 +252,8 @@ internal class LanguageServiceController(
     private fun refilter(session: CompletionSession, snapshot: DocumentSnapshot, caret: Int) {
         val prefix = snapshot.text.substring(session.anchor, caret)
         if (prefix == session.prefix) return
-        val items = filterAndRankCompletions(session.rawItems, prefix, options.maxCompletionItems)
+        val original = session.requestSnapshot ?: snapshot
+        val items = rankAcceptable(session.rawItems, prefix, snapshot, original, session.anchor, session.requestPosition, caret)
         if (items.isEmpty() && !session.isIncomplete && !session.explicit) {
             closeCompletion()
             return
@@ -284,7 +285,7 @@ internal class LanguageServiceController(
     private fun publishCompletion(list: CompletionList, snapshot: DocumentSnapshot, caret: Int, position: TextPosition, explicit: Boolean) {
         val anchor = completionPrefixStart(snapshot.text, caret, rules)
         val prefix = snapshot.text.substring(anchor, caret)
-        val items = filterAndRankCompletions(list.items, prefix, options.maxCompletionItems)
+        val items = rankAcceptable(list.items, prefix, snapshot, snapshot, anchor, position, caret)
         val previous = _completion.value
         if (items.isEmpty() && !explicit && !(list.isIncomplete && previous != null)) {
             _completion.value = null
@@ -304,6 +305,33 @@ internal class LanguageServiceController(
             requestSnapshot = snapshot,
         )
         resolveSelected()
+    }
+
+    /**
+     * Ranks [raw] against [prefix] and keeps the first [LanguageServiceOptions.maxCompletionItems]
+     * whose edits [completionAcceptOutcome] could apply now, so the popup never lists an item that
+     * acceptance would reject.
+     */
+    private fun rankAcceptable(
+        raw: List<CompletionItem>,
+        prefix: String,
+        snapshot: DocumentSnapshot,
+        original: DocumentSnapshot,
+        anchor: Int,
+        requestPosition: TextPosition,
+        caret: Int,
+    ): List<RankedCompletion> {
+        val diff = diffText(original.text, snapshot.text)
+        var discarded = 0
+        val ranked = filterAndRankCompletions(raw, prefix).asSequence()
+            .filter { candidate ->
+                (planCompletion(snapshot, original, candidate.item, anchor, requestPosition, caret, diff) != null)
+                    .also { if (!it) discarded++ }
+            }
+            .take(options.maxCompletionItems)
+            .toList()
+        if (discarded > 0) logger.debug("Discarded $discarded completion candidates with invalid edits")
+        return ranked
     }
 
     private fun preselectedIndex(items: List<RankedCompletion>): Int = items.indexOfFirst { it.item.preselect }.coerceAtLeast(0)
@@ -352,11 +380,24 @@ internal class LanguageServiceController(
 /**
  * The edit that accepting [item] makes, given the [session] it came from and the current [caret].
  * Maps service edits through changes to the completion prefix. A `textEdit` ending at the request
- * position follows the caret; otherwise replaces the identifier prefix with `insertText ?: label`. Snippets are expanded and select the first stop.
+ * position follows the caret; otherwise replaces the identifier prefix with `insertText ?: label`.
+ * Snippets are expanded and select the first stop. Invalid edits return null without changing text.
  */
-internal fun completionAcceptOutcome(snapshot: DocumentSnapshot, item: CompletionItem, session: CompletionSession, caret: Int): EditOutcome {
+internal fun completionAcceptOutcome(snapshot: DocumentSnapshot, item: CompletionItem, session: CompletionSession, caret: Int): EditOutcome? {
     val original = session.requestSnapshot ?: snapshot
     val diff = diffText(original.text, snapshot.text)
+    return planCompletion(snapshot, original, item, session.anchor, session.requestPosition, caret, diff)
+}
+
+private fun planCompletion(
+    snapshot: DocumentSnapshot,
+    original: DocumentSnapshot,
+    item: CompletionItem,
+    anchor: Int,
+    requestPosition: TextPosition,
+    caret: Int,
+    diff: TextDiff,
+): EditOutcome? {
     val delta = diff.newText.length - (diff.oldEnd - diff.start)
     fun mapOffset(offset: Int, end: Boolean): Int = when {
         offset < diff.start || offset == diff.start && !end -> offset
@@ -371,21 +412,29 @@ internal fun completionAcceptOutcome(snapshot: DocumentSnapshot, item: Completio
     )
     val (start, end, rawText) = item.textEdit?.let { edit ->
         val mapped = replacement(edit)
-        val editEnd = if (edit.range.end == session.requestPosition) caret else mapped.end
+        val editEnd = if (edit.range.end == requestPosition) caret else mapped.end
         Triple(mapped.start, editEnd, edit.newText)
-    } ?: Triple(session.anchor.coerceAtMost(caret), caret, item.insertText ?: item.label)
+    } ?: Triple(anchor.coerceAtMost(caret), caret, item.insertText ?: item.label)
     val parsed = if (item.insertTextFormat == InsertTextFormat.SNIPPET) parseSnippet(rawText) else ParsedSnippet(rawText, rawText.length, rawText.length)
     val main = Replacement(start, end, parsed.text)
     val additional = item.additionalTextEdits.map { edit ->
         if (edit.range.isEmpty) {
             val offset = original.offsetOf(edit.range.start)
-            val mapped = mapOffset(offset, end = offset != session.anchor)
+            val mapped = mapOffset(offset, end = offset != anchor)
             Replacement(mapped, mapped, edit.newText)
         } else {
             replacement(edit)
         }
-    }.filter { it.end <= start || it.start >= end }
+    }
+    val replacements = listOf(main) + additional
+    if (replacements.any { it.start !in 0..snapshot.text.length || it.end !in it.start..snapshot.text.length }) return null
+    if (!hasNonOverlappingReplacements(replacements)) return null
     val shiftBefore = additional.filter { it.end <= start }.sumOf { it.text.length - (it.end - it.start) }
     val selection = Selection(start + shiftBefore + parsed.selectionStart, start + shiftBefore + parsed.selectionEnd)
-    return EditOutcome(listOf(main) + additional, selection, EditKind.OTHER)
+    return EditOutcome(replacements, selection, EditKind.OTHER)
+}
+
+/** Reports an accepted completion whose edits were discarded because they overlap or fall outside the document. */
+internal fun CodeEditorLogger.logRejectedCompletion(item: CompletionItem) {
+    error("Rejected completion '${item.label}': its edits overlap each other, the replaced prefix, or fall outside the document")
 }

@@ -68,6 +68,10 @@ internal fun RstaCodeEditor(state: CodeEditorState, controller: LanguageServiceC
                     val session = controller.completion.value ?: return
                     val outcome = completionAcceptOutcome(state.snapshot(), item, session, state.selectionInternal.caret)
                     controller.closeCompletion()
+                    if (outcome == null) {
+                        config.logger.logRejectedCompletion(item)
+                        return
+                    }
                     if (panelHolder[0]?.config?.readOnly == false) state.apply(outcome)
                     panelHolder[0]?.syncFromState()
                 }

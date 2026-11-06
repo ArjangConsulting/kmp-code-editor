@@ -86,22 +86,12 @@ public class BackendLanguageService(
                 response.contextRevision == context.revision && response.documentVersion == doc.version
             if (matches && response.completions != null) {
                 val list = response.completions
-                val items = list.items.filter { validEdits(it, doc) }
-                if (items.size != list.items.size) logger.debug("Discarded completion candidates with invalid edits")
+                val items = list.items.filter { hasInDocumentPositions(it, doc) }
+                if (items.size != list.items.size) logger.debug("Discarded completion candidates with out-of-document edits")
                 return list.copy(items = items)
             }
             if (!matches) logger.debug("Discarded mismatched completion backend response")
         }
         return fallback.complete(doc, position, trigger)
     }
-}
-
-private fun validEdits(item: CompletionItem, doc: DocumentSnapshot): Boolean {
-    val edits = listOfNotNull(item.textEdit) + item.additionalTextEdits
-    if (edits.any { edit ->
-        doc.positionOf(doc.offsetOf(edit.range.start)) != edit.range.start ||
-            doc.positionOf(doc.offsetOf(edit.range.end)) != edit.range.end
-    }) return false
-    val ordered = edits.sortedWith(compareBy({ it.range.start }, { it.range.end }))
-    return ordered.zipWithNext().all { (before, after) -> before.range.end <= after.range.start }
 }

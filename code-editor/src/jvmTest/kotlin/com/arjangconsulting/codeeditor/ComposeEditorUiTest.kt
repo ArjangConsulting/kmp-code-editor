@@ -186,6 +186,38 @@ class ComposeEditorUiTest {
     }
 
     @Test
+    fun `invalid resolved completion edits close the popup and leave editing usable`() = runComposeUiTest {
+        val state = CodeEditorState("t abcdef", 1 until 1)
+        val invalidService = object : LanguageService {
+            override suspend fun complete(doc: DocumentSnapshot, position: TextPosition, trigger: CompletionTrigger): CompletionList =
+                CompletionList(listOf(CompletionItem("tap")))
+
+            override suspend fun resolveCompletionItem(item: CompletionItem): CompletionItem = item.copy(
+                documentation = MarkupContent.plain("Resolved completion"),
+                additionalTextEdits = listOf(
+                    TextEdit(TextRange(TextPosition(0, 2), TextPosition(0, 5)), "first"),
+                    TextEdit(TextRange(TextPosition(0, 4), TextPosition(0, 7)), "second"),
+                ),
+            )
+        }
+        setContent {
+            Themed {
+                CodeEditor(state, Modifier.size(500.dp, 300.dp), languageService = invalidService, serviceOptions = fastOptions)
+            }
+        }
+        focusEditor()
+        input().performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.Spacebar) } }
+        waitUntil(timeoutMillis = 3_000) { onAllNodesHaveText("Resolved completion") }
+        input().performKeyInput { pressKey(Key.Enter) }
+        waitForIdle()
+        assertFalse(onAllNodesExist(COMPLETION_LIST_TAG))
+        assertEquals("t abcdef", state.text)
+        input().performTextInput("x")
+        waitForIdle()
+        assertEquals("tx abcdef", state.text)
+    }
+
+    @Test
     fun `line highlights and diagnostics are drawn`() = runComposeUiTest {
         val highlight = Color(0xFFFF0000)
         val squiggle = Color(0xFF0000FF)

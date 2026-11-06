@@ -206,7 +206,7 @@ The editor still applies local filtering with `filterText` or `label`.
 Create one context-bound service per editor/session or share only across identical immutable
 contexts. `BackendLanguageService` copies context attributes and generates unique request IDs.
 It discards responses with a different request ID, protocol version, session ID, context revision,
-or document version, and discards candidates with out-of-bounds or overlapping edits.
+or document version, and discards candidates whose edit positions fall outside the document. The editor then drops candidates whose edits overlap each other or the replaced prefix.
 
 Replace the service after runtime changes. Service replacement invalidates pending results; also
 advance `languageServiceRevision` when retaining a mutable provider. The existing controller checks

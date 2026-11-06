@@ -550,12 +550,21 @@ internal class EditorModel(
         applyOutcome(EditOutcome(listOf(Replacement(selection.start, selection.end, normalized)), Selection(selection.start + normalized.length)))
     }
 
+    /**
+     * Accepts the selected completion. Returns true when a completion was selected, whether or not its
+     * edits could be applied: a rejected item closes the popup and consumes the key, as the RSTA
+     * engine does.
+     */
     fun acceptCompletion(): Boolean {
         val session = controller.completion.value ?: return false
         val item = session.selected ?: return false
         val snapshot = state.snapshot()
         val outcome = completionAcceptOutcome(snapshot, item, session, state.selectionInternal.caret)
         controller.closeCompletion()
+        if (outcome == null) {
+            config.logger.logRejectedCompletion(item)
+            return true
+        }
         applyOutcome(outcome)
         return true
     }
