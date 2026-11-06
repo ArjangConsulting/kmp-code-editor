@@ -90,7 +90,7 @@ Central releases are immutable; never move a published tag or reuse a published 
 
 ## Current readiness evidence
 
-The `0.1.0` [preflight at `7c04f6e`](https://github.com/ArjangConsulting/kmp-code-editor/actions/runs/42304177088)
+The `0.1.0` [preflight at `7c04f6e`](https://github.com/ArjangConsulting/kmp-code-editor/actions/runs/42307080067)
 completed the release checks, ABI checks, authenticated Central read-only request, and signing.
 All five publications passed local POM/archive checks with 29 signature files. The six environment
 secrets were present. The App installation accepted its identity but token creation failed because
