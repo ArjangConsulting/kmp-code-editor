@@ -69,6 +69,11 @@ var text by remember { mutableStateOf("") }
 CodeEditor(value = text, onValueChange = { text = it }, language = KotlinRules)
 ```
 
+`onValueChange` reports editor changes, including typing, completion acceptance, undo, and redo.
+Supplying an external `value` replaces the text as one undoable change and moves the caret to the
+end without calling `onValueChange`. Delayed echoes of recently reported values do not overwrite
+newer typing.
+
 A REPL prompt:
 
 ```kotlin

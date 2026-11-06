@@ -6,9 +6,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -161,9 +163,11 @@ public fun CodeEditor(
 }
 
 /**
- * A [CodeEditor] for a plain [value]. Edits are reported through [onValueChange]; when [value]
- * changes from outside, the editor text is replaced (as one undoable change) and the caret moves to
- * the end. Selection, folding, and undo history live inside and survive recomposition.
+ * A [CodeEditor] for a plain [value]. [onValueChange] reports editor changes, including user edits,
+ * completion acceptance, undo, and redo. Synchronizing an external [value] does not call
+ * [onValueChange]: the editor text is replaced as one undoable change and the caret moves to the end.
+ * Delayed echoes of recently reported values do not overwrite newer typing. Selection, folding,
+ * and undo history live inside and survive recomposition.
  * [languageServiceRevision] invalidates service results as in the state-based overload.
  */
 @Composable
@@ -197,20 +201,30 @@ public fun CodeEditor(
 ) {
     val state = remember { CodeEditorState(value) }
     val currentOnValueChange by rememberUpdatedState(onValueChange)
+    var synchronizingExternalValue by remember { mutableStateOf(false) }
     // Texts we reported but the caller may not have echoed back yet. A late echo of one of them must
     // not overwrite newer typing, so only values outside this set count as external changes.
     val reported = remember { ArrayDeque<String>() }
     DisposableEffect(state) {
         val listener: (String) -> Unit = { text ->
-            reported.addLast(text)
-            while (reported.size > 32) reported.removeFirst()
-            currentOnValueChange(text)
+            if (!synchronizingExternalValue) {
+                reported.addLast(text)
+                while (reported.size > 32) reported.removeFirst()
+                currentOnValueChange(text)
+            }
         }
         state.addTextListener(listener)
         onDispose { state.removeTextListener(listener) }
     }
     LaunchedEffect(value) {
-        if (value != state.text && value !in reported) state.setText(value)
+        if (value != state.text && value !in reported) {
+            synchronizingExternalValue = true
+            try {
+                state.setText(value)
+            } finally {
+                synchronizingExternalValue = false
+            }
+        }
         if (value == state.text) reported.clear()
     }
     CodeEditor(

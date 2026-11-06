@@ -18,6 +18,7 @@ CodeEditor (public composable)
 
 | File | Role | Tested in |
 | --- | --- | --- |
+| `CodeEditor.kt` | The controlled-value overload suppresses its synchronous text callback only while applying an external value. Editor changes still notify the host and enter a bounded queue of reported values that protects newer typing from delayed parent echoes. | `ControlledValueEditorUiTest` |
 | `TextModel.kt` | `TextPosition`/`TextRange`/`TextEdit`, `DocumentSnapshot` with a lazy `LineIndex` (LSP line breaks: `\n`, `\r\n`, `\r`), `applyTextEdits`, minimal `diffText`, surrogate-pair helpers. | `TextModelTest` |
 | `TokenRules.kt`, `TokenRulesPresets.kt` | DSL and a line lexer, with an internal tokenizer hook for YAML. Default multi-line state is an `Int` (`(ruleIndex + 1) << 8 | nestingDepth`), so the Compose engine caches it per line and RSyntaxTextArea stores it as a negative token type. | `LexerTest` |
 | `YamlLexer.kt` | Dedicated incremental YAML scanner selected by `YamlRules`. Positive line state packs flow depth/quote mode or block scalar indentation/inference mode; both engines consume it through `TokenRules.tokenizeLine`. | `YamlLexerTest`, `RstaEditorPanelTest` |
