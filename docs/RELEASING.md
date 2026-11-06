@@ -63,9 +63,19 @@ them in command arguments.
    gh workflow run release-preflight.yml --repo ArjangConsulting/kmp-code-editor -f version=0.1.0
    ```
 
-   Preflight checks secret presence, App access and permissions, the full CI task list, and signing
-   for all five Maven publications. It does not create a tag, upload artifacts, or publish anything.
-   Secret presence does not verify the Central token or namespace; confirm those in the Portal.
+   Preflight runs independent jobs for App access, a read-only Central token check, and the full CI
+   task list plus signing. One credential failure does not skip the other jobs. The Central check
+   uses the authenticated deployments-list endpoint; it does not upload a deployment or establish
+   namespace ownership. See the [Publisher API](https://central.sonatype.com/api-doc).
+   Signed publications are written to an isolated temporary Maven repository. Checks require all
+   five target POMs, publication metadata, source/documentation archives, and signatures for every
+   published artifact. Test reports are uploaded as CI evidence; no release artifacts are uploaded
+   to Central, and no tag or release is created.
+   Secret presence alone verifies no credentials. A passing App job verifies installation token
+   creation with the requested permissions; a passing Central job verifies token authentication;
+   a passing signing step verifies that Gradle can unlock and use the key. Confirm namespace
+   ownership, supported public-keyserver availability, and Central's publication validation in the
+   Portal before publishing. Local POM checks do not replace Central validation.
 4. Review the results and the generated release content before enabling releases. The maintainer
    controls the repository variable `RELEASES_ENABLED`; leave it unset or false during preparation.
 5. Once the maintainer enables releases, dispatch Release Please. Inspect its PR for version

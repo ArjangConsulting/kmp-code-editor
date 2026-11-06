@@ -135,4 +135,6 @@ bytecode at `JvmTarget.JVM_17`. `.editorconfig` holds the house style.
   the App needs Contents, Pull requests, and Workflows write permissions for this repository.
   Run `gh workflow run release-preflight.yml -f version=0.1.0` to check secrets, App access, builds,
   tests, ABI, and signing without publishing. `.github/scripts/check-release-secrets.sh` checks
-  required secret names without printing their values.
+  required secret names without printing their values. Preflight isolates App permissions, read-only
+  Central authentication (`check-central-credentials.py`), and build/signing checks;
+  `check-publications.py` validates all five local publications and their signature files.

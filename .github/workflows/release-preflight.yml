@@ -16,6 +16,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  app-access:
+    runs-on: ubuntu-latest
+    environment: secrets
+    steps:
+      - uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.RELEASE_PLEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+  central-credentials:
+    runs-on: ubuntu-latest
+    environment: secrets
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify Central token without uploading
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: python3 .github/scripts/check-central-credentials.py
+
   verify:
     runs-on: macos-26
     environment: secrets
@@ -42,14 +65,6 @@ jobs:
           RELEASE_PLEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
         run: bash .github/scripts/check-release-secrets.sh RELEASE_PLEASE_APP_CLIENT_ID RELEASE_PLEASE_APP_PRIVATE_KEY
 
-      - uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ secrets.RELEASE_PLEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
-          permission-workflows: write
-
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -65,13 +80,9 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          ./gradlew publishToMavenLocal --no-configuration-cache
-          signatures="$(find "$HOME/.m2/repository/com/arjangconsulting/codeeditor" -name '*.asc' | wc -l | tr -d '[:space:]')"
-          if [ "$signatures" -eq 0 ]; then
-            echo "::error::publishToMavenLocal produced no .asc signatures; signing is not exercised."
-            exit 1
-          fi
-          echo "Signed $signatures artifacts."
+          repository="$RUNNER_TEMP/preflight-maven"
+          ./gradlew publishToMavenLocal "-Dmaven.repo.local=$repository" --no-configuration-cache
+          python3 .github/scripts/check-publications.py "$repository" "$ORG_GRADLE_PROJECT_VERSION_NAME"
 
       - name: Upload test reports
         if: always()
