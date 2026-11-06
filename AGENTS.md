@@ -33,6 +33,7 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
     `LanguageService` + `LanguageServiceController` (orchestration), the Compose engine
     (`ComposeCodeEditor`, `EditorModel`, `EditorOverlays`), `HighlightedText`, defaults/labels.
     `VisualLayout` supplies bounded rendering tiles and logical-to-visual wrapping geometry.
+    `CompletionEdits` holds the backend in-document position check and the shared overlap check; the controller validates mapped replacements before publication and acceptance.
     `Formatting` handles explicit format actions; `JsonLanguageService` and `YamlLanguageService`
     supply local syntax validation and formatting. `YamlLexer` handles indentation-aware YAML highlighting.
     `CompletionProtocol` and `BackendLanguageService` bridge tool completion providers;
@@ -48,9 +49,11 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
 - `verification/` — standalone Android/iOS harness for native input and accessibility checks; a
   separate Gradle build that includes this repo (see `verification/README.md`).
 - `examples/completion/export_mcp_tools.py` — source-free MCP catalog export with Python 3.11+.
+- `docs/RELEASING.md` — credential setup, pre-1.0 versioning, ABI review, and initial release checks.
 - `docs/COMPLETION_PROTOCOL.md` — native/provider integration and the versioned JSON contract.
 - `docs/ARCHITECTURE.md` — internals. `README.md` — public API, engines, keyboard, known gaps.
 - `.github/workflows/` — `ci.yml`, `release-please.yml` -> `release.yml` (Maven Central publish),
+  `release-preflight.yml` (credential/App checks and signing without publishing),
   `dependabot-auto-merge.yml`. `.github/dependabot.yml` configures dependency updates.
 - `.run/` — shared IntelliJ run configurations.
 
@@ -82,10 +85,11 @@ KMPComponents and kommon, is in the `kmp-library-conventions` skill (from the KM
 ```bash
 ./gradlew :code-editor:jvmTest                     # fastest: common + desktop UI + RSTA tests
 ./gradlew :code-editor:allTests                    # all targets (iOS needs macOS + Xcode)
+./gradlew :code-editor:checkKotlinAbi
 ./gradlew :code-editor:assemble :sample:compileKotlinJvm
 ```
 
-CI runs `:code-editor:allTests :code-editor:assemble :sample:compileKotlinJvm` on macOS with JDK 21.
+CI runs `bash .github/scripts/verify.sh` (`:code-editor:allTests :code-editor:checkKotlinAbi :code-editor:assemble :sample:compileKotlinJvm`) on macOS with JDK 21. That script is the only copy of the task list; `ci.yml`, `release.yml`, and `release-preflight.yml` all call it.
 Test reports and results are uploaded as the `test-reports` artifact even when verification fails.
 The build needs Google Maven for the Android Gradle plugin. Versions live in
 `gradle/libs.versions.toml` only; declare Compose libraries through catalog entries. Keep Kotlin/JVM
@@ -109,7 +113,9 @@ bytecode at `JvmTarget.JVM_17`. `.editorconfig` holds the house style.
 - Conventional Commits drive Release Please and the release notes. Only `feat:` (minor pre-1.0),
   `fix:` (patch), and `!` (breaking) produce a release; use `docs:`, `test:`, `refactor:`, `build:`,
   `ci:`, or `chore:` for everything else so the notes list only user-visible changes. Call out
-  breaking public API changes in the commit body.
+  breaking public API changes in the commit body. The initial version is `0.1.0`; breaking changes
+  before `1.0.0` bump the minor version. Review and update `code-editor/api/` with
+  `./gradlew :code-editor:updateKotlinAbi` when intentionally changing the public contract.
 - Tags and versions are bare SemVer (`0.1.0`, never `v0.1.0`). Never hand-edit versions;
   `VERSION_NAME` is injected by `release.yml` from the tag, which must equal
   `.release-please-manifest.json`.
@@ -125,3 +131,8 @@ bytecode at `JvmTarget.JVM_17`. `.editorconfig` holds the house style.
 - Publishing needs `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_IN_MEMORY_KEY`, and
   `SIGNING_IN_MEMORY_KEY_PASSWORD` in the `secrets` environment, and the `com.arjangconsulting`
   namespace verified in the Central Portal (DNS TXT record on `arjangconsulting.com`).
+  `RELEASE_PLEASE_APP_CLIENT_ID` and `RELEASE_PLEASE_APP_PRIVATE_KEY` also live in that environment;
+  the App needs Contents, Pull requests, and Workflows write permissions for this repository.
+  Run `gh workflow run release-preflight.yml -f version=0.1.0` to check secrets, App access, builds,
+  tests, ABI, and signing without publishing. `.github/scripts/check-release-secrets.sh` checks
+  required secret names without printing their values.

@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -11,6 +12,9 @@ plugins {
 
 kotlin {
     explicitApi()
+
+    @OptIn(ExperimentalAbiValidation::class)
+    abiValidation()
 
     android {
         namespace = "com.arjangconsulting.codeeditor"

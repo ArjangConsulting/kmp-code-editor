@@ -1,0 +1,84 @@
+name: Release preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Bare SemVer version to verify without publishing
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-preflight
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: macos-26
+    environment: secrets
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate candidate version
+        env:
+          CANDIDATE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$CANDIDATE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Candidate version must be bare SemVer."
+            exit 1
+          fi
+          echo "ORG_GRADLE_PROJECT_VERSION_NAME=$CANDIDATE_VERSION" >> "$GITHUB_ENV"
+
+      - name: Check release secrets
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          SIGNING_IN_MEMORY_KEY: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          SIGNING_IN_MEMORY_KEY_PASSWORD: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+          RELEASE_PLEASE_APP_CLIENT_ID: ${{ secrets.RELEASE_PLEASE_APP_CLIENT_ID }}
+          RELEASE_PLEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+        run: bash .github/scripts/check-release-secrets.sh RELEASE_PLEASE_APP_CLIENT_ID RELEASE_PLEASE_APP_PRIVATE_KEY
+
+      - uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.RELEASE_PLEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Run the release checks
+        run: bash .github/scripts/verify.sh --no-configuration-cache
+
+      - name: Sign release artifacts without publishing
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          ./gradlew publishToMavenLocal --no-configuration-cache
+          signatures="$(find "$HOME/.m2/repository/com/arjangconsulting/codeeditor" -name '*.asc' | wc -l | tr -d '[:space:]')"
+          if [ "$signatures" -eq 0 ]; then
+            echo "::error::publishToMavenLocal produced no .asc signatures; signing is not exercised."
+            exit 1
+          fi
+          echo "Signed $signatures artifacts."
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: preflight-test-reports
+          path: |
+            code-editor/build/reports/tests/
+            code-editor/build/test-results/
+          retention-days: 14

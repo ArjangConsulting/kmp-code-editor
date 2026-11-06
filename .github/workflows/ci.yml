@@ -24,7 +24,7 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v6
       # Use the wrapper so CI builds with the pinned Gradle version rather than the runner's.
-      - run: ./gradlew :code-editor:allTests :code-editor:assemble :sample:compileKotlinJvm
+      - run: bash .github/scripts/verify.sh
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v7

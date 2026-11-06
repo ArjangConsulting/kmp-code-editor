@@ -262,6 +262,10 @@ The editor owns orchestration so services can be simple, slow, remote, or flaky:
   together with `additionalTextEdits`, as one undo step. Service ranges follow prefix growth or deletion,
   including additional edits after the prefix. A main edit ending at the request position follows the
   caret. Snippets support `$1`, `${1:placeholder}`, and `$0`.
+- Direct services follow LSP position clamping. Candidates whose edits overlap each other or the
+  replaced prefix are not offered, and acceptance validates resolved edits and their mapped ranges
+  before changing the document. A rejected acceptance closes the popup, applies nothing, consumes
+  the key in both engines, and is logged through `CodeEditorLogger.error`.
 - `CodeEditorState.edit` preserves list order for insertions at the same position. Swing selection
   replacement is one undo step and one value callback. Collapsed folds move with edits and undo/redo
   for LF, CRLF, and CR line endings.
@@ -519,6 +523,7 @@ caret, long press selects a word and shows the platform text toolbar, and drag s
 ```bash
 ./gradlew :code-editor:jvmTest      # common + desktop UI + RSyntaxTextArea panel tests
 ./gradlew :code-editor:allTests     # also Android host and iOS simulator
+./gradlew :code-editor:checkKotlinAbi
 ./gradlew :sample:run               # desktop sample app
 ```
 
@@ -538,6 +543,12 @@ includeBuild("../kmp-code-editor")
 Releases are automated by Release Please from Conventional Commit messages (`feat:`, `fix:`,
 `feat!:`), with bare SemVer tags (no `v` prefix). Until 0.1.0 is released, changes are committed
 directly to `main`; after that they land through pull requests.
+
+The initial release is `0.1.0`. While below `1.0.0`, `feat:` and breaking changes (`feat!:` or a
+`BREAKING CHANGE:` footer) bump the minor version; `fix:` bumps the patch version. Breaking API
+changes remain allowed: update the reviewed ABI baseline with `./gradlew :code-editor:updateKotlinAbi`
+and describe consumer migration in the release PR. The ABI check makes those changes explicit.
+See [docs/RELEASING.md](docs/RELEASING.md) for credential setup and the release preflight.
 
 Dependabot opens one weekly pull request for all Gradle and GitHub Actions updates, which is
 merged automatically once CI passes.

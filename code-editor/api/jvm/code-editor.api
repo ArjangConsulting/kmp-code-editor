@@ -1,0 +1,1426 @@
+public final class com/arjangconsulting/codeeditor/BackendLanguageService : com/arjangconsulting/codeeditor/LanguageService {
+	public static final field $stable I
+	public fun <init> (Lcom/arjangconsulting/codeeditor/CompletionBackend;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionContext;Ljava/util/Set;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;)V
+	public synthetic fun <init> (Lcom/arjangconsulting/codeeditor/CompletionBackend;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionContext;Ljava/util/Set;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun complete (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun diagnostics (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun foldingRanges (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun format (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/FormattingOptions;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getTriggerCharacters ()Ljava/util/Set;
+	public fun hover (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resolveCompletionItem (Lcom/arjangconsulting/codeeditor/CompletionItem;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun semanticTokens (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorColors {
+	public static final field $stable I
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-0d7_KjU ()J
+	public final fun component10-0d7_KjU ()J
+	public final fun component11-0d7_KjU ()J
+	public final fun component12-0d7_KjU ()J
+	public final fun component13-0d7_KjU ()J
+	public final fun component14-0d7_KjU ()J
+	public final fun component15-0d7_KjU ()J
+	public final fun component16-0d7_KjU ()J
+	public final fun component17-0d7_KjU ()J
+	public final fun component18-0d7_KjU ()J
+	public final fun component19-0d7_KjU ()J
+	public final fun component2-0d7_KjU ()J
+	public final fun component20-0d7_KjU ()J
+	public final fun component21-0d7_KjU ()J
+	public final fun component22-0d7_KjU ()J
+	public final fun component23-0d7_KjU ()J
+	public final fun component24-0d7_KjU ()J
+	public final fun component25-0d7_KjU ()J
+	public final fun component26-0d7_KjU ()J
+	public final fun component27-0d7_KjU ()J
+	public final fun component28-0d7_KjU ()J
+	public final fun component29-0d7_KjU ()J
+	public final fun component3-0d7_KjU ()J
+	public final fun component30 ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;
+	public final fun component4-0d7_KjU ()J
+	public final fun component5-0d7_KjU ()J
+	public final fun component6-0d7_KjU ()J
+	public final fun component7-0d7_KjU ()J
+	public final fun component8-0d7_KjU ()J
+	public final fun component9-0d7_KjU ()J
+	public final fun copy-r8AzLMM (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;)Lcom/arjangconsulting/codeeditor/CodeEditorColors;
+	public static synthetic fun copy-r8AzLMM$default (Lcom/arjangconsulting/codeeditor/CodeEditorColors;JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorColors;
+	public final fun diagnosticColor-vNxB06k (Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;)J
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackground-0d7_KjU ()J
+	public final fun getCaret-0d7_KjU ()J
+	public final fun getCurrentLineBackground-0d7_KjU ()J
+	public final fun getDiagnosticError-0d7_KjU ()J
+	public final fun getDiagnosticHint-0d7_KjU ()J
+	public final fun getDiagnosticInformation-0d7_KjU ()J
+	public final fun getDiagnosticWarning-0d7_KjU ()J
+	public final fun getFindCurrentMatchBackground-0d7_KjU ()J
+	public final fun getFindMatchBackground-0d7_KjU ()J
+	public final fun getFoldPlaceholderBackground-0d7_KjU ()J
+	public final fun getFoldPlaceholderForeground-0d7_KjU ()J
+	public final fun getForeground-0d7_KjU ()J
+	public final fun getGutterActiveForeground-0d7_KjU ()J
+	public final fun getGutterBackground-0d7_KjU ()J
+	public final fun getGutterForeground-0d7_KjU ()J
+	public final fun getLineHighlightError-0d7_KjU ()J
+	public final fun getLineHighlightHover-0d7_KjU ()J
+	public final fun getLineHighlightInfo-0d7_KjU ()J
+	public final fun getLineHighlightSelected-0d7_KjU ()J
+	public final fun getLineHighlightWarning-0d7_KjU ()J
+	public final fun getMatchingBracketBackground-0d7_KjU ()J
+	public final fun getPopupBackground-0d7_KjU ()J
+	public final fun getPopupBorder-0d7_KjU ()J
+	public final fun getPopupForeground-0d7_KjU ()J
+	public final fun getPopupMatchForeground-0d7_KjU ()J
+	public final fun getPopupSecondaryForeground-0d7_KjU ()J
+	public final fun getPopupSelectedBackground-0d7_KjU ()J
+	public final fun getScrollbar-0d7_KjU ()J
+	public final fun getSelectionBackground-0d7_KjU ()J
+	public final fun getSyntax ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;
+	public final fun getSyntaxTheme ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;
+	public fun hashCode ()I
+	public final fun lineHighlightColor-vNxB06k (Lcom/arjangconsulting/codeeditor/LineHighlightRole;)J
+	public fun toString ()Ljava/lang/String;
+	public final fun tokenColor-vNxB06k (Lcom/arjangconsulting/codeeditor/TokenKind;)J
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/CodeEditorDefaults;
+	public final fun colors (Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;Landroidx/compose/runtime/Composer;II)Lcom/arjangconsulting/codeeditor/CodeEditorColors;
+	public final fun colorsFrom (Landroidx/compose/material3/ColorScheme;Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;)Lcom/arjangconsulting/codeeditor/CodeEditorColors;
+	public static synthetic fun colorsFrom$default (Lcom/arjangconsulting/codeeditor/CodeEditorDefaults;Landroidx/compose/material3/ColorScheme;Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorColors;
+	public final fun textStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorEngine : java/lang/Enum {
+	public static final field COMPOSE Lcom/arjangconsulting/codeeditor/CodeEditorEngine;
+	public static final field DEFAULT Lcom/arjangconsulting/codeeditor/CodeEditorEngine;
+	public static final field RSYNTAX_TEXT_AREA Lcom/arjangconsulting/codeeditor/CodeEditorEngine;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/CodeEditorEngine;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/CodeEditorEngine;
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorKt {
+	public static final fun CodeEditor (Lcom/arjangconsulting/codeeditor/CodeEditorState;Landroidx/compose/ui/Modifier;Lcom/arjangconsulting/codeeditor/TokenRules;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/CodeEditorEngine;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZZLjava/util/List;Ljava/util/List;Ljava/lang/Integer;Lcom/arjangconsulting/codeeditor/TextRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/arjangconsulting/codeeditor/TabBehavior;Lcom/arjangconsulting/codeeditor/CodeEditorColors;Landroidx/compose/ui/text/TextStyle;Lcom/arjangconsulting/codeeditor/CodeEditorLabels;Lcom/arjangconsulting/codeeditor/CodeEditorOptions;Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;JLandroidx/compose/runtime/Composer;IIII)V
+	public static final fun CodeEditor (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lcom/arjangconsulting/codeeditor/TokenRules;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/CodeEditorEngine;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZZLjava/util/List;Ljava/util/List;Ljava/lang/Integer;Lcom/arjangconsulting/codeeditor/TextRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/arjangconsulting/codeeditor/TabBehavior;Lcom/arjangconsulting/codeeditor/CodeEditorColors;Landroidx/compose/ui/text/TextStyle;Lcom/arjangconsulting/codeeditor/CodeEditorLabels;Lcom/arjangconsulting/codeeditor/CodeEditorOptions;Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;JLandroidx/compose/runtime/Composer;IIII)V
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorLabels {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()Lkotlin/jvm/functions/Function2;
+	public final fun component15 ()Lkotlin/jvm/functions/Function1;
+	public final fun component16 ()Ljava/lang/String;
+	public final fun component17 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Lkotlin/jvm/functions/Function2;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/CodeEditorLabels;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CodeEditorLabels;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorLabels;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCaretDescription ()Lkotlin/jvm/functions/Function2;
+	public final fun getCompletionListDescription ()Ljava/lang/String;
+	public final fun getEditorDescription ()Ljava/lang/String;
+	public final fun getFindClose ()Ljava/lang/String;
+	public final fun getFindMatchCase ()Ljava/lang/String;
+	public final fun getFindMatchCount ()Lkotlin/jvm/functions/Function2;
+	public final fun getFindNext ()Ljava/lang/String;
+	public final fun getFindNoResults ()Ljava/lang/String;
+	public final fun getFindPlaceholder ()Ljava/lang/String;
+	public final fun getFindPrevious ()Ljava/lang/String;
+	public final fun getFold ()Ljava/lang/String;
+	public final fun getFoldAll ()Ljava/lang/String;
+	public final fun getFoldedPlaceholder ()Ljava/lang/String;
+	public final fun getNoSuggestions ()Ljava/lang/String;
+	public final fun getSeverityLabel ()Lkotlin/jvm/functions/Function1;
+	public final fun getUnfold ()Ljava/lang/String;
+	public final fun getUnfoldAll ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/arjangconsulting/codeeditor/CodeEditorLogger {
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CodeEditorLogger$Companion;
+	public fun debug (Ljava/lang/String;)V
+	public fun error (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public static synthetic fun error$default (Lcom/arjangconsulting/codeeditor/CodeEditorLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorLogger$Companion {
+	public final fun getNone ()Lcom/arjangconsulting/codeeditor/CodeEditorLogger;
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorLogger$DefaultImpls {
+	public static fun debug (Lcom/arjangconsulting/codeeditor/CodeEditorLogger;Ljava/lang/String;)V
+	public static fun error (Lcom/arjangconsulting/codeeditor/CodeEditorLogger;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public static synthetic fun error$default (Lcom/arjangconsulting/codeeditor/CodeEditorLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorOptions {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (ZZZZZZIZ)V
+	public synthetic fun <init> (ZZZZZZIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()I
+	public final fun component8 ()Z
+	public final fun copy (ZZZZZZIZ)Lcom/arjangconsulting/codeeditor/CodeEditorOptions;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CodeEditorOptions;ZZZZZZIZILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAutoCloseBrackets ()Z
+	public final fun getAutoIndent ()Z
+	public final fun getCompletionOnTyping ()Z
+	public final fun getHighlightCurrentLine ()Z
+	public final fun getHover ()Z
+	public final fun getMatchBrackets ()Z
+	public final fun getSoftWrap ()Z
+	public final fun getTabSize ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorState {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CodeEditorState$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lkotlin/ranges/IntRange;)V
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/ranges/IntRange;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun edit (Ljava/util/List;)V
+	public final fun fold (I)V
+	public final fun foldAll ()V
+	public final fun getCanRedo ()Z
+	public final fun getCanUndo ()Z
+	public final fun getCaret ()Lcom/arjangconsulting/codeeditor/TextPosition;
+	public final fun getFoldedLines ()Ljava/util/Set;
+	public final fun getFoldingRanges ()Ljava/util/List;
+	public final fun getSelectedText ()Ljava/lang/String;
+	public final fun getSelection ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun getSelectionEnd ()I
+	public final fun getSelectionStart ()I
+	public final fun getText ()Ljava/lang/String;
+	public final fun getVersion ()J
+	public final fun getVisibleLines ()Lkotlin/ranges/IntRange;
+	public final fun insert (Ljava/lang/String;)V
+	public final fun redo ()Z
+	public final fun resetText (Ljava/lang/String;I)V
+	public static synthetic fun resetText$default (Lcom/arjangconsulting/codeeditor/CodeEditorState;Ljava/lang/String;IILjava/lang/Object;)V
+	public final fun revealLine (I)V
+	public final fun revealRange (Lcom/arjangconsulting/codeeditor/TextRange;)V
+	public final fun select (II)V
+	public final fun select (Lcom/arjangconsulting/codeeditor/TextRange;)V
+	public static synthetic fun select$default (Lcom/arjangconsulting/codeeditor/CodeEditorState;IIILjava/lang/Object;)V
+	public final fun selectAll ()V
+	public final fun setText (Ljava/lang/String;I)V
+	public static synthetic fun setText$default (Lcom/arjangconsulting/codeeditor/CodeEditorState;Ljava/lang/String;IILjava/lang/Object;)V
+	public final fun snapshot ()Lcom/arjangconsulting/codeeditor/DocumentSnapshot;
+	public final fun toggleFold (I)V
+	public final fun undo ()Z
+	public final fun unfold (I)V
+	public final fun unfoldAll ()V
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorState$Companion {
+	public final fun getSaver ()Landroidx/compose/runtime/saveable/Saver;
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorStateKt {
+	public static final fun rememberCodeEditorState (Ljava/lang/String;Landroidx/compose/runtime/Composer;II)Lcom/arjangconsulting/codeeditor/CodeEditorState;
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorSyntaxColors {
+	public static final field $stable I
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-0d7_KjU ()J
+	public final fun component10-0d7_KjU ()J
+	public final fun component11-0d7_KjU ()J
+	public final fun component12-0d7_KjU ()J
+	public final fun component13-0d7_KjU ()J
+	public final fun component14-0d7_KjU ()J
+	public final fun component15-0d7_KjU ()J
+	public final fun component16-0d7_KjU ()J
+	public final fun component2-0d7_KjU ()J
+	public final fun component3-0d7_KjU ()J
+	public final fun component4-0d7_KjU ()J
+	public final fun component5-0d7_KjU ()J
+	public final fun component6-0d7_KjU ()J
+	public final fun component7-0d7_KjU ()J
+	public final fun component8-0d7_KjU ()J
+	public final fun component9-0d7_KjU ()J
+	public final fun copy-Q_H9qLU (JJJJJJJJJJJJJJJJ)Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;
+	public static synthetic fun copy-Q_H9qLU$default (Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;JJJJJJJJJJJJJJJJILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun get-vNxB06k (Lcom/arjangconsulting/codeeditor/TokenKind;)J
+	public final fun getAnnotation-0d7_KjU ()J
+	public final fun getAttribute-0d7_KjU ()J
+	public final fun getComment-0d7_KjU ()J
+	public final fun getConstant-0d7_KjU ()J
+	public final fun getError-0d7_KjU ()J
+	public final fun getEscape-0d7_KjU ()J
+	public final fun getFunction-0d7_KjU ()J
+	public final fun getKeyword-0d7_KjU ()J
+	public final fun getNumber-0d7_KjU ()J
+	public final fun getOperator-0d7_KjU ()J
+	public final fun getPreprocessor-0d7_KjU ()J
+	public final fun getProperty-0d7_KjU ()J
+	public final fun getPunctuation-0d7_KjU ()J
+	public final fun getString-0d7_KjU ()J
+	public final fun getType-0d7_KjU ()J
+	public final fun getVariable-0d7_KjU ()J
+	public fun hashCode ()I
+	public final fun lowContrastKinds-DxMtmZc (JF)Ljava/util/List;
+	public static synthetic fun lowContrastKinds-DxMtmZc$default (Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;JFILjava/lang/Object;)Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
+	public final fun with-4WTKRHQ (Lcom/arjangconsulting/codeeditor/TokenKind;J)Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorSyntaxColorsKt {
+	public static final fun contrastRatio--OWjLjI (JJ)F
+	public static final fun isDarkBackground-8_81llA (J)Z
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorSyntaxTheme {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme$Companion;
+	public fun <init> (Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;)V
+	public fun <init> (Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;)V
+	public final fun colorsFor-8_81llA (J)Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;
+	public final fun component1 ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;
+	public final fun component2 ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;
+	public final fun copy (Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;)Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDark ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;
+	public final fun getLight ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxColors;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/CodeEditorSyntaxTheme$Companion {
+	public final fun getDefault ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;
+	public final fun getHighContrast ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;
+}
+
+public abstract interface class com/arjangconsulting/codeeditor/CompletionBackend {
+	public abstract fun complete (Lcom/arjangconsulting/codeeditor/CompletionRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionContext {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CompletionContext$Companion;
+	public fun <init> (Ljava/lang/String;JLjava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;JLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;JLjava/util/Map;)Lcom/arjangconsulting/codeeditor/CompletionContext;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CompletionContext;Ljava/lang/String;JLjava/util/Map;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CompletionContext;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttributes ()Ljava/util/Map;
+	public final fun getRevision ()J
+	public final fun getSessionId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/CompletionContext$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/CompletionContext$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/CompletionContext;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/CompletionContext;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionContext$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionItem {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CompletionItem$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionItemKind;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/MarkupContent;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TextEdit;Ljava/lang/String;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/InsertTextFormat;Ljava/util/List;ZLjava/util/Set;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionItemKind;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/MarkupContent;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TextEdit;Ljava/lang/String;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/InsertTextFormat;Ljava/util/List;ZLjava/util/Set;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component11 ()Z
+	public final fun component12 ()Ljava/util/Set;
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lcom/arjangconsulting/codeeditor/MarkupContent;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Lcom/arjangconsulting/codeeditor/TextEdit;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Lcom/arjangconsulting/codeeditor/InsertTextFormat;
+	public final fun copy (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionItemKind;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/MarkupContent;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TextEdit;Ljava/lang/String;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/InsertTextFormat;Ljava/util/List;ZLjava/util/Set;Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/CompletionItem;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CompletionItem;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionItemKind;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/MarkupContent;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TextEdit;Ljava/lang/String;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/InsertTextFormat;Ljava/util/List;ZLjava/util/Set;Ljava/lang/String;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CompletionItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdditionalTextEdits ()Ljava/util/List;
+	public final fun getCommitCharacters ()Ljava/util/Set;
+	public final fun getDetail ()Ljava/lang/String;
+	public final fun getDocumentation ()Lcom/arjangconsulting/codeeditor/MarkupContent;
+	public final fun getFilterText ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getInsertText ()Ljava/lang/String;
+	public final fun getInsertTextFormat ()Lcom/arjangconsulting/codeeditor/InsertTextFormat;
+	public final fun getKind ()Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getPreselect ()Z
+	public final fun getSortText ()Ljava/lang/String;
+	public final fun getTextEdit ()Lcom/arjangconsulting/codeeditor/TextEdit;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/CompletionItem$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/CompletionItem$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/CompletionItem;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/CompletionItem;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionItem$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionItemKind : java/lang/Enum {
+	public static final field CLASS Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field COLOR Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field CONSTANT Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field CONSTRUCTOR Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CompletionItemKind$Companion;
+	public static final field ENUM Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field ENUM_MEMBER Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field EVENT Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field FIELD Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field FILE Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field FOLDER Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field FUNCTION Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field INTERFACE Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field KEYWORD Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field METHOD Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field MODULE Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field OPERATOR Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field PROPERTY Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field REFERENCE Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field SNIPPET Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field STRUCT Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field TEXT Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field TYPE_PARAMETER Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field UNIT Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field VALUE Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static final field VARIABLE Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/CompletionItemKind;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionItemKind$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionList {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CompletionList$Companion;
+	public fun <init> (Ljava/util/List;Z)V
+	public synthetic fun <init> (Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Z
+	public final fun copy (Ljava/util/List;Z)Lcom/arjangconsulting/codeeditor/CompletionList;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CompletionList;Ljava/util/List;ZILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CompletionList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getItems ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun isIncomplete ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/CompletionList$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/CompletionList$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/CompletionList;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/CompletionList;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionList$Companion {
+	public final fun getEmpty ()Lcom/arjangconsulting/codeeditor/CompletionList;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionProtocol {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/CompletionProtocol;
+	public static final field VERSION I
+	public final fun decodeRequest (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/CompletionRequest;
+	public final fun decodeResponse (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/CompletionResponse;
+	public final fun encodeRequest (Lcom/arjangconsulting/codeeditor/CompletionRequest;)Ljava/lang/String;
+	public final fun encodeResponse (Lcom/arjangconsulting/codeeditor/CompletionResponse;)Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionRequest {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CompletionRequest$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionContext;Ljava/lang/String;Ljava/lang/String;JLcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;I)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionContext;Ljava/lang/String;Ljava/lang/String;JLcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/arjangconsulting/codeeditor/CompletionContext;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()J
+	public final fun component6 ()Lcom/arjangconsulting/codeeditor/TextPosition;
+	public final fun component7 ()Lcom/arjangconsulting/codeeditor/CompletionTrigger;
+	public final fun component8 ()I
+	public final fun copy (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionContext;Ljava/lang/String;Ljava/lang/String;JLcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;I)Lcom/arjangconsulting/codeeditor/CompletionRequest;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CompletionRequest;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/CompletionContext;Ljava/lang/String;Ljava/lang/String;JLcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;IILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CompletionRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContext ()Lcom/arjangconsulting/codeeditor/CompletionContext;
+	public final fun getDocumentVersion ()J
+	public final fun getLanguageId ()Ljava/lang/String;
+	public final fun getPosition ()Lcom/arjangconsulting/codeeditor/TextPosition;
+	public final fun getProtocolVersion ()I
+	public final fun getRequestId ()Ljava/lang/String;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getTrigger ()Lcom/arjangconsulting/codeeditor/CompletionTrigger;
+	public fun hashCode ()I
+	public final fun response (Lcom/arjangconsulting/codeeditor/CompletionList;)Lcom/arjangconsulting/codeeditor/CompletionResponse;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/CompletionRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/CompletionRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/CompletionRequest;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/CompletionRequest;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionResponse {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CompletionResponse$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;JJLcom/arjangconsulting/codeeditor/CompletionList;I)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JJLcom/arjangconsulting/codeeditor/CompletionList;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun component5 ()Lcom/arjangconsulting/codeeditor/CompletionList;
+	public final fun component6 ()I
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;JJLcom/arjangconsulting/codeeditor/CompletionList;I)Lcom/arjangconsulting/codeeditor/CompletionResponse;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CompletionResponse;Ljava/lang/String;Ljava/lang/String;JJLcom/arjangconsulting/codeeditor/CompletionList;IILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CompletionResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCompletions ()Lcom/arjangconsulting/codeeditor/CompletionList;
+	public final fun getContextRevision ()J
+	public final fun getDocumentVersion ()J
+	public final fun getProtocolVersion ()I
+	public final fun getRequestId ()Ljava/lang/String;
+	public final fun getSessionId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/CompletionResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/CompletionResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/CompletionResponse;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/CompletionResponse;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionTrigger {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CompletionTrigger$Companion;
+	public fun <init> (Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;Ljava/lang/Character;)V
+	public synthetic fun <init> (Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;Ljava/lang/Character;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;
+	public final fun component2 ()Ljava/lang/Character;
+	public final fun copy (Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;Ljava/lang/Character;)Lcom/arjangconsulting/codeeditor/CompletionTrigger;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CompletionTrigger;Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;Ljava/lang/Character;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CompletionTrigger;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCharacter ()Ljava/lang/Character;
+	public final fun getKind ()Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/CompletionTrigger$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/CompletionTrigger$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/CompletionTrigger;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/CompletionTrigger;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionTrigger$Companion {
+	public final fun character (C)Lcom/arjangconsulting/codeeditor/CompletionTrigger;
+	public final fun getIncomplete ()Lcom/arjangconsulting/codeeditor/CompletionTrigger;
+	public final fun getInvoked ()Lcom/arjangconsulting/codeeditor/CompletionTrigger;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionTriggerKind : java/lang/Enum {
+	public static final field Companion Lcom/arjangconsulting/codeeditor/CompletionTriggerKind$Companion;
+	public static final field INVOKED Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;
+	public static final field TRIGGER_CHARACTER Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;
+	public static final field TRIGGER_FOR_INCOMPLETE_COMPLETIONS Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/CompletionTriggerKind;
+}
+
+public final class com/arjangconsulting/codeeditor/CompletionTriggerKind$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/Diagnostic {
+	public static final field $stable I
+	public fun <init> (Lcom/arjangconsulting/codeeditor/TextRange;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/arjangconsulting/codeeditor/TextRange;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Lcom/arjangconsulting/codeeditor/TextRange;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;Ljava/lang/String;Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/Diagnostic;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/Diagnostic;Lcom/arjangconsulting/codeeditor/TextRange;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/Diagnostic;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Ljava/lang/String;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getRange ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun getSeverity ()Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;
+	public final fun getSource ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/DiagnosticSeverity : java/lang/Enum {
+	public static final field ERROR Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;
+	public static final field HINT Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;
+	public static final field INFORMATION Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;
+	public static final field WARNING Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;
+}
+
+public final class com/arjangconsulting/codeeditor/DocumentSnapshot {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;J)V
+	public final fun getEndPosition ()Lcom/arjangconsulting/codeeditor/TextPosition;
+	public final fun getFullRange ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun getLineCount ()I
+	public final fun getText ()Ljava/lang/String;
+	public final fun getVersion ()J
+	public final fun line (I)Ljava/lang/String;
+	public final fun lineEnd (I)I
+	public final fun lineLength (I)I
+	public final fun lineStart (I)I
+	public final fun offsetOf (Lcom/arjangconsulting/codeeditor/TextPosition;)I
+	public final fun positionOf (I)Lcom/arjangconsulting/codeeditor/TextPosition;
+	public final fun textIn (Lcom/arjangconsulting/codeeditor/TextRange;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/FoldingRange {
+	public static final field $stable I
+	public fun <init> (IILcom/arjangconsulting/codeeditor/FoldingRangeKind;)V
+	public synthetic fun <init> (IILcom/arjangconsulting/codeeditor/FoldingRangeKind;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Lcom/arjangconsulting/codeeditor/FoldingRangeKind;
+	public final fun copy (IILcom/arjangconsulting/codeeditor/FoldingRangeKind;)Lcom/arjangconsulting/codeeditor/FoldingRange;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/FoldingRange;IILcom/arjangconsulting/codeeditor/FoldingRangeKind;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/FoldingRange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEndLine ()I
+	public final fun getKind ()Lcom/arjangconsulting/codeeditor/FoldingRangeKind;
+	public final fun getStartLine ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/FoldingRangeKind : java/lang/Enum {
+	public static final field COMMENT Lcom/arjangconsulting/codeeditor/FoldingRangeKind;
+	public static final field IMPORTS Lcom/arjangconsulting/codeeditor/FoldingRangeKind;
+	public static final field REGION Lcom/arjangconsulting/codeeditor/FoldingRangeKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/FoldingRangeKind;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/FoldingRangeKind;
+}
+
+public final class com/arjangconsulting/codeeditor/FormatResult : java/lang/Enum {
+	public static final field APPLIED Lcom/arjangconsulting/codeeditor/FormatResult;
+	public static final field FAILED Lcom/arjangconsulting/codeeditor/FormatResult;
+	public static final field STALE Lcom/arjangconsulting/codeeditor/FormatResult;
+	public static final field UNAVAILABLE Lcom/arjangconsulting/codeeditor/FormatResult;
+	public static final field UNCHANGED Lcom/arjangconsulting/codeeditor/FormatResult;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/FormatResult;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/FormatResult;
+}
+
+public final class com/arjangconsulting/codeeditor/FormattingKt {
+	public static final fun format (Lcom/arjangconsulting/codeeditor/CodeEditorState;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/FormattingOptions;Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun format$default (Lcom/arjangconsulting/codeeditor/CodeEditorState;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/FormattingOptions;Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/arjangconsulting/codeeditor/FormattingOptions {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (IZ)V
+	public synthetic fun <init> (IZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Z
+	public final fun copy (IZ)Lcom/arjangconsulting/codeeditor/FormattingOptions;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/FormattingOptions;IZILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/FormattingOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInsertSpaces ()Z
+	public final fun getTabSize ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/FuzzyMatch {
+	public static final field $stable I
+	public final fun getMatchedIndices ()[I
+	public final fun getScore ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/FuzzyMatcher {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/FuzzyMatcher;
+	public final fun match (Ljava/lang/String;Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/FuzzyMatch;
+}
+
+public final class com/arjangconsulting/codeeditor/FuzzyMatcherKt {
+	public static final fun filterAndRankCompletions (Ljava/util/List;Ljava/lang/String;I)Ljava/util/List;
+	public static synthetic fun filterAndRankCompletions$default (Ljava/util/List;Ljava/lang/String;IILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class com/arjangconsulting/codeeditor/HighlightedTextKt {
+	public static final fun CodeSnippet-pWT9dkc (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lcom/arjangconsulting/codeeditor/TokenRules;Lcom/arjangconsulting/codeeditor/CodeEditorColors;Landroidx/compose/ui/text/TextStyle;IZILandroidx/compose/runtime/Composer;II)V
+	public static final fun highlightedText (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TokenRules;Lcom/arjangconsulting/codeeditor/CodeEditorColors;)Landroidx/compose/ui/text/AnnotatedString;
+	public static final fun rememberHighlightedText (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TokenRules;Lcom/arjangconsulting/codeeditor/CodeEditorColors;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/text/AnnotatedString;
+}
+
+public final class com/arjangconsulting/codeeditor/Hover {
+	public static final field $stable I
+	public fun <init> (Lcom/arjangconsulting/codeeditor/MarkupContent;Lcom/arjangconsulting/codeeditor/TextRange;)V
+	public synthetic fun <init> (Lcom/arjangconsulting/codeeditor/MarkupContent;Lcom/arjangconsulting/codeeditor/TextRange;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/arjangconsulting/codeeditor/MarkupContent;
+	public final fun component2 ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun copy (Lcom/arjangconsulting/codeeditor/MarkupContent;Lcom/arjangconsulting/codeeditor/TextRange;)Lcom/arjangconsulting/codeeditor/Hover;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/Hover;Lcom/arjangconsulting/codeeditor/MarkupContent;Lcom/arjangconsulting/codeeditor/TextRange;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/Hover;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContents ()Lcom/arjangconsulting/codeeditor/MarkupContent;
+	public final fun getRange ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/InsertTextFormat : java/lang/Enum {
+	public static final field Companion Lcom/arjangconsulting/codeeditor/InsertTextFormat$Companion;
+	public static final field PLAIN_TEXT Lcom/arjangconsulting/codeeditor/InsertTextFormat;
+	public static final field SNIPPET Lcom/arjangconsulting/codeeditor/InsertTextFormat;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/InsertTextFormat;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/InsertTextFormat;
+}
+
+public final class com/arjangconsulting/codeeditor/InsertTextFormat$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/JsonLanguageService : com/arjangconsulting/codeeditor/LanguageService {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lcom/arjangconsulting/codeeditor/JsonLanguageServiceLabels;I)V
+	public synthetic fun <init> (Lcom/arjangconsulting/codeeditor/JsonLanguageServiceLabels;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun complete (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun diagnostics (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun foldingRanges (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun format (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/FormattingOptions;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getTriggerCharacters ()Ljava/util/Set;
+	public fun hover (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resolveCompletionItem (Lcom/arjangconsulting/codeeditor/CompletionItem;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun semanticTokens (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/arjangconsulting/codeeditor/JsonLanguageServiceLabels {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/JsonLanguageServiceLabels;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/JsonLanguageServiceLabels;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/JsonLanguageServiceLabels;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExpectedColon ()Ljava/lang/String;
+	public final fun getExpectedKey ()Ljava/lang/String;
+	public final fun getExpectedSeparator ()Ljava/lang/String;
+	public final fun getExpectedValue ()Ljava/lang/String;
+	public final fun getInvalidEscape ()Ljava/lang/String;
+	public final fun getInvalidNumber ()Ljava/lang/String;
+	public final fun getInvalidString ()Ljava/lang/String;
+	public final fun getNestingLimit ()Ljava/lang/String;
+	public final fun getSource ()Ljava/lang/String;
+	public final fun getUnexpectedContent ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/KeywordLanguageService : com/arjangconsulting/codeeditor/LanguageService {
+	public static final field $stable I
+	public fun <init> (Lcom/arjangconsulting/codeeditor/TokenRules;)V
+	public fun complete (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun diagnostics (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun foldingRanges (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun format (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/FormattingOptions;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getTriggerCharacters ()Ljava/util/Set;
+	public fun hover (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resolveCompletionItem (Lcom/arjangconsulting/codeeditor/CompletionItem;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun semanticTokens (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/arjangconsulting/codeeditor/LanguageService {
+	public static final field Companion Lcom/arjangconsulting/codeeditor/LanguageService$Companion;
+	public fun complete (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun diagnostics (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun foldingRanges (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun format (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/FormattingOptions;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getTriggerCharacters ()Ljava/util/Set;
+	public fun hover (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resolveCompletionItem (Lcom/arjangconsulting/codeeditor/CompletionItem;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun semanticTokens (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/arjangconsulting/codeeditor/LanguageService$Companion {
+	public final fun getNone ()Lcom/arjangconsulting/codeeditor/LanguageService;
+}
+
+public final class com/arjangconsulting/codeeditor/LanguageService$DefaultImpls {
+	public static fun complete (Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun diagnostics (Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun foldingRanges (Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun format (Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/FormattingOptions;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun getTriggerCharacters (Lcom/arjangconsulting/codeeditor/LanguageService;)Ljava/util/Set;
+	public static fun hover (Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun resolveCompletionItem (Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/CompletionItem;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun semanticTokens (Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/arjangconsulting/codeeditor/LanguageServiceOptions {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (JJJJJILkotlinx/coroutines/CoroutineDispatcher;)V
+	public synthetic fun <init> (JJJJJILkotlinx/coroutines/CoroutineDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun component5 ()J
+	public final fun component6 ()I
+	public final fun component7 ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun copy (JJJJJILkotlinx/coroutines/CoroutineDispatcher;)Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;JJJJJILkotlinx/coroutines/CoroutineDispatcher;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCompletionDebounceMillis ()J
+	public final fun getDiagnosticsDebounceMillis ()J
+	public final fun getDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun getHoverDelayMillis ()J
+	public final fun getMaxCompletionItems ()I
+	public final fun getRequestTimeoutMillis ()J
+	public final fun getTriggerDebounceMillis ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/LexedLine {
+	public static final field $stable I
+	public final fun getEndState-U9Q5frw ()I
+	public final fun getTokens ()Ljava/util/List;
+	public final fun kindAt (I)Lcom/arjangconsulting/codeeditor/TokenKind;
+}
+
+public final class com/arjangconsulting/codeeditor/LexerState {
+	public static final field Companion Lcom/arjangconsulting/codeeditor/LexerState$Companion;
+	public static final synthetic fun box-impl (I)Lcom/arjangconsulting/codeeditor/LexerState;
+	public static fun constructor-impl (I)I
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (ILjava/lang/Object;)Z
+	public static final fun equals-impl0 (II)Z
+	public final fun getValue ()I
+	public fun hashCode ()I
+	public static fun hashCode-impl (I)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (I)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()I
+}
+
+public final class com/arjangconsulting/codeeditor/LexerState$Companion {
+	public final fun getInitial-U9Q5frw ()I
+}
+
+public final class com/arjangconsulting/codeeditor/LineHighlight {
+	public static final field $stable I
+	public fun <init> (ILcom/arjangconsulting/codeeditor/LineHighlightRole;)V
+	public synthetic fun <init> (ILcom/arjangconsulting/codeeditor/LineHighlightRole;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lkotlin/ranges/IntRange;Lcom/arjangconsulting/codeeditor/LineHighlightRole;)V
+	public synthetic fun <init> (Lkotlin/ranges/IntRange;Lcom/arjangconsulting/codeeditor/LineHighlightRole;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/ranges/IntRange;
+	public final fun component2 ()Lcom/arjangconsulting/codeeditor/LineHighlightRole;
+	public final fun copy (Lkotlin/ranges/IntRange;Lcom/arjangconsulting/codeeditor/LineHighlightRole;)Lcom/arjangconsulting/codeeditor/LineHighlight;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/LineHighlight;Lkotlin/ranges/IntRange;Lcom/arjangconsulting/codeeditor/LineHighlightRole;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/LineHighlight;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLines ()Lkotlin/ranges/IntRange;
+	public final fun getRole ()Lcom/arjangconsulting/codeeditor/LineHighlightRole;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/LineHighlightRole : java/lang/Enum {
+	public static final field ERROR Lcom/arjangconsulting/codeeditor/LineHighlightRole;
+	public static final field HOVER Lcom/arjangconsulting/codeeditor/LineHighlightRole;
+	public static final field INFO Lcom/arjangconsulting/codeeditor/LineHighlightRole;
+	public static final field SELECTED Lcom/arjangconsulting/codeeditor/LineHighlightRole;
+	public static final field WARNING Lcom/arjangconsulting/codeeditor/LineHighlightRole;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/LineHighlightRole;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/LineHighlightRole;
+}
+
+public final class com/arjangconsulting/codeeditor/MarkupContent {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/MarkupContent$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/MarkupKind;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/MarkupKind;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/arjangconsulting/codeeditor/MarkupKind;
+	public final fun copy (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/MarkupKind;)Lcom/arjangconsulting/codeeditor/MarkupContent;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/MarkupContent;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/MarkupKind;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/MarkupContent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKind ()Lcom/arjangconsulting/codeeditor/MarkupKind;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/MarkupContent$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/MarkupContent$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/MarkupContent;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/MarkupContent;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/MarkupContent$Companion {
+	public final fun markdown (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/MarkupContent;
+	public final fun plain (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/MarkupContent;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/MarkupKind : java/lang/Enum {
+	public static final field Companion Lcom/arjangconsulting/codeeditor/MarkupKind$Companion;
+	public static final field MARKDOWN Lcom/arjangconsulting/codeeditor/MarkupKind;
+	public static final field PLAIN_TEXT Lcom/arjangconsulting/codeeditor/MarkupKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/MarkupKind;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/MarkupKind;
+}
+
+public final class com/arjangconsulting/codeeditor/MarkupKind$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/RankedCompletion {
+	public static final field $stable I
+	public final fun getItem ()Lcom/arjangconsulting/codeeditor/CompletionItem;
+	public final fun getMatch ()Lcom/arjangconsulting/codeeditor/FuzzyMatch;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/SemanticToken {
+	public static final field $stable I
+	public fun <init> (IIILcom/arjangconsulting/codeeditor/TokenKind;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()Lcom/arjangconsulting/codeeditor/TokenKind;
+	public final fun copy (IIILcom/arjangconsulting/codeeditor/TokenKind;)Lcom/arjangconsulting/codeeditor/SemanticToken;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/SemanticToken;IIILcom/arjangconsulting/codeeditor/TokenKind;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/SemanticToken;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKind ()Lcom/arjangconsulting/codeeditor/TokenKind;
+	public final fun getLength ()I
+	public final fun getLine ()I
+	public final fun getStartCharacter ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/TabBehavior : java/lang/Enum {
+	public static final field INSERT_INDENT Lcom/arjangconsulting/codeeditor/TabBehavior;
+	public static final field MOVE_FOCUS Lcom/arjangconsulting/codeeditor/TabBehavior;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/TabBehavior;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/TabBehavior;
+}
+
+public final class com/arjangconsulting/codeeditor/TextEdit {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/TextEdit$Companion;
+	public fun <init> (Lcom/arjangconsulting/codeeditor/TextRange;Ljava/lang/String;)V
+	public final fun component1 ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lcom/arjangconsulting/codeeditor/TextRange;Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/TextEdit;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/TextEdit;Lcom/arjangconsulting/codeeditor/TextRange;Ljava/lang/String;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/TextEdit;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNewText ()Ljava/lang/String;
+	public final fun getRange ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/TextEdit$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/TextEdit$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/TextEdit;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/TextEdit;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/TextEdit$Companion {
+	public final fun delete (Lcom/arjangconsulting/codeeditor/TextRange;)Lcom/arjangconsulting/codeeditor/TextEdit;
+	public final fun insert (Lcom/arjangconsulting/codeeditor/TextPosition;Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/TextEdit;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/TextModelKt {
+	public static final fun applyTextEdits (Ljava/lang/String;Ljava/util/List;)Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/TextPosition : java/lang/Comparable {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/TextPosition$Companion;
+	public fun <init> (II)V
+	public fun compareTo (Lcom/arjangconsulting/codeeditor/TextPosition;)I
+	public synthetic fun compareTo (Ljava/lang/Object;)I
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lcom/arjangconsulting/codeeditor/TextPosition;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/TextPosition;IIILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/TextPosition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCharacter ()I
+	public final fun getLine ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/TextPosition$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/TextPosition$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/TextPosition;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/TextPosition;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/TextPosition$Companion {
+	public final fun getZero ()Lcom/arjangconsulting/codeeditor/TextPosition;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/TextRange {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/TextRange$Companion;
+	public fun <init> (Lcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/TextPosition;)V
+	public final fun contains (Lcom/arjangconsulting/codeeditor/TextPosition;)Z
+	public final fun copy (Lcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/TextPosition;)Lcom/arjangconsulting/codeeditor/TextRange;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/TextRange;Lcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/TextPosition;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/TextRange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnd ()Lcom/arjangconsulting/codeeditor/TextPosition;
+	public final fun getStart ()Lcom/arjangconsulting/codeeditor/TextPosition;
+	public fun hashCode ()I
+	public final fun intersects (Lcom/arjangconsulting/codeeditor/TextRange;)Z
+	public final fun isEmpty ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/TextRange$Companion {
+	public final fun at (Lcom/arjangconsulting/codeeditor/TextPosition;)Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun lines (III)Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/Token {
+	public static final field $stable I
+	public fun <init> (IILcom/arjangconsulting/codeeditor/TokenKind;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Lcom/arjangconsulting/codeeditor/TokenKind;
+	public final fun copy (IILcom/arjangconsulting/codeeditor/TokenKind;)Lcom/arjangconsulting/codeeditor/Token;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/Token;IILcom/arjangconsulting/codeeditor/TokenKind;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/Token;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnd ()I
+	public final fun getKind ()Lcom/arjangconsulting/codeeditor/TokenKind;
+	public final fun getStart ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/TokenKind : java/lang/Enum {
+	public static final field ANNOTATION Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field ATTRIBUTE Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field COMMENT Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field CONSTANT Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field ERROR Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field ESCAPE Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field FUNCTION Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field KEYWORD Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field NUMBER Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field OPERATOR Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field PLAIN Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field PREPROCESSOR Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field PROPERTY Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field PUNCTUATION Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field STRING Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field TYPE Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static final field VARIABLE Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/TokenKind;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/TokenKind;
+}
+
+public final class com/arjangconsulting/codeeditor/TokenRules {
+	public static final field $stable I
+	public final fun getAutoClosingPairs ()Ljava/util/List;
+	public final fun getBrackets ()Ljava/util/List;
+	public final fun getIndentUnit ()Ljava/lang/String;
+	public final fun getLineComment ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun isIdentifierPart (C)Z
+	public final fun isIdentifierStart (C)Z
+	public fun toString ()Ljava/lang/String;
+	public final fun tokenize (Ljava/lang/String;)Ljava/util/List;
+	public final fun tokenizeLine-_dis-KM (Ljava/lang/String;I)Lcom/arjangconsulting/codeeditor/LexedLine;
+	public static synthetic fun tokenizeLine-_dis-KM$default (Lcom/arjangconsulting/codeeditor/TokenRules;Ljava/lang/String;IILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/LexedLine;
+}
+
+public final class com/arjangconsulting/codeeditor/TokenRulesBuilder {
+	public static final field $stable I
+	public final fun attributeAssignments ()V
+	public final fun autoClose ([Lkotlin/Pair;)V
+	public final fun blockComment (Ljava/lang/String;Ljava/lang/String;Z)V
+	public static synthetic fun blockComment$default (Lcom/arjangconsulting/codeeditor/TokenRulesBuilder;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)V
+	public final fun brackets ([Lkotlin/Pair;)V
+	public final fun capitalizedIdentifiersAreTypes ()V
+	public final fun constants ([Ljava/lang/String;)V
+	public final fun functionCalls ()V
+	public final fun getCaseInsensitiveKeywords ()Z
+	public final fun getIdentifierPart ()Lkotlin/jvm/functions/Function1;
+	public final fun getIdentifierStart ()Lkotlin/jvm/functions/Function1;
+	public final fun getIndentUnit ()Ljava/lang/String;
+	public final fun keywords ([Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TokenKind;)V
+	public static synthetic fun keywords$default (Lcom/arjangconsulting/codeeditor/TokenRulesBuilder;[Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TokenKind;ILjava/lang/Object;)V
+	public final fun lineComment (Ljava/lang/String;)V
+	public final fun numbers ()V
+	public final fun operators (Ljava/lang/String;)V
+	public final fun pattern (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TokenKind;)V
+	public final fun punctuation (Ljava/lang/String;)V
+	public final fun setCaseInsensitiveKeywords (Z)V
+	public final fun setIdentifierPart (Lkotlin/jvm/functions/Function1;)V
+	public final fun setIdentifierStart (Lkotlin/jvm/functions/Function1;)V
+	public final fun setIndentUnit (Ljava/lang/String;)V
+	public final fun string (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Character;ZLcom/arjangconsulting/codeeditor/TokenKind;Ljava/lang/String;CLjava/lang/Character;)V
+	public static synthetic fun string$default (Lcom/arjangconsulting/codeeditor/TokenRulesBuilder;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Character;ZLcom/arjangconsulting/codeeditor/TokenKind;Ljava/lang/String;CLjava/lang/Character;ILjava/lang/Object;)V
+	public final fun stringPropertyKeys ()V
+	public final fun types ([Ljava/lang/String;)V
+}
+
+public final class com/arjangconsulting/codeeditor/TokenRulesKt {
+	public static final fun tokenRules (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TokenRules;Lkotlin/jvm/functions/Function1;)Lcom/arjangconsulting/codeeditor/TokenRules;
+	public static synthetic fun tokenRules$default (Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TokenRules;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/TokenRules;
+}
+
+public final class com/arjangconsulting/codeeditor/TokenRulesPresetsKt {
+	public static final fun getJsonRules ()Lcom/arjangconsulting/codeeditor/TokenRules;
+	public static final fun getKotlinRules ()Lcom/arjangconsulting/codeeditor/TokenRules;
+	public static final fun getPlainText ()Lcom/arjangconsulting/codeeditor/TokenRules;
+	public static final fun getShellRules ()Lcom/arjangconsulting/codeeditor/TokenRules;
+	public static final fun getSwiftRules ()Lcom/arjangconsulting/codeeditor/TokenRules;
+	public static final fun getYamlRules ()Lcom/arjangconsulting/codeeditor/TokenRules;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolCommand {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/ToolCommand$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/arjangconsulting/codeeditor/ToolCommand;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/ToolCommand;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/ToolCommand;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getParameters ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/ToolCommand$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/ToolCommand$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/ToolCommand;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/ToolCommand;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolCommand$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolCommandCatalog {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/ToolCommandCatalog$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/arjangconsulting/codeeditor/ToolCommandCatalog;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/ToolCommandCatalog;Ljava/util/List;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/ToolCommandCatalog;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCommands ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun languageRules (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/TokenRules;
+	public static synthetic fun languageRules$default (Lcom/arjangconsulting/codeeditor/ToolCommandCatalog;Ljava/lang/String;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/TokenRules;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/ToolCommandCatalog$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/ToolCommandCatalog$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/ToolCommandCatalog;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/ToolCommandCatalog;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolCommandCatalog$Companion {
+	public final fun fromMcpToolsJson (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/ToolCommandCatalog;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolCompletionBackend : com/arjangconsulting/codeeditor/CompletionBackend {
+	public static final field $stable I
+	public fun <init> (Lcom/arjangconsulting/codeeditor/ToolCommandCatalog;Lcom/arjangconsulting/codeeditor/ToolValueProvider;Lcom/arjangconsulting/codeeditor/ToolCompletionLabels;)V
+	public synthetic fun <init> (Lcom/arjangconsulting/codeeditor/ToolCommandCatalog;Lcom/arjangconsulting/codeeditor/ToolValueProvider;Lcom/arjangconsulting/codeeditor/ToolCompletionLabels;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun complete (Lcom/arjangconsulting/codeeditor/CompletionRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolCompletionLabels {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/ToolCompletionLabels;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/ToolCompletionLabels;Ljava/lang/String;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/ToolCompletionLabels;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRequired ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolParameter {
+	public static final field $stable I
+	public static final field Companion Lcom/arjangconsulting/codeeditor/ToolParameter$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lcom/arjangconsulting/codeeditor/ToolValueKind;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lcom/arjangconsulting/codeeditor/ToolValueKind;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Lcom/arjangconsulting/codeeditor/ToolValueKind;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lcom/arjangconsulting/codeeditor/ToolValueKind;)Lcom/arjangconsulting/codeeditor/ToolParameter;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/ToolParameter;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lcom/arjangconsulting/codeeditor/ToolValueKind;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/ToolParameter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getKind ()Lcom/arjangconsulting/codeeditor/ToolValueKind;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getRequired ()Z
+	public final fun getValues ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/arjangconsulting/codeeditor/ToolParameter$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/arjangconsulting/codeeditor/ToolParameter$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/arjangconsulting/codeeditor/ToolParameter;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/arjangconsulting/codeeditor/ToolParameter;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolParameter$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolValueKind : java/lang/Enum {
+	public static final field BOOLEAN Lcom/arjangconsulting/codeeditor/ToolValueKind;
+	public static final field Companion Lcom/arjangconsulting/codeeditor/ToolValueKind$Companion;
+	public static final field JSON Lcom/arjangconsulting/codeeditor/ToolValueKind;
+	public static final field NUMBER Lcom/arjangconsulting/codeeditor/ToolValueKind;
+	public static final field STRING Lcom/arjangconsulting/codeeditor/ToolValueKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/ToolValueKind;
+	public static fun values ()[Lcom/arjangconsulting/codeeditor/ToolValueKind;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolValueKind$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/arjangconsulting/codeeditor/ToolValueProvider {
+	public abstract fun values (Lcom/arjangconsulting/codeeditor/ToolValueRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/arjangconsulting/codeeditor/ToolValueRequest {
+	public static final field $stable I
+	public fun <init> (Lcom/arjangconsulting/codeeditor/CompletionRequest;Lcom/arjangconsulting/codeeditor/ToolCommand;Lcom/arjangconsulting/codeeditor/ToolParameter;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TextRange;)V
+	public final fun component1 ()Lcom/arjangconsulting/codeeditor/CompletionRequest;
+	public final fun component2 ()Lcom/arjangconsulting/codeeditor/ToolCommand;
+	public final fun component3 ()Lcom/arjangconsulting/codeeditor/ToolParameter;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun copy (Lcom/arjangconsulting/codeeditor/CompletionRequest;Lcom/arjangconsulting/codeeditor/ToolCommand;Lcom/arjangconsulting/codeeditor/ToolParameter;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TextRange;)Lcom/arjangconsulting/codeeditor/ToolValueRequest;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/ToolValueRequest;Lcom/arjangconsulting/codeeditor/CompletionRequest;Lcom/arjangconsulting/codeeditor/ToolCommand;Lcom/arjangconsulting/codeeditor/ToolParameter;Ljava/lang/String;Lcom/arjangconsulting/codeeditor/TextRange;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/ToolValueRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCommand ()Lcom/arjangconsulting/codeeditor/ToolCommand;
+	public final fun getParameter ()Lcom/arjangconsulting/codeeditor/ToolParameter;
+	public final fun getPrefix ()Ljava/lang/String;
+	public final fun getReplacementRange ()Lcom/arjangconsulting/codeeditor/TextRange;
+	public final fun getRequest ()Lcom/arjangconsulting/codeeditor/CompletionRequest;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/arjangconsulting/codeeditor/YamlLanguageService : com/arjangconsulting/codeeditor/LanguageService {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lcom/arjangconsulting/codeeditor/YamlLanguageServiceLabels;I)V
+	public synthetic fun <init> (Lcom/arjangconsulting/codeeditor/YamlLanguageServiceLabels;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun complete (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lcom/arjangconsulting/codeeditor/CompletionTrigger;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun diagnostics (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun foldingRanges (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun format (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/FormattingOptions;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getTriggerCharacters ()Ljava/util/Set;
+	public fun hover (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lcom/arjangconsulting/codeeditor/TextPosition;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resolveCompletionItem (Lcom/arjangconsulting/codeeditor/CompletionItem;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun semanticTokens (Lcom/arjangconsulting/codeeditor/DocumentSnapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/arjangconsulting/codeeditor/YamlLanguageServiceLabels {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/arjangconsulting/codeeditor/YamlLanguageServiceLabels;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/YamlLanguageServiceLabels;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/YamlLanguageServiceLabels;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDocumentTooLarge ()Ljava/lang/String;
+	public final fun getInvalidSyntax ()Ljava/lang/String;
+	public final fun getNestingLimit ()Ljava/lang/String;
+	public final fun getSource ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

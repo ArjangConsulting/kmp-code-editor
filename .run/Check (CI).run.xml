@@ -11,6 +11,7 @@
       <option name="taskNames">
         <list>
           <option value=":code-editor:allTests" />
+          <option value=":code-editor:checkKotlinAbi" />
           <option value=":code-editor:assemble" />
           <option value=":sample:compileKotlinJvm" />
         </list>
