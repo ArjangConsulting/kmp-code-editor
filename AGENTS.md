@@ -52,7 +52,7 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
 - `docs/RELEASING.md` — credential setup, pre-1.0 versioning, ABI review, and initial release checks.
 - `docs/COMPLETION_PROTOCOL.md` — native/provider integration and the versioned JSON contract.
 - `docs/ARCHITECTURE.md` — internals. `README.md` — public API, engines, keyboard, known gaps.
-- `.github/workflows/` — `ci.yml`, `release-please.yml` -> `release.yml` (Maven Central publish),
+- `.github/workflows/` — `ci.yml`, `docs.yml` (Dokka API docs to GitHub Pages at https://arjangconsulting.github.io/kmp-code-editor/, built by `ci.yml` and deployed after it passes on `main`), `release-please.yml` -> `release.yml` (Maven Central publish),
   `release-preflight.yml` (credential/App checks and signing without publishing),
   `dependabot-auto-merge.yml`. `.github/dependabot.yml` configures dependency updates.
 - `.run/` — shared IntelliJ run configurations.
@@ -86,6 +86,7 @@ KMPComponents and kommon, is in the `kmp-library-conventions` skill (from the KM
 ./gradlew :code-editor:jvmTest                     # fastest: common + desktop UI + RSTA tests
 ./gradlew :code-editor:allTests                    # all targets (iOS needs macOS + Xcode)
 ./gradlew :code-editor:checkKotlinAbi
+./gradlew :code-editor:dokkaGenerate               # API docs: code-editor/build/dokka/html
 ./gradlew :code-editor:assemble :sample:compileKotlinJvm
 ```
 
