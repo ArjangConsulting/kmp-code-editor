@@ -36,6 +36,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.KeyInjectionScope
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -441,6 +442,11 @@ class ComposeEditorUiTest {
         waitForIdle()
         onNodeWithTag("editor").performMouseInput { moveTo(Offset(width * 0.05f, height * 0.1f)) }
         waitUntil(timeoutMillis = 3_000) { onAllNodesExist(HOVER_TAG) }
+        // Diagnostics and hover are separate async requests; the popup can appear with only one of them.
+        waitUntil(timeoutMillis = 5_000) {
+            onAllNodes(hasText("from service", substring = true)).fetchSemanticsNodes().isNotEmpty() &&
+                onAllNodes(hasText("hover text")).fetchSemanticsNodes().isNotEmpty()
+        }
         onNodeWithText("from service", substring = true).assertIsDisplayed()
         onNodeWithText("hover text").assertIsDisplayed()
     }
