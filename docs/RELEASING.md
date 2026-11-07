@@ -90,14 +90,11 @@ Central releases are immutable; never move a published tag or reuse a published 
 
 ## Current readiness evidence
 
-The `0.1.0` [preflight at `7c04f6e`](https://github.com/ArjangConsulting/kmp-code-editor/actions/runs/42307080067)
-completed the release checks, ABI checks, authenticated Central read-only request, and signing.
-All five publications passed local POM/archive checks with 29 signature files. The six environment
-secrets were present. The App installation accepted its identity but token creation failed because
-it had Contents and Pull requests write without Workflows write. Add Workflows write to the App
-registration, then approve the updated installation permissions and rerun preflight. See
-[GitHub's registration guide](https://docs.github.com/en/apps/maintaining-github-apps/modifying-a-github-app-registration)
-and [installation approval guide](https://docs.github.com/en/apps/using-github-apps/approving-updated-permissions-for-a-github-app).
+The `0.1.0` [preflight at `d09c23b`](https://github.com/ArjangConsulting/kmp-code-editor/actions/runs/42323140477)
+passed all three jobs: `app-access`, `central-credentials`, and `verify`. The release checks, ABI
+checks, authenticated Central read-only request, and signing succeeded. All five publications
+passed local POM/archive checks with signature files. The six environment secrets were present and
+the App token was created with Contents, Pull requests, and Workflows write.
 
 The release gate remains unset. `0.1.0` is absent from Maven Central, so Studio's source fallback
 must remain. Central token authentication and local signing do not establish the account's verified
