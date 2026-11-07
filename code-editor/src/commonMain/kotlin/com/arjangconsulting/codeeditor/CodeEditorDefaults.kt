@@ -119,7 +119,7 @@ public enum class TabBehavior {
 /**
  * Which implementation renders the editor.
  *
- * [DEFAULT] picks the platform's recommended engine: [COMPOSE] everywhere (see the module README
+ * [DEFAULT] picks the platform's recommended engine: [COMPOSE] everywhere (see docs/ENGINES.md
  * for why the desktop default is not RSyntaxTextArea). [RSYNTAX_TEXT_AREA] is desktop-only and falls
  * back to [COMPOSE] on other platforms.
  */
@@ -132,7 +132,7 @@ public enum class CodeEditorEngine {
     /**
      * RSyntaxTextArea hosted in a `SwingPanel` (desktop only). It is a heavyweight component: Compose
      * popups and dialogs can draw underneath it unless the app enables the window-layer flags
-     * described in the README.
+     * described in docs/ENGINES.md.
      */
     RSYNTAX_TEXT_AREA,
 }

@@ -51,7 +51,7 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
 - `examples/completion/export_mcp_tools.py` — source-free MCP catalog export with Python 3.11+.
 - `docs/RELEASING.md` — credential setup, pre-1.0 versioning, ABI review, and initial release checks.
 - `docs/COMPLETION_PROTOCOL.md` — native/provider integration and the versioned JSON contract.
-- `docs/ARCHITECTURE.md` — internals. `README.md` — public API, engines, keyboard, known gaps.
+- `docs/ARCHITECTURE.md` — internals. `README.md` — overview, install, quick start, docs index, known gaps. Topic pages in `docs/`: `GETTING_STARTED.md`, `API.md`, `LANGUAGES.md`, `THEMING.md`, `LANGUAGE_SERVICES.md`, `FORMATTING.md`, `ENGINES.md`, `KEYBOARD.md`, `ACCESSIBILITY.md`, `DEVELOPMENT.md`.
 - `.github/workflows/` — `ci.yml`, `docs.yml` (Dokka API docs to GitHub Pages at https://arjangconsulting.github.io/kmp-code-editor/, built by `ci.yml` and deployed after it passes on `main`), `release-please.yml` -> `release.yml` (Maven Central publish),
   `release-preflight.yml` (credential/App checks and signing without publishing),
   `dependabot-auto-merge.yml`. `.github/dependabot.yml` configures dependency updates.
@@ -78,7 +78,7 @@ KMPComponents and kommon, is in the `kmp-library-conventions` skill (from the KM
    3.17 so adapters stay thin.
 8. **KDoc** on every public declaration; `explicitApi()` is on.
 9. **No inline (end-of-line) comments;** put comments on their own line.
-10. Keep the engines' behavior aligned; document any engine-specific gap in `README.md`.
+10. Keep the engines' behavior aligned; document any engine-specific gap in `docs/ENGINES.md` and the README's known gaps.
 
 ## Build and verification
 
@@ -100,7 +100,7 @@ bytecode at `JvmTarget.JVM_17`. `.editorconfig` holds the house style.
 
 1. `./gradlew :code-editor:jvmTest` passes; for changes outside pure JVM code, run the full CI task
    list above (iOS/Android behavior: also the checks in `verification/README.md`).
-2. Public API changed: KDoc updated, `README.md` (API table, engines, keyboard, known gaps) updated,
+2. Public API changed: KDoc updated, the matching `docs/` page (`API.md`, `ENGINES.md`, `KEYBOARD.md`, …) and the README's known gaps updated, with any new page linked from the README's docs index,
    and the sample shows the feature.
 3. Internals changed (new file, layer, or data flow): `docs/ARCHITECTURE.md` updated.
 4. A command, path, or workflow named in this file changed: update this file in the same commit.

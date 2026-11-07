@@ -8,46 +8,7 @@ Protocol (LSP) 3.17.
 implementation("com.arjangconsulting.codeeditor:code-editor:<version>")
 ```
 
-Targets: `android` (minSdk 26), `jvm`, `iosArm64`, `iosSimulatorArm64`. Dependencies: Compose
-runtime/foundation/ui, Material 3 (only for color defaults), kotlinx-coroutines, and on desktop
-RSyntaxTextArea 4.0.1 + fifesoft autocomplete 4.0.0 (BSD-3-Clause).
-
-Internals are described in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Contributor and AI-agent
-conventions live in [AGENTS.md](AGENTS.md).
-
-## Try it
-
-```bash
-./gradlew :sample:run                 # desktop sample: every feature on one screen
-verification/build-apps.sh android    # Android app with the editor (see verification/README.md)
-verification/build-apps.sh ios        # iOS simulator app (needs Xcode and xcodegen)
-```
-
-In IntelliJ IDEA or Android Studio, open the repository and use the shared run configurations in
-`.run/`: **Run** has *Sample (desktop)*, *Sample (desktop, window layers)* (adds
-`-Dcompose.layers.type=WINDOW` for testing the RSyntaxTextArea engine with overlays), and the
-Android and iOS verification builds; **Test** has *Tests (JVM)*, *Tests (all targets)*, and
-*Check (CI)*.
-
-The desktop sample has language and engine pickers, a toggle for every option, a demo
-`LanguageService` for a small command language (with simulated latency), JSON completion from a
-tiny schema, a read-only Swift test whose lines highlight from a clickable step list, a REPL, a
-`CodeSnippet` list, light/dark themes, a syntax color editor (palette presets, per-token colors
-with a contrast check), and a dialog-over-editor overlay check.
-
-The sample uses [KMPComponents](https://github.com/ArjangConsulting/KMPComponents) 0.2.0 for `KmpTheme`,
-kommon spacing tokens, `ThemeModeSelector`, and section cards. The
-published editor has no KMPComponents dependency; its Material theme roles inherit the host's
-colors when placed inside `KmpTheme`.
-
-To try changes from a sibling KMPComponents checkout:
-
-```bash
-./gradlew :sample:run -PuseLocalKmpComponents=true
-```
-
-Add `-PkmpComponentsDir=/path/to/KMPComponents` for another checkout location. Without the opt-in,
-the sample resolves the catalog version from Maven Central, including in CI.
+Targets: `android` (minSdk 26), `jvm`, `iosArm64`, `iosSimulatorArm64`.
 
 ## Quick start
 
@@ -57,461 +18,51 @@ CodeEditor(
     state = state,
     modifier = Modifier.fillMaxSize(),
     language = JsonRules,
-    languageService = myService,
-    diagnostics = externalDiagnostics,
+    languageService = JsonLanguageService(),
 )
 ```
 
-For a plain string:
+Or bind a plain string:
 
 ```kotlin
 var text by remember { mutableStateOf("") }
 CodeEditor(value = text, onValueChange = { text = it }, language = KotlinRules)
 ```
 
-`onValueChange` reports editor changes, including typing, completion acceptance, undo, and redo.
-Supplying an external `value` replaces the text as one undoable change and moves the caret to the
-end without calling `onValueChange`. Delayed echoes of recently reported values do not overwrite
-newer typing.
+Run the desktop sample to see every feature: `./gradlew :sample:run`.
 
-A REPL prompt:
+## Features
 
-```kotlin
-val replService = remember { KeywordLanguageService(KotlinRules) }
-var sessionRevision by remember { mutableStateOf(0L) }
-CodeEditor(
-    value = command,
-    onValueChange = { command = it },
-    singleLine = true,
-    language = KotlinRules,
-    languageService = replService,
-    languageServiceRevision = sessionRevision,
-    onSubmit = {
-        run(it)
-        sessionRevision++
-        command = ""
-    },
-    onHistory = { delta -> command = history.step(delta) },
-)
-```
+- Syntax highlighting for JSON, YAML, Kotlin, Swift, shell, and plain text, plus a `tokenRules { }`
+  DSL for your own languages.
+- Read-only `CodeSnippet`s and full-width line highlights for generated tests.
+- Pluggable `LanguageService`: completion, diagnostics, hover, semantic tokens, folding, formatting.
+- Local JSON and YAML validation and explicit, undoable formatting. No bundled LSP runtime.
+- Completion from tool endpoints and source-free add-ons through a versioned JSON contract.
+- Folding, find, undo/redo, soft wrap, smart typing, and a single-line REPL mode.
+- Light, dark, and high-contrast syntax palettes that follow the editor background.
+- Compose engine on every platform; opt-in RSyntaxTextArea engine on desktop.
 
-Use the same rules with `CodeSnippet(command, language = KotlinRules)` for highlighted submitted
-commands. Keep ordinary runtime output as text. The sample REPL includes command, Kotlin, Swift,
-and shell modes, highlighted transcript entries that retain their original language, and a session reset.
+## Documentation
 
-Read-only snippets in lists (one `BasicText`, no editor machinery):
-
-```kotlin
-CodeSnippet(toolCall.argumentsJson, language = JsonRules, maxLines = 3, overflow = TextOverflow.Ellipsis)
-val annotated = highlightedText(code, KotlinRules, CodeEditorDefaults.colorsFrom(scheme))
-```
-
-## Public API
-
-| Type | Purpose |
+| Topic | What it covers |
 | --- | --- |
-| `CodeEditor(state, …)` / `CodeEditor(value, onValueChange, …)` | The editor. Parameters: `language`, `languageService`, `engine`, `readOnly`, `singleLine`, `onSubmit`, `onHistory`, `showLineNumbers`, `folding`, `lineHighlights`, `diagnostics`, `revealLine`, `revealRange`, `onCaretChange`, `onLineClick`, `tabBehavior`, `colors`, `textStyle`, `labels`, `options`, `serviceOptions`, `logger`, `languageServiceRevision`. |
-| `CodeEditorState`, `rememberCodeEditorState` | Text, selection, monotonically increasing `version`, folding, undo/redo, `visibleLines`, `revealLine`/`revealRange`, `edit(List<TextEdit>)`, `snapshot()`. |
-| `TextPosition`, `TextRange`, `TextEdit`, `applyTextEdits`, `DocumentSnapshot` | LSP-shaped text model: 0-based lines, UTF-16 characters. `TextRange` is position based; it is not `androidx.compose.ui.text.TextRange`. |
-| `LanguageService` | `triggerCharacters`, `complete`, `resolveCompletionItem`, `diagnostics`, `format`, `hover`, `semanticTokens`, `foldingRanges`. All default to no-ops. |
-| `KeywordLanguageService(language)` | Local completion from the highlighting vocabulary, including keywords, constants, and known types. |
-| `CompletionBackend`, `BackendLanguageService` | Adapts native tool endpoints and external add-ons to completion in both engines. |
-| `CompletionContext`, `CompletionRequest`, `CompletionResponse`, `CompletionProtocol` | Versioned, correlated completion messages and a transport-independent JSON codec. |
-| `ToolCommandCatalog`, `ToolCommand`, `ToolParameter`, `ToolValueKind` | External command metadata, MCP `tools/list` import, and matching highlighting rules. |
-| `ToolCompletionBackend`, `ToolValueProvider`, `ToolValueRequest`, `ToolCompletionLabels` | Command/argument/enum suggestions plus optional runtime value completion. |
-| `FormattingOptions`, `FormatResult`, `CodeEditorState.format` | Explicit, asynchronous formatting with timeout, stale-result rejection, and one undo step. |
-| `JsonLanguageService`, `JsonLanguageServiceLabels` | Local JSON syntax validation and whitespace-only formatting, with localizable diagnostic messages. |
-| `YamlLanguageService`, `YamlLanguageServiceLabels` | Local YAML syntax validation and formatting for `.yaml` and `.yml`, with localizable diagnostic messages. |
-| `CompletionItem`, `CompletionList`, `CompletionTrigger`, `Diagnostic`, `Hover`, `MarkupContent`, `SemanticToken`, `FoldingRange` | Mirrors of the LSP types. |
-| `LineHighlight(lines, role)` | Full-width line tint: `SELECTED`, `HOVER`, `WARNING`, `ERROR`, `INFO`. |
-| `TokenRules`, `tokenRules { }`, `PlainText`, `JsonRules`, `YamlRules`, `KotlinRules`, `SwiftRules`, `ShellRules` | Language definitions: lexer rules plus brackets, comment prefix, indentation. |
-| `highlightedText`, `rememberHighlightedText`, `CodeSnippet` | Lightweight read-only highlighting. |
-| `FuzzyMatcher`, `filterAndRankCompletions` | The client-side completion filter, reusable elsewhere. |
-| `CodeEditorSyntaxTheme` (`Default`, `HighContrast`), `CodeEditorSyntaxColors`, `contrastRatio`, `isDarkBackground` | Token color palettes; see [Colors](#colors). |
-| `CodeEditorColors` / `CodeEditorDefaults.colors(syntaxTheme)` / `colorsFrom(scheme, syntaxTheme)`, `CodeEditorLabels`, `CodeEditorOptions`, `LanguageServiceOptions`, `CodeEditorLogger`, `TabBehavior`, `CodeEditorEngine` | Configuration; `CodeEditorOptions.softWrap` defaults to `false`. |
-
-Enum entries use SCREAMING_CASE (house style), e.g. `DiagnosticSeverity.ERROR`.
-
-## Colors
-
-Editor chrome (background, gutter, selection, popups) comes from `MaterialTheme.colorScheme`. Token
-colors come from a separate syntax palette, `CodeEditorSyntaxTheme`, which has a light and a dark
-variant. The variant is picked from the editor background's luminance, so tokens stay readable on any
-background, including a custom one.
-
-| Theme | Contrast |
-| --- | --- |
-| `CodeEditorSyntaxTheme.Default` | ≥ 4.5:1 (WCAG AA) on white through `#D6D6D6` and on `#0F0D13` through `#404040`, so also on Material's tinted containers |
-| `CodeEditorSyntaxTheme.HighContrast` | ≥ 7:1 (WCAG AAA) on white through `#D6D6D6` and on black through `#2E2E2E` |
-
-Pick a palette:
-
-```kotlin
-CodeEditor(state, colors = CodeEditorDefaults.colors(CodeEditorSyntaxTheme.HighContrast))
-```
-
-The syntax variant follows a custom background automatically:
-
-```kotlin
-val colors = CodeEditorDefaults.colors().copy(background = panel)
-```
-
-Let people recolor tokens from a settings screen, then warn about unreadable picks:
-
-```kotlin
-val theme = CodeEditorSyntaxTheme.Default.let { it.copy(dark = it.dark.with(TokenKind.STRING, picked)) }
-val tooFaint = theme.dark.lowContrastKinds(background)
-CodeEditor(state, colors = CodeEditorDefaults.colors(theme))
-```
-
-A role set to `Color.Unspecified` uses the editor foreground; `variable` does by default.
-`CodeEditorSyntaxTheme(colors)` uses one palette for every background. Persisting
-someone's choices is up to the app: store the edited `CodeEditorSyntaxTheme` however you store
-other settings.
-
-## Languages
-
-The library includes five highlighting presets: JSON, YAML, Kotlin, Swift, and shell (sh/Bash), plus
-plain text. Choose `language` explicitly; filename/content detection is left to the host. Highlighting
-and generated-test line highlights work without a language service. Shell rules cover control words,
-common builtins, assignments, flags, variables, comments, and quoted strings. Heredocs, nested command
-substitutions, and context-sensitive shell comments are not fully modeled.
-
-`YamlRules` supports both `.yaml` and `.yml`: block and flow mappings/sequences, keys, quoted and
-plain scalars, numbers, booleans/null, comments, document markers, anchors/aliases, tags, and multiline
-block strings. Both editor engines use the same indentation-aware YAML lexer. Highlighting is
-lexical; complex keys and multiline plain scalar context are not fully modeled. YAML uses a
-dedicated scanner, so token patterns added through `tokenRules(base = YamlRules)` are not applied;
-editing metadata such as indentation and auto-closing pairs can still be customized.
-
-`tokenRules` builds a line-based incremental lexer. Rules are tried in order: line comments,
-delimited constructs (strings and block comments, longest opening delimiter first), regex
-`pattern`s, numbers, identifiers (keywords, then `name=` attributes, then `fn(` calls, then
-capitalized types), operators, punctuation.
-
-```kotlin
-val CommandRules = tokenRules("commands") {
-    keywords("tap", "swipe", "assert")
-    constants("true", "false")
-    attributeAssignments()
-    lineComment("#")
-    string("\"")
-    numbers()
-    pattern("@[a-z]+", TokenKind.ANNOTATION)
-    brackets('(' to ')')
-}
-val Jsonc = tokenRules("jsonc", base = JsonRules) { lineComment("//") }
-```
-
-Strings and block comments may span lines (`multiline = true`, `nested = true`). Only changed lines
-are re-lexed: after an edit the lexer restarts at the first changed line and stops as soon as a
-line ends in the same state as before. Semantic tokens from the service (`SemanticToken`) are drawn
-over lexer tokens in the Compose engine.
-
-## Language services
-
-`KeywordLanguageService(rules)` supplies lexical completion without a language server, including
-in single-line REPL prompts. Pass the same `rules` as the editor's `language` for matching syntax
-highlighting. It returns the full vocabulary for local filtering and suppresses suggestions inside
-strings, escapes, and comments, and after a member-access dot. It does not infer scopes, runtime
-members, or context-specific keyword legality. Host services can call its `complete` method and
-merge the returned items with their own proposals; the host owns backend failure and latency policy.
-
-Change `languageServiceRevision` whenever runtime context changes, such as after command execution,
-session reset, or device switch. This cancels outstanding service requests and clears completion,
-hover, diagnostics, semantic tokens, and service folds even when the document is unchanged.
-Analysis is refreshed automatically; completion reopens on typing or Ctrl+Space. The document,
-selection, undo history, and host-supplied diagnostics are preserved. The signal works in both
-engines and both editor overloads. Explicit host formatting calls have their own document version
-checks and are not cancelled by this signal.
-
-### Tool backends and external add-ons
-
-`BackendLanguageService` connects the editor to a `CompletionBackend`. The backend can live in the
-tool itself, in the consuming app, or in an external completion add-on. It receives document text,
-UTF-16 caret position, language ID, session identity, and runtime revision, and returns correlated
-`CompletionItem`s. `CompletionProtocol` supplies a versioned JSON codec for remote implementations;
-the host supplies HTTP, stdio, WebSocket, or another transport.
-
-Tools do not need source changes when they already expose useful metadata. `ToolCommandCatalog`
-imports MCP `tools/list` responses, and `ToolCompletionBackend` turns the catalog into suggestions
-for a `command name=value` prompt. An optional `ToolValueProvider` adds values obtained from public
-runtime APIs or host snapshots. The included amoo example uses its existing MCP schemas; the sample
-REPL's **Tools (schema)** mode demonstrates command names, arguments, enums, and fixture element IDs
-through a JSON boundary. It runs offline and displays submissions locally.
-
-See [Completion providers and add-ons](docs/COMPLETION_PROTOCOL.md) for integration code, the JSON
-contract, source-free amoo discovery, capabilities, and limitations. The exporter in
-`examples/completion/export_mcp_tools.py` reads paginated MCP catalogs using an installed tool binary
-and Python 3.11+. Runtime variables and type members require an existing introspection/completion
-surface or a native provider; a command schema supplies command and argument knowledge.
-
-The editor owns orchestration so services can be simple, slow, remote, or flaky:
-
-- Completion is requested on a trigger character, while typing an identifier (debounced by
-  `completionDebounceMillis`), and on Ctrl+Space.
-- Every request carries a `DocumentSnapshot` with a `version`. In-flight requests are cancelled when
-  the document changes, and results for an older version are dropped. Moving the caret cancels pending
-  completion and hover requests. An open completion list is retained only for edits within its prefix;
-  other edits close it. Diagnostics, semantic tokens, and service folds apply only to their version.
-- While the popup is open and the list is complete (`isIncomplete = false`), typing re-filters
-  locally with `FuzzyMatcher` (subsequence, word-boundary, and prefix aware). Ranking order is
-  score, then `preselect`, then `sortText ?: label`. When `isIncomplete = true` the service is asked
-  again on every edit.
-- Diagnostics, semantic tokens, and folding ranges are requested `diagnosticsDebounceMillis` after
-  the last edit; hover after the pointer rests for `hoverDelayMillis`.
-- Calls run on `LanguageServiceOptions.dispatcher` (default `Dispatchers.Default`) with
-  `requestTimeoutMillis`. Exceptions and timeouts go to `CodeEditorLogger.error` and are otherwise
-  ignored. The logger never receives document text.
-- Accepting a completion applies `textEdit` or replaces the identifier prefix with `insertText ?: label`,
-  together with `additionalTextEdits`, as one undo step. Service ranges follow prefix growth or deletion,
-  including additional edits after the prefix. A main edit ending at the request position follows the
-  caret. Snippets support `$1`, `${1:placeholder}`, and `$0`.
-- Direct services follow LSP position clamping. Candidates whose edits overlap each other or the
-  replaced prefix are not offered, and acceptance validates resolved edits and their mapped ranges
-  before changing the document. A rejected acceptance closes the popup, applies nothing, consumes
-  the key in both engines, and is logged through `CodeEditorLogger.error`.
-- `CodeEditorState.edit` preserves list order for insertions at the same position. Swing selection
-  replacement is one undo step and one value callback. Collapsed folds move with edits and undo/redo
-  for LF, CRLF, and CR line endings.
-- `tabSize`, request timeout, and completion item limits must be positive; delays must be nonnegative.
-  Empty string and block-comment delimiters are rejected when building token rules.
-
-### Formatting, saving, and validation
-
-Highlighting is the core feature; services are optional plugins. A service can implement only
-`format`, only `diagnostics`, or both, without providing completion or other IDE features. The
-library bundles JSON and YAML syntax validation and formatting. Kotlin, Swift, and shell have highlighting
-and smart typing, but no bundled formatter or validator. Host adapters may supply local tools or
-LSP-backed implementations. There is no bundled LSP client or server process.
-
-```kotlin
-val state = rememberCodeEditorState("""{"port":8080,"routes":[]}""")
-val service = remember { JsonLanguageService() }
-val scope = rememberCoroutineScope()
-CodeEditor(state = state, language = JsonRules, languageService = service)
-Button(onClick = {
-    scope.launch {
-        state.format(service, FormattingOptions(tabSize = 2))
-    }
-}) { Text("Format") }
-```
-
-Formatting runs only when the host requests it, such as a Format button or a Save handler. It never
-runs on typing or automatically on save; this library owns no persistence. Call `state.format` from
-the UI thread. The provider runs on the configured service dispatcher, with a timeout; the result
-returns to the caller before edits are applied. Newer typing makes the result `STALE`. Successful
-edits are one undo step, and selection is mapped through them. `UNAVAILABLE` means the provider
-cannot format this document (including invalid JSON/YAML), `FAILED` means an exception/timeout/invalid
-edit response, and `UNCHANGED` means no change was needed. Cancellation propagates to the caller.
-
-For format-before-save, the host can use this sequence inside its UI coroutine; `saveDocument` and
-`showFormattingOutcome` are host callbacks:
-
-```kotlin
-val result = state.format(service, FormattingOptions(tabSize = 2))
-when (result) {
-    FormatResult.APPLIED, FormatResult.UNCHANGED -> saveDocument(state.text)
-    else -> showFormattingOutcome(result)
-}
-```
-
-`JsonLanguageService` validates any JSON root value, reports the first syntax error, and does not
-perform JSON Schema validation. Invalid input is never formatted. Formatting changes only whitespace
-between tokens: property order, duplicate keys, exact numbers, and string escapes are preserved.
-The first line-ending style and presence of a final line ending are retained; empty collections
-stay compact. Nesting is limited to 128 objects/arrays by default, configurable downward. Use
-`JsonLanguageServiceLabels` to localize diagnostic messages.
-
-For YAML, use `language = YamlRules` and `languageService = remember { YamlLanguageService() }`,
-then call `state.format(service, FormattingOptions(tabSize = 2))` as above. No filename detection is
-required: the same service handles `.yaml` and `.yml`. The formatter uses
-[SnakeYAML Engine KMP](https://github.com/krzema12/snakeyaml-engine-kmp)'s parser/emitter events,
-preserving scalar values, mapping order, duplicate keys, comments, anchors/aliases, tags, and
-multiple documents without constructing objects or expanding aliases. It normalizes indentation
-and spacing while retaining flow/block collection styles; scalar spelling, quoting, and block
-indicators may be normalized. Output uses the first input line-ending style and ends with a line
-break; empty and comment-only input is unchanged. Edits use the smallest single replacement, so
-selection inside the reformatted region may move to its end.
-
-YAML indentation must use spaces: requests with `insertSpaces = false` or `tabSize` outside 1..10
-return `UNAVAILABLE`, as does invalid syntax. Syntax validation does not resolve aliases or check
-schemas or duplicate keys. Documents are limited to 3 Mi UTF-16 code units, and collection nesting
-to 128 levels by default (configurable downward). Use `YamlLanguageServiceLabels` to localize errors.
-
-The editor requests `diagnostics` after edits when a service is installed; a host can also explicitly
-call `service.diagnostics(state.snapshot())` to validate before saving. Reject stale results when
-managing validation yourself. For multiple validators, combine their diagnostics in your service,
-or pass a combined list through the editor's `diagnostics` parameter. Direct diagnostics are owned
-by the host and do not receive the controller's version checks. The sample layers mock-server schema
-checks over the built-in JSON service. JSON and YAML demonstrate Format, Validate, and an in-memory Save snapshot.
-
-Smart typing already pairs `{` with `}`, and Enter between them creates an indented blank line.
-JSON and YAML use two spaces by default; Kotlin, Swift, and shell use four. Configure this through
-`TokenRules.indentUnit` and `CodeEditorOptions.autoIndent`/`autoCloseBrackets`. This is lightweight
-bracket-based indentation rather than whole-document formatting.
-
-### Adapting an LSP server
-
-The types map one to one; an adapter is a thin translation layer:
-
-| LSP | Here |
-| --- | --- |
-| `textDocument/didChange` | Send `DocumentSnapshot.text` (full sync) with `version`. |
-| `textDocument/completion` + `CompletionContext` | `complete(doc, position, trigger)`; `CompletionTriggerKind` mirrors LSP's. |
-| `completionItem/resolve` | `resolveCompletionItem(item)`; carry LSP `data` in `CompletionItem.id`. |
-| `textDocument/publishDiagnostics` / `textDocument/diagnostic` | `diagnostics(doc)`. For push servers, cache the last publish and return it, or pass it as the `diagnostics` parameter instead. |
-| `textDocument/hover` | `hover(doc, position)`. |
-| `textDocument/semanticTokens/full` | `semanticTokens(doc)`; decode the integer stream with your legend into `SemanticToken(line, startCharacter, length, kind)`. |
-| `textDocument/foldingRange` | `foldingRanges(doc)`. |
-| `textDocument/formatting` | `format(doc, options)`; return edits or null when unavailable. |
-
-Positions are UTF-16 based, LSP's default `positionEncoding`.
-An adapter owns JSON-RPC transport, initialization/capabilities, document URI and language ID, and
-open/change/close synchronization. `DocumentSnapshot` contains text and version only. For push
-diagnostics, update the host's diagnostics state when a publish arrives; returning a cached list
-from `diagnostics(doc)` alone does not trigger another analysis when the push arrives later.
-
-## Engines
-
-`engine = CodeEditorEngine.DEFAULT` picks **Compose on every platform, including desktop**.
-`RSYNTAX_TEXT_AREA` is available on desktop as an opt-in and falls back to Compose elsewhere.
-
-### Compose engine
-
-The Compose engine draws viewport tiles of at most 256 UTF-16 units, with small extensions to
-keep ordinary Unicode clusters together. Long logical lines have no display truncation. Horizontal
-scrolling, hit testing, selection, diagnostics, and search use the complete source, including
-minified JSON and long string values. Layout never reformats or inserts source line breaks.
-
-Enable character wrapping for request/response bodies with:
-
-```kotlin
-CodeEditor(
-    state = bodyState,
-    language = JsonRules,
-    languageService = JsonLanguageService(),
-    options = CodeEditorOptions(softWrap = true),
-    tabBehavior = TabBehavior.MOVE_FOCUS,
-    labels = CodeEditorLabels(editorDescription = "Response body"),
-)
-```
-
-Use `PlainText` and omit the language service for raw bodies. Set `readOnly = true` for previews;
-selection, copying, find, and folding remain available. Existing callers keep unwrapped behavior.
-`softWrap` works through both public overloads and is ignored with `singleLine = true`.
-
-Wrapping is visual and breaks at character clusters rather than word boundaries. Positions,
-service ranges, callbacks, and line numbers remain logical source positions; only the first row
-of a logical line gets a gutter number and fold control. Up/Down and PageUp/PageDown follow visual
-rows, and Home/End target the visual row edges. Document start/end still target source boundaries.
-Tabs use logical-line tab stops and move intact to the next row when necessary. Resizing reflows
-the view and keeps the focused caret visible. Content that fits the wrapped viewport has no
-horizontal scrollbar; an indivisible glyph, tab, or fold label wider than the viewport can overflow.
-Folding hides whole source lines and wraps the visible header, reserving space for its placeholder.
-
-A hidden `BasicTextField` preserves native text input, composition, and accessibility. It mirrors
-at most 4,096 UTF-16 units (with surrogate-boundary adjustments) around the selection/caret,
-including line context when it fits. Large selections detach from this window; editor copy/cut
-still use the complete logical selection. Native IME geometry is aligned to the drawn caret.
-Highlighting and folding for long lines or more than 10,000 lines run off the UI thread, cancel
-on replacement, and reject stale versions. Text can appear briefly without syntax colors while
-analysis catches up. Formatting happens only through the host's explicit `state.format` action.
-
-The default monospace style is recommended. The tiled renderer measures glyph advances and
-turns off ligatures and kerning for consistent geometry. Bidirectional shaping across tile
-boundaries and pathological combining sequences longer than a tile are not full-paragraph
-shaping. See [benchmark evidence](benchmarks/RESULTS.md) for reproducible performance measurements
-and their limits.
-
-### RSyntaxTextArea engine (desktop, opt-in)
-
-The RSyntaxTextArea engine generalizes moqserver's `JsonCodeEditor`. It hosts `RSyntaxTextArea`
-in a `SwingPanel` with:
-
-- a `TokenMakerBase` adapter over the shared lexer, so custom languages and Swift work;
-- `addLineHighlight` for line highlights;
-- a `Parser` that turns diagnostics into notices, gutter icons, and tooltips;
-- fifesoft `AutoCompletion` fed by the same controller, whose popup is a separate Swing window;
-- the theme mapped onto `SyntaxScheme`;
-- the shared fold computation;
-- the find bar as Compose above the panel.
-
-`CodeEditorState` stays the source of truth for text, selection, and undo.
-`CodeEditorOptions.softWrap` also enables character wrapping in RSTA; Swing owns its native
-wrapping, glyph shaping, and caret affinity, so exact row breaks can differ from Compose.
-
-### Why RSyntaxTextArea is not the desktop default
-
-The engine was probed in a real window under Compose Multiplatform 1.12.0. Compose renders into a
-heavyweight `SkiaLayer` canvas, and the `SwingPanel` content sits in a separate Swing group inside
-it. Compose `Popup`s, `Dialog`s, `DropdownMenu`s, and tooltips draw on the same canvas, so where
-they overlap the editor, the editor wins. Approval dialogs and menus shown over an editor are
-therefore hidden. Results by flag:
-
-| JVM flag (set before Compose starts) | Popups and dialogs over RSTA | Notes |
-| --- | --- | --- |
-| none (default `compose.layers.type` = on same canvas) | **Hidden under the editor** | |
-| `-Dcompose.layers.type=WINDOW` | Drawn above it: each popup and dialog becomes its own owned `JWindow` | Process-wide; changes popup windowing for the whole app. |
-| `-Dcompose.layers.type=COMPONENT` | Not fixed (no separate windows) | |
-| `-Dcompose.interop.blending=true` | Experimental. Not visually verified here; no separate windows. | Platform-dependent. |
-
-Focus traversal is the second issue. Pressing Tab in a Compose text field above the panel left
-AWT's focus owner `null` for several seconds before the `RSyntaxTextArea` got focus. Focus handoff
-between Compose and Swing is not reliable enough for Studio's keyboard-first flows.
-
-A library cannot set these flags safely: they must be set before Compose starts and they affect the
-whole app. Compose is therefore the default everywhere. To use RSyntaxTextArea anyway:
-
-1. Start the app with `-Dcompose.layers.type=WINDOW`, for example
-   `compose.desktop.application { jvmArgs("-Dcompose.layers.type=WINDOW") }` or
-   `System.setProperty("compose.layers.type", "WINDOW")` as the first line of `main`.
-2. Check overlays with the sample's "Overlay check" card: `./gradlew :sample:run`, switch the
-   engine to RSTA, and open the dialog and menu.
-
-Not supported by the RSyntaxTextArea engine: semantic tokens, service folding ranges, hover
-Markdown beyond escaped paragraphs, `TokenRules.indentUnit` other than tabs or spaces.
-
-## Keyboard (Compose engine)
-
-| Action | macOS / iOS | Windows / Linux / Android |
-| --- | --- | --- |
-| Word left/right | ⌥←/→ | Ctrl+←/→ |
-| Line start/end | ⌘←/→, Home/End, ⌃A/⌃E | Home/End (smart Home) |
-| Document start/end | ⌘↑/↓ | Ctrl+Home/End |
-| Extend selection | add ⇧ | add Shift |
-| Undo / Redo | ⌘Z / ⇧⌘Z | Ctrl+Z / Ctrl+Y, Ctrl+Shift+Z |
-| Copy / Cut / Paste | ⌘C/X/V (whole line when nothing is selected) | Ctrl+C/X/V |
-| Find / next / previous | ⌘F / ⌘G / ⇧⌘G, F3 | Ctrl+F / F3 / Shift+F3 |
-| Complete | ⌃Space | Ctrl+Space |
-| Toggle line comment | ⌘/ | Ctrl+/ |
-| Indent / outdent | Tab / ⇧Tab (or focus traversal with `TabBehavior.MOVE_FOCUS`) | same |
-| Fold / unfold region | ⌘⌥[ / ⌘⌥] | Ctrl+Shift+[ / Ctrl+Shift+] |
-| Completion popup | ↑/↓, PageUp/PageDown, Enter/Tab accept, Esc closes | same |
-| REPL (`singleLine`) | Enter submits when no suggestion is selected; ↑/↓ browse history when the popup is closed | same |
-
-Editing helpers: auto-indent (and splitting `{|}` onto three lines), auto-closing and overtyping of
-brackets and quotes, wrapping a selection in a pair, re-indenting a closing bracket typed on a blank
-line, Backspace by indent stop, and deleting an empty pair at once. On mobile, tap places the
-caret, long press selects a word and shows the platform text toolbar, and drag scrolls.
-
-## Accessibility
-
-- The input field exposes a full editor-sized accessibility region, `contentDescription`
-  (`CodeEditorLabels.editorDescription`), and `stateDescription` with the caret's line and column.
-  The drawing layer is hidden from accessibility so it does not obscure the text field.
-- Screen readers read the hidden input field, which holds the lines around the caret, not the whole
-  document. Native screen-reader speech and navigation need platform-specific verification; the
-  automated semantics and composition tests do not establish a VoiceOver or TalkBack journey.
-- The completion list and find bar controls have labels. The Compose input field exposes localized
-  Fold, Unfold, Fold all, and Unfold all accessibility actions when folding is enabled. Region actions
-  choose the innermost applicable range at the caret. Collapsing moves a hidden selection to its header;
-  folding also works in read-only editors. Action labels are in `CodeEditorLabels`.
-- Active IME composition retains native key handling and marked-text selection, including reversed
-  selections. Touch selection's
-  toolbar uses root coordinates, including editors offset within a larger screen.
-- Hover tooltips and find result counts are polite live regions.
-- All strings are in `CodeEditorLabels` for localization.
+| [Getting started](docs/GETTING_STARTED.md) | Install, hoisted state vs. plain string, REPL prompts, read-only snippets, line highlights |
+| [Public API](docs/API.md) | Every main type and the `CodeEditor` parameters |
+| [Languages](docs/LANGUAGES.md) | Presets, YAML notes, custom `tokenRules`, smart typing |
+| [Colors and themes](docs/THEMING.md) | Syntax palettes, contrast guarantees, user-editable token colors |
+| [Language services](docs/LANGUAGE_SERVICES.md) | Completion, request orchestration, tool backends, adapting an LSP server |
+| [Formatting and validation](docs/FORMATTING.md) | Format on demand, format before save, JSON and YAML services, diagnostics |
+| [Completion providers](docs/COMPLETION_PROTOCOL.md) | Native providers, add-ons, and the JSON contract |
+| [Engines](docs/ENGINES.md) | Compose engine, soft wrap, large documents, RSyntaxTextArea |
+| [Keyboard and touch](docs/KEYBOARD.md) | Shortcuts and editing helpers |
+| [Accessibility](docs/ACCESSIBILITY.md) | Semantics, screen readers, IME, localization |
+| [Development](docs/DEVELOPMENT.md) | Sample app, build and test, local checkout, releases |
+| [Architecture](docs/ARCHITECTURE.md) | Internals |
+| [Releasing](docs/RELEASING.md) | Credential setup, versioning, preflight |
+
+The generated API reference is at <https://arjangconsulting.github.io/kmp-code-editor/>. Contributor
+and AI-agent conventions live in [AGENTS.md](AGENTS.md).
 
 ## Known gaps
 
@@ -522,42 +73,4 @@ caret, long press selects a word and shows the platform text toolbar, and drag s
 - Hover is mouse-only in the Compose engine; touch has no hover.
 - In the RSyntaxTextArea engine, AutoCompletion's popup can't be shown headless, so tests cover the
   feed and acceptance, not the popup window.
-
-## Development
-
-```bash
-./gradlew :code-editor:jvmTest      # common + desktop UI + RSyntaxTextArea panel tests
-./gradlew :code-editor:allTests     # also Android host and iOS simulator
-./gradlew :code-editor:checkKotlinAbi
-./gradlew :sample:run               # desktop sample app
-```
-
-The standalone [mobile verification harness](verification/README.md) builds Android and iOS
-simulator apps for native composition, keyboard, selection, toolbar, and accessibility checks.
-
-### Using a local checkout
-
-Include this repository as a composite build; Gradle substitutes
-`com.arjangconsulting.codeeditor:code-editor` with the `:code-editor` project automatically:
-
-```kotlin
-// settings.gradle.kts of the consuming app
-includeBuild("../kmp-code-editor")
-```
-
-Releases are automated by Release Please from Conventional Commit messages (`feat:`, `fix:`,
-`feat!:`), with bare SemVer tags (no `v` prefix). Until 0.1.0 is released, changes are committed
-directly to `main`; after that they land through pull requests.
-
-The initial release is `0.1.0`. While below `1.0.0`, `feat:` and breaking changes (`feat!:` or a
-`BREAKING CHANGE:` footer) bump the minor version; `fix:` bumps the patch version. Breaking API
-changes remain allowed: update the reviewed ABI baseline with `./gradlew :code-editor:updateKotlinAbi`
-and describe consumer migration in the release PR. The ABI check makes those changes explicit.
-See [docs/RELEASING.md](docs/RELEASING.md) for credential setup and the release preflight.
-
-Dependabot opens one weekly pull request for all Gradle and GitHub Actions updates, which is
-merged automatically once CI passes.
-
-Releases are **off** until the GitHub repository variable `RELEASES_ENABLED` is set to `true`
-(Settings > Secrets and variables > Actions > Variables). Until then no release PR is opened and
-nothing is tagged or published, so the first release (0.1.0) waits for review.
+- Engine differences are listed in [Engines](docs/ENGINES.md).

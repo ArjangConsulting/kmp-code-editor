@@ -106,7 +106,7 @@ RSTA's undo/redo, Ctrl+Space, Cmd/Ctrl+F, Enter, Up/Down, and Tab are rebound in
 `InputMap` so that history, completion, find, and the single-line behaviors use the shared
 implementations. The language is installed by building an `RSyntaxDocument` with a
 `TokenMakerFactory` that returns `SharedLexerTokenMaker`, and by registering `SharedFoldParser`
-under the style key `text/x-kmpcodeeditor-<name>`. See the README for why this engine is opt-in.
+under the style key `text/x-kmpcodeeditor-<name>`. See [Engines](ENGINES.md) for why this engine is opt-in.
 
 ## Sample host
 

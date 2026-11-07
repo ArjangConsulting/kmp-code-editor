@@ -22,7 +22,7 @@ compose.desktop {
     application {
         mainClass = "com.arjangconsulting.codeeditor.sample.MainKt"
         // -PcomposeLayersType=WINDOW draws Compose popups in their own windows, which keeps dialogs
-        // and menus above the RSyntaxTextArea engine (see the README's engine section).
+        // and menus above the RSyntaxTextArea engine (see docs/ENGINES.md).
         providers.gradleProperty("composeLayersType").orNull?.let { jvmArgs("-Dcompose.layers.type=$it") }
     }
 }
