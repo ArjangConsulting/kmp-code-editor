@@ -28,9 +28,9 @@ line boundaries, and zero-length matches are skipped. Opening the bar with a sin
 seeds the query, escaped when regex mode is on. Replacement text is literal unless regex mode is on;
 then `$0`–`$99` and `${name}` insert groups, `$$` inserts `$`, `\n` and `\t` insert a line break and a
 tab, and `\` escapes the next character. A reference to a missing group is kept as typed. An invalid
-pattern, a search that runs longer than 250 ms (one second for replace all), or, on desktop and
-Android, a match that recurses too deeply for a very long line shows a message instead of results,
-and nothing is replaced.
+pattern, a search that runs longer than 250 ms (one second for replace all), or a match that
+recurses too deeply for a very long line shows a message instead of results, and nothing is
+replaced.
 
 ## Editing helpers
 

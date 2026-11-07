@@ -38,6 +38,17 @@ class FindReplaceTest {
     }
 
     @Test
+    fun `deeply recursive patterns over a long line never crash`() {
+        val line = "ab".repeat(500_000)
+        for (pattern in listOf("((a)|(b))+", "(a|b)*c", "(?:ab|a)*")) {
+            val result = findInText(line, pattern, regex)
+            assertTrue(result.error != null || result.matches.isNotEmpty(), pattern)
+            val (replacements, error) = replaceAllReplacements(line, pattern, regex, "x")
+            assertTrue(error != null || replacements.isNotEmpty(), pattern)
+        }
+    }
+
+    @Test
     fun `matches respect the limit`() {
         assertEquals(3, findInText("a".repeat(10), "a", regex, limit = 3).matches.size)
     }
@@ -50,7 +61,7 @@ class FindReplaceTest {
 
     @Test
     fun `replacement templates expand groups and escapes`() {
-        val match = Regex("(?<key>\\w+)=(\\d+)?").find("name=")!!
+        val match = Regex("(?<key>\\w+)=(\\d+)?").find("name=")!!.asRegexMatch()
         assertEquals("name:[]", expandReplacement("$1:[$2]", match))
         assertEquals("name", expandReplacement("\${key}", match))
         assertEquals("\$1 \$9 \${nope}", expandReplacement("$$1 $9 \${nope}", match))
@@ -60,7 +71,7 @@ class FindReplaceTest {
 
     @Test
     fun `two digit group references fall back to one digit`() {
-        val match = Regex("(a)(b)").find("ab")!!
+        val match = Regex("(a)(b)").find("ab")!!.asRegexMatch()
         assertEquals("a0", expandReplacement("$10", match))
     }
 

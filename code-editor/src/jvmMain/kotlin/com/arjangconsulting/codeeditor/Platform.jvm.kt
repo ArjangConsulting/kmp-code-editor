@@ -43,3 +43,13 @@ internal actual fun RSyntaxTextAreaEditor(
 ): Unit = RstaCodeEditor(state, controller, config, modifier)
 
 internal actual fun isRecoverableStackOverflow(error: Throwable): Boolean = error is StackOverflowError
+
+internal actual fun regexSearch(
+    text: String,
+    query: String,
+    caseSensitive: Boolean,
+    from: Int,
+    limit: Int,
+    budget: kotlin.time.Duration,
+    onMatch: (RegexMatch) -> Unit,
+): FindError? = kotlinRegexSearch(text, query, caseSensitive, from, limit, budget, onMatch)

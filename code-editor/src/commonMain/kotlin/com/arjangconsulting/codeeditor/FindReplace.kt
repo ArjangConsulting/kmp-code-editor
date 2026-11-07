@@ -93,29 +93,84 @@ private inline fun <T> guardedRegex(search: () -> T): Pair<T?, FindError?> = try
     null to FindError.TOO_COMPLEX
 }
 
+/** A regular-expression match, independent of the engine that found it. */
+internal interface RegexMatch {
+    val range: IntRange
+
+    /** Number of groups, including group 0 (the whole match). */
+    val groupCount: Int
+
+    /** The value of group [index], or null when it didn't participate in the match. */
+    fun group(index: Int): String?
+
+    /** The named group's value (empty when it didn't participate), or null when the pattern has no such group. */
+    fun namedGroup(name: String): String?
+}
+
+private class KotlinRegexMatch(private val match: MatchResult) : RegexMatch {
+    override val range: IntRange get() = match.range
+    override val groupCount: Int get() = match.groupValues.size
+
+    override fun group(index: Int): String? = match.groups[index]?.value
+
+    override fun namedGroup(name: String): String? = try {
+        match.groups[name]?.value.orEmpty()
+    } catch (_: IllegalArgumentException) {
+        null
+    } catch (_: UnsupportedOperationException) {
+        null
+    }
+}
+
+/** This match as an engine-independent [RegexMatch]. */
+internal fun MatchResult.asRegexMatch(): RegexMatch = KotlinRegexMatch(this)
+
 /**
- * Collects non-empty matches of [regex] in [text] through [transform]. Zero-length matches are
- * skipped. Returns the error instead when the search exceeds [budget] or overflows the stack.
+ * Searches with Kotlin's [Regex] (`java.util.regex` on the JVM and Android). Reads the text through a
+ * deadline-checking view so a runaway pattern times out, and turns a recoverable stack overflow into
+ * [FindError.TOO_COMPLEX].
  */
-private inline fun <T> collectRegexMatches(
-    text: CharSequence,
-    regex: Regex,
+internal fun kotlinRegexSearch(
+    text: String,
+    query: String,
+    caseSensitive: Boolean,
+    from: Int,
     limit: Int,
     budget: Duration,
-    crossinline transform: (MatchResult) -> T,
-): Pair<List<T>, FindError?> {
+    onMatch: (RegexMatch) -> Unit,
+): FindError? {
+    val regex = compileFindRegex(query, caseSensitive) ?: return FindError.INVALID_PATTERN
     val input = DeadlineCharSequence(text, TimeSource.Monotonic.markNow() + budget)
-    val (matches, error) = guardedRegex {
-        val result = ArrayList<T>()
-        var match = regex.find(input)
-        while (match != null && result.size < limit) {
-            if (!match.range.isEmpty()) result += transform(match)
+    return guardedRegex {
+        var count = 0
+        var match = regex.find(input, from)
+        while (match != null && count < limit) {
+            if (!match.range.isEmpty()) {
+                onMatch(KotlinRegexMatch(match))
+                count++
+            }
             match = match.next()
         }
-        result
-    }
-    return (matches ?: emptyList()) to error
+    }.second
 }
+
+/**
+ * Searches [text] from offset [from] for the multi-line regular expression [query] (`^` and `$`
+ * match at line boundaries) with the platform's engine, passing at most [limit] non-empty matches to
+ * [onMatch] in document order. Lookbehind and anchors see the text before [from]. Returns why the
+ * search stopped early ([FindError.INVALID_PATTERN], [FindError.TIMED_OUT] after [budget], or
+ * [FindError.TOO_COMPLEX]), or null when it completed; callers discard matches reported before an
+ * error. Must never crash the process, whatever the pattern and text length.
+ */
+internal expect fun regexSearch(
+    text: String,
+    query: String,
+    caseSensitive: Boolean,
+    from: Int,
+    limit: Int,
+    budget: Duration,
+    onMatch: (RegexMatch) -> Unit,
+): FindError?
 
 /** Finds [query] in [text] as literal text or, with [FindOptions.regex], as a regular expression. */
 internal fun findInText(
@@ -127,9 +182,9 @@ internal fun findInText(
 ): FindResult {
     if (query.isEmpty()) return FindResult.Empty
     if (!options.regex) return FindResult(findMatches(text, query, options.caseSensitive, limit))
-    val regex = compileFindRegex(query, options.caseSensitive) ?: return FindResult(emptyList(), FindError.INVALID_PATTERN)
-    val (matches, error) = collectRegexMatches(text, regex, limit, budget) { it.range }
-    return FindResult(if (error == null) matches else emptyList(), error)
+    val matches = ArrayList<IntRange>()
+    val error = regexSearch(text, query, options.caseSensitive, 0, limit, budget) { matches += it.range }
+    return if (error == null) FindResult(matches) else FindResult(emptyList(), error)
 }
 
 /**
@@ -138,9 +193,9 @@ internal fun findInText(
  * and `\\` are escapes; a backslash before any other character inserts that character. A reference
  * to a group that doesn't exist is kept literally.
  */
-internal fun expandReplacement(template: String, match: MatchResult): String {
+internal fun expandReplacement(template: String, match: RegexMatch): String {
     val out = StringBuilder(template.length)
-    val groupCount = match.groupValues.size
+    val groupCount = match.groupCount
     var i = 0
     while (i < template.length) {
         val c = template[i]
@@ -164,11 +219,11 @@ internal fun expandReplacement(template: String, match: MatchResult): String {
                 val oneDigit = template[i + 1] - '0'
                 when {
                     twoDigits in 0 until groupCount -> {
-                        out.append(match.groups[twoDigits]?.value.orEmpty())
+                        out.append(match.group(twoDigits).orEmpty())
                         i += 3
                     }
                     oneDigit < groupCount -> {
-                        out.append(match.groups[oneDigit]?.value.orEmpty())
+                        out.append(match.group(oneDigit).orEmpty())
                         i += 2
                     }
                     else -> {
@@ -180,7 +235,7 @@ internal fun expandReplacement(template: String, match: MatchResult): String {
             c == '$' && i + 1 < template.length && template[i + 1] == '{' -> {
                 val close = template.indexOf('}', i + 2)
                 val name = if (close > i + 2) template.substring(i + 2, close) else null
-                val group = name?.let { namedGroupValue(match, it) }
+                val group = name?.let { match.namedGroup(it) }
                 if (group != null) {
                     out.append(group)
                     i = close + 1
@@ -199,15 +254,6 @@ internal fun expandReplacement(template: String, match: MatchResult): String {
 }
 
 private fun Char.isAsciiDigit(): Boolean = this in '0'..'9'
-
-/** The named group's value, empty for an unmatched group, or null when no group has that name. */
-private fun namedGroupValue(match: MatchResult, name: String): String? = try {
-    match.groups[name]?.value.orEmpty()
-} catch (_: IllegalArgumentException) {
-    null
-} catch (_: UnsupportedOperationException) {
-    null
-}
 
 /**
  * The replacement for the match that occupies exactly [range] in [text], or null when [range] is
@@ -228,11 +274,11 @@ internal fun replacementForMatch(
             text.regionMatches(range.first, query, 0, query.length, ignoreCase = !options.caseSensitive)
         return if (matches) Replacement(range.first, end, template) else null
     }
-    val regex = compileFindRegex(query, options.caseSensitive) ?: return null
-    val input = DeadlineCharSequence(text, TimeSource.Monotonic.markNow() + budget)
-    val match = guardedRegex { regex.find(input, range.first) }.first
-    if (match == null || match.range != range) return null
-    return Replacement(range.first, end, expandReplacement(template, match))
+    var match: RegexMatch? = null
+    val error = regexSearch(text, query, options.caseSensitive, range.first, 1, budget) { match = it }
+    val found = match
+    if (error != null || found == null || found.range != range) return null
+    return Replacement(range.first, end, expandReplacement(template, found))
 }
 
 /**
@@ -251,9 +297,9 @@ internal fun replaceAllReplacements(
         val replacements = findMatches(text, query, options.caseSensitive, Int.MAX_VALUE).map { Replacement(it.first, it.last + 1, template) }
         return replacements to null
     }
-    val regex = compileFindRegex(query, options.caseSensitive) ?: return emptyList<Replacement>() to FindError.INVALID_PATTERN
-    val (replacements, error) = collectRegexMatches(text, regex, Int.MAX_VALUE, budget) {
-        Replacement(it.range.first, it.range.last + 1, expandReplacement(template, it))
+    val replacements = ArrayList<Replacement>()
+    val error = regexSearch(text, query, options.caseSensitive, 0, Int.MAX_VALUE, budget) {
+        replacements += Replacement(it.range.first, it.range.last + 1, expandReplacement(template, it))
     }
     return if (error == null) replacements to null else emptyList<Replacement>() to error
 }

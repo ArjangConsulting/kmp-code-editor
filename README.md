@@ -68,11 +68,10 @@ and AI-agent conventions live in [AGENTS.md](AGENTS.md).
 ## Known gaps
 
 - No multi-cursor. Find highlights and navigates the first 10,000 matches; replace all is uncapped.
-- Regular expressions use the platform engine (`java.util.regex` on desktop and Android, Kotlin/Native's
-  on iOS), so advanced syntax can differ. The search time limit that stops runaway patterns is
-  verified on the JVM only. On desktop and Android, a pattern that recurses too deeply for a very long
-  line (such as `(a|b)*` over minified JSON) reports "too complex"; Kotlin/Native can't recover from a
-  stack overflow, so on iOS such a pattern can still crash the app.
+- Regular expressions use the platform engine (`java.util.regex` on desktop and Android,
+  `NSRegularExpression` (ICU) on iOS), so advanced syntax can differ slightly. A pattern that recurses
+  too deeply for a very long line (such as `((a)|(b))+` over minified JSON) reports "too complex"
+  instead of crashing on every platform.
 - Snippets support only the first tab stop; there is no tab-stop navigation.
 - Mobile has no selection handles. Long press shows the platform text toolbar instead.
 - IME composition text is drawn inline without an underline.
