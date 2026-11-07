@@ -13,7 +13,8 @@
 - Active IME composition retains native key handling and marked-text selection, including reversed
   selections. Touch selection's toolbar uses root coordinates, including editors offset within a
   larger screen.
-- Hover tooltips and find result counts are polite live regions.
+- Hover tooltips, find result counts, replace results, and invalid-pattern or time-out messages are
+  polite live regions.
 - All strings are in `CodeEditorLabels` for localization.
 
 Native verification evidence and the harness that produces it live in

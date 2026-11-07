@@ -65,7 +65,8 @@ in a `SwingPanel` with:
 - fifesoft `AutoCompletion` fed by the same controller, whose popup is a separate Swing window;
 - the theme mapped onto `SyntaxScheme`;
 - the shared fold computation;
-- the find bar as Compose above the panel.
+- the shared Compose find and replace bar above the panel, with matches shown by RSTA's mark-all
+  highlighter and replacements applied through `CodeEditorState`.
 
 `CodeEditorState` stays the source of truth for text, selection, and undo.
 `CodeEditorOptions.softWrap` also enables character wrapping in RSTA; Swing owns its native

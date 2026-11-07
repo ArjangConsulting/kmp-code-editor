@@ -105,6 +105,15 @@ public data class CodeEditorLabels(
     },
     val foldAll: String = "Fold all",
     val unfoldAll: String = "Unfold all",
+    val findRegex: String = "Use regular expression",
+    val findInvalidPattern: String = "Invalid regular expression",
+    val findTimedOut: String = "Search timed out",
+    val findTooComplex: String = "Pattern too complex for this text",
+    val findToggleReplace: String = "Toggle replace",
+    val replacePlaceholder: String = "Replace",
+    val replace: String = "Replace",
+    val replaceAll: String = "Replace all",
+    val replacedCount: (count: Int) -> String = { count -> if (count == 1) "Replaced 1 occurrence" else "Replaced $count occurrences" },
 )
 
 /** What the Tab key does when no completion popup is open. */

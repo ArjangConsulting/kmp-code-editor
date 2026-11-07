@@ -8,6 +8,10 @@ import androidx.compose.ui.unit.sp
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument
 import org.fife.ui.rsyntaxtextarea.TokenTypes
 import org.fife.ui.rsyntaxtextarea.parser.ParserNotice
+import java.awt.event.ActionEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import javax.swing.KeyStroke
 import javax.swing.text.Segment
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -45,6 +49,10 @@ class RstaEditorPanelTest {
 
         override fun openFind() {
             events += "find"
+        }
+
+        override fun openReplace() {
+            events += "replace"
         }
 
         override fun closeFind() = Unit
@@ -123,6 +131,38 @@ class RstaEditorPanelTest {
         panel.syncFromState()
         assertEquals(2, panel.textArea.selectionStart)
         assertEquals(3, panel.textArea.selectionEnd)
+    }
+
+    @Test
+    fun `replace shortcut opens replace and shared replace all reaches the document`() {
+        val stroke = if (isApplePlatform) {
+            KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.META_DOWN_MASK or InputEvent.ALT_DOWN_MASK)
+        } else {
+            KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK)
+        }
+        val action = panel.textArea.actionMap.get(panel.textArea.inputMap.get(stroke))
+        assertNotNull(action).actionPerformed(ActionEvent(panel.textArea, ActionEvent.ACTION_PERFORMED, ""))
+        assertEquals("replace", events.last())
+
+        val session = FindSession(
+            object : FindSession.Host {
+                override val state: CodeEditorState get() = this@RstaEditorPanelTest.state
+                override val readOnly: Boolean get() = false
+                override fun select(start: Int, end: Int) {
+                    state.selectionInternal = Selection(start, end)
+                }
+                override fun apply(outcome: EditOutcome): Boolean = state.apply(outcome).also { panel.syncFromState() }
+                override fun focusEditor() = Unit
+            },
+        )
+        session.open(replace = true)
+        session.regex = true
+        session.query.edit { replace(0, length, "\\d") }
+        session.replacement.edit { replace(0, length, "[$0]") }
+        panel.markAll(session.matches())
+        session.replaceAll()
+        assertEquals("{\"a\":[1]}", panel.textArea.text)
+        panel.markAll(emptyList())
     }
 
     @Test

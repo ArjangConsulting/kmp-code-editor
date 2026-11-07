@@ -39,7 +39,8 @@ Run the desktop sample to see every feature: `./gradlew :sample:run`.
 - Pluggable `LanguageService`: completion, diagnostics, hover, semantic tokens, folding, formatting.
 - Local JSON and YAML validation and explicit, undoable formatting. No bundled LSP runtime.
 - Completion from tool endpoints and source-free add-ons through a versioned JSON contract.
-- Folding, find, undo/redo, soft wrap, smart typing, and a single-line REPL mode.
+- Folding, find and replace (literal or regular expression), undo/redo, soft wrap, smart typing,
+  and a single-line REPL mode.
 - Light, dark, and high-contrast syntax palettes that follow the editor background.
 - Compose engine on every platform; opt-in RSyntaxTextArea engine on desktop.
 
@@ -66,7 +67,12 @@ and AI-agent conventions live in [AGENTS.md](AGENTS.md).
 
 ## Known gaps
 
-- No multi-cursor, regex find, or replace. Find currently retains the first 10,000 matches.
+- No multi-cursor. Find highlights and navigates the first 10,000 matches; replace all is uncapped.
+- Regular expressions use the platform engine (`java.util.regex` on desktop and Android, Kotlin/Native's
+  on iOS), so advanced syntax can differ. The search time limit that stops runaway patterns is
+  verified on the JVM only. On desktop and Android, a pattern that recurses too deeply for a very long
+  line (such as `(a|b)*` over minified JSON) reports "too complex"; Kotlin/Native can't recover from a
+  stack overflow, so on iOS such a pattern can still crash the app.
 - Snippets support only the first tab stop; there is no tab-stop navigation.
 - Mobile has no selection handles. Long press shows the platform text toolbar instead.
 - IME composition text is drawn inline without an underline.

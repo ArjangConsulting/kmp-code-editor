@@ -7,9 +7,9 @@ CodeEditor (public composable)
  ├─ DocumentObserver / FoldingRangeUpdater (effects feeding the controller and fold ranges)
  └─ engine
      ├─ ComposeCodeEditor (all targets)
-     │    EditorModel ── metrics, scroll, Highlighter, VisualLayout, tile cache, commands, find
+     │    EditorModel ── metrics, scroll, Highlighter, VisualLayout, tile cache, commands, FindSession
      │    InputBridge ── hidden BasicTextField ↔ document window
-     │    Gutter / TextArea draw passes, CompletionPopup, HoverPopup, FindBar, Scrollbars
+     │    Gutter / TextArea draw passes, CompletionPopup, HoverPopup, FindReplaceBar, Scrollbars
      └─ RstaCodeEditor (desktop) ── RstaEditorPanel (RSyntaxTextArea in SwingPanel)
           SharedLexerTokenMaker · DiagnosticsParser · SharedFoldParser · ServiceAutoCompletion
 ```
@@ -25,6 +25,7 @@ CodeEditor (public composable)
 | `Highlighter.kt` | Incremental, lazy line cache. An update keeps the common prefix lines, carries the common suffix as candidates, and re-lexes from the first changed line until a re-lexed line ends in the state its old successor started in. | `LexerTest` (`lexedLineCount`) |
 | `EditingOps.kt` | Pure editing commands returning `EditOutcome` (replacements in original coordinates plus the resulting selection): newline with auto-indent, typing with auto-close/overtype/wrap/outdent, backspace, indent/outdent, toggle comment, word boundaries, bracket matching, folding computation, `FoldLayout` (row ↔ line), find, snippets. | `EditingOpsTest`, `FoldingTest` |
 | `VisualLayout.kt` | Sparse advance checkpoints, bounded glyph tiles, logical-to-visual row mapping, tab expansion, Unicode cluster boundaries, fold header wrapping, and reuse of unchanged line geometry. | `VisualLayoutTest`, `LargeDocumentEditorUiTest` |
+| `FindReplace.kt` | Literal and regular-expression search (`findInText`), replacement template expansion, single and replace-all `Replacement`s, and `FindSession`, the find bar state shared by both engines through a small host interface. Regex searches read the text through a deadline-checking `CharSequence`, so a runaway pattern reports a time-out instead of blocking the UI thread; a recoverable stack overflow (JVM/Android, via `isRecoverableStackOverflow`) reports "too complex"; replace all fails as a whole rather than applying a partial result. | `FindReplaceTest`, `FindReplaceTimeoutTest` |
 | `EditHistory.kt` | Undo stack of `(start, removed, inserted)` fragments with typing/deletion coalescing. | `CodeEditorStateTest` |
 | `CodeEditorState.kt` | Snapshot-state holder. `apply(outcome)` is the single mutation path: it records history, bumps `version`, remaps folds, and notifies listeners synchronously (the value overload depends on that). | `CodeEditorStateTest` |
 | `LanguageServiceController.kt` | Per-editor orchestration on the composition's scope. One job each for completion, resolve, analysis (diagnostics + semantic tokens + folding ranges), and hover. Service replacement or `languageServiceRevision` changes advance an internal generation, cancel jobs, clear published results, and refresh analysis. Requests check their generation and document version before publishing to a `StateFlow`; completion also checks the caret. | `LanguageServiceControllerTest` (virtual time) |
@@ -95,7 +96,8 @@ Keyboard folding and localized accessibility actions share the state holder's ra
 collapsing relocates a selection that would otherwise become hidden.
 
 **Overlays.** The completion list and hover are non-focusable `Popup`s anchored at the caret rect.
-The find bar is an in-editor overlay with its own focus.
+The find and replace bar is an in-editor overlay with its own focus. Replace all is one
+`EditOutcome`, so it is a single mutation and a single undo entry.
 
 ## RSyntaxTextArea engine
 

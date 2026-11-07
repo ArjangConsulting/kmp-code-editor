@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -258,8 +259,14 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
             }
             TextArea(model, diagnosticsByLine, textToolbar, Modifier.fillMaxHeight().weight(1f))
         }
-        if (model.findVisible) {
-            FindBar(model, Modifier.align(Alignment.TopEnd))
+        if (model.find.visible) {
+            FindReplaceBar(
+                session = model.find,
+                config = config,
+                charWidth = model.metrics.charWidth,
+                lineHeight = model.metrics.lineHeight,
+                modifier = Modifier.align(Alignment.TopEnd).padding(with(density) { (model.metrics.charWidth * 0.5f).toDp() }),
+            )
         }
         val gutterOffset = if (showGutter) gutterLayout.width else 0f
         CompletionPopup(model, gutterOffset)
@@ -617,8 +624,8 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
     val selection = state.selectionInternal
     val caretLine = snapshot.positionOf(selection.caret).line
     val brackets = if (config.options.matchBrackets && model.focused && selection.collapsed) model.matchingBracket() else null
-    val matches = model.findMatches()
-    val currentMatch = matches.getOrNull(model.findIndex)
+    val matches = model.find.matches()
+    val currentMatch = matches.getOrNull(model.find.index)
     val (first, last) = visibleRows(model, size.height, fold.rowCount)
     val textLeft = m.paddingLeft - model.scrollX
     clipRect {

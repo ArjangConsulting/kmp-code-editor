@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,7 +52,10 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -87,6 +91,9 @@ import kotlin.math.roundToInt
 internal const val COMPLETION_LIST_TAG = "CodeEditorCompletionList"
 internal const val HOVER_TAG = "CodeEditorHover"
 internal const val FIND_FIELD_TAG = "CodeEditorFindField"
+internal const val REPLACE_FIELD_TAG = "CodeEditorReplaceField"
+internal const val REPLACE_BUTTON_TAG = "CodeEditorReplaceButton"
+internal const val REPLACE_ALL_BUTTON_TAG = "CodeEditorReplaceAllButton"
 
 /** Places a popup below [anchor] (relative to the popup's parent), or above when it doesn't fit. */
 internal class AnchoredPositionProvider(private val anchor: IntRect, private val gap: Int) : PopupPositionProvider {
@@ -494,89 +501,163 @@ internal fun renderInlineMarkdown(text: String, colors: CodeEditorColors): Annot
     }
 }
 
+/**
+ * The find and replace bar shared by both engines. Sizes derive from the editor's [charWidth] and
+ * [lineHeight] in pixels. The replace row is hidden for read-only editors.
+ */
 @Composable
-internal fun FindBar(model: EditorModel, modifier: Modifier) {
-    val config = model.config
+internal fun FindReplaceBar(session: FindSession, config: EditorConfig, charWidth: Float, lineHeight: Float, modifier: Modifier = Modifier) {
     val colors = config.colors
     val labels = config.labels
     val density = LocalDensity.current
-    val m = model.metrics
-    val focus = remember { FocusRequester() }
-    LaunchedEffect(model.findFocusRequests) { runCatching { focus.requestFocus() } }
-    LaunchedEffect(model) {
-        snapshotFlow { model.findQuery.text.toString() to model.findCaseSensitive }.collect { model.findIncremental() }
+    val findFocus = remember { FocusRequester() }
+    val replaceFocus = remember { FocusRequester() }
+    val canReplace = !config.readOnly
+    LaunchedEffect(session.focusRequest) {
+        val target = if (session.focusRequest.replace && canReplace && session.replaceVisible) replaceFocus else findFocus
+        runCatching { target.requestFocus() }
     }
-    val matches = model.findMatches()
-    val buttonSize = (m.lineHeight * 1.3f).toDp(density)
-    val padding = (m.charWidth * 0.5f).toDp(density)
+    LaunchedEffect(session) {
+        snapshotFlow { Triple(session.query.text.toString(), session.caseSensitive, session.regex) }.collect { session.incremental() }
+    }
+    val result = session.result()
+    val buttonSize = (lineHeight * 1.3f).toDp(density)
+    val padding = (charWidth * 0.5f).toDp(density)
+    val fieldWidth = (charWidth * 22).toDp(density)
+    val status = when {
+        session.replacedCount != null -> labels.replacedCount(session.replacedCount ?: 0)
+        session.query.text.isEmpty() -> ""
+        result.error == FindError.INVALID_PATTERN || session.replaceError == FindError.INVALID_PATTERN -> labels.findInvalidPattern
+        result.error == FindError.TIMED_OUT || session.replaceError == FindError.TIMED_OUT -> labels.findTimedOut
+        result.error == FindError.TOO_COMPLEX || session.replaceError == FindError.TOO_COMPLEX -> labels.findTooComplex
+        result.matches.isEmpty() -> labels.findNoResults
+        else -> labels.findMatchCount(session.index.coerceAtLeast(0) + if (session.index >= 0) 1 else 0, result.matches.size)
+    }
     Surface(
-        modifier = modifier
-            .padding(padding)
-            .onPreviewKeyEvent { event ->
-                // Escape closes the bar from any of its controls, not just the query field.
-                if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) true.also { model.closeFind() } else false
-            },
+        modifier = modifier.onPreviewKeyEvent { event ->
+            // Escape closes the bar from any of its controls, not just the query field.
+            if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) true.also { session.close() } else false
+        },
         color = colors.popupBackground,
         contentColor = colors.popupForeground,
         shape = MaterialTheme.shapes.small,
         border = BorderStroke(1.dp, colors.popupBorder),
     ) {
-        Row(Modifier.padding(horizontal = padding), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.width((m.charWidth * 22).toDp(density)), contentAlignment = Alignment.CenterStart) {
-                if (model.findQuery.text.isEmpty()) {
-                    Text(labels.findPlaceholder, style = config.textStyle, color = colors.popupSecondaryForeground)
+        Column(Modifier.padding(horizontal = padding)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (canReplace) {
+                    ToolButton(labels.findToggleReplace, session.replaceVisible, buttonSize, colors, onClick = { session.toggleReplace() }) {
+                        Icon(
+                            if (session.replaceVisible) EditorIcons.ChevronDown else EditorIcons.ChevronRight,
+                            contentDescription = null,
+                            tint = colors.popupForeground,
+                        )
+                    }
                 }
-                BasicTextField(
-                    state = model.findQuery,
-                    textStyle = config.textStyle.copy(color = colors.popupForeground),
-                    cursorBrush = SolidColor(colors.caret),
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focus)
-                        .testTag(FIND_FIELD_TAG)
-                        .semantics { contentDescription = labels.findPlaceholder }
-                        .onPreviewKeyEvent { event ->
-                            if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                            when (event.key) {
-                                Key.Enter, Key.NumPadEnter -> true.also { model.findStep(if (event.isShiftPressed) -1 else 1) }
-                                Key.Escape -> true.also { model.closeFind() }
-                                Key.F3 -> true.also { model.findStep(if (event.isShiftPressed) -1 else 1) }
-                                else -> false
-                            }
-                        },
+                FindField(
+                    state = session.query,
+                    placeholder = labels.findPlaceholder,
+                    tag = FIND_FIELD_TAG,
+                    focusRequester = findFocus,
+                    width = fieldWidth,
+                    config = config,
+                ) { event ->
+                    when (event.key) {
+                        Key.Enter, Key.NumPadEnter, Key.F3 -> true.also { session.step(if (event.isShiftPressed) -1 else 1) }
+                        else -> false
+                    }
+                }
+                Text(
+                    text = status,
+                    style = config.textStyle,
+                    color = colors.popupSecondaryForeground,
+                    modifier = Modifier.padding(horizontal = padding).semantics { liveRegion = LiveRegionMode.Polite },
+                    maxLines = 1,
                 )
+                ToolButton(labels.findMatchCase, session.caseSensitive, buttonSize, colors, onClick = { session.caseSensitive = !session.caseSensitive }) {
+                    Text("Aa", style = config.textStyle.copy(fontWeight = FontWeight.Bold), color = colors.popupForeground)
+                }
+                ToolButton(labels.findRegex, session.regex, buttonSize, colors, onClick = { session.regex = !session.regex }) {
+                    Text(".*", style = config.textStyle.copy(fontWeight = FontWeight.Bold), color = colors.popupForeground)
+                }
+                ToolButton(labels.findPrevious, false, buttonSize, colors, onClick = { session.step(-1) }) {
+                    Icon(EditorIcons.ChevronUp, contentDescription = null, tint = colors.popupForeground)
+                }
+                ToolButton(labels.findNext, false, buttonSize, colors, onClick = { session.step(1) }) {
+                    Icon(EditorIcons.ChevronDown, contentDescription = null, tint = colors.popupForeground)
+                }
+                ToolButton(labels.findClose, false, buttonSize, colors, onClick = { session.close() }) {
+                    Icon(EditorIcons.Close, contentDescription = null, tint = colors.popupForeground)
+                }
             }
-            Text(
-                text = when {
-                    model.findQuery.text.isEmpty() -> ""
-                    matches.isEmpty() -> labels.findNoResults
-                    else -> labels.findMatchCount(model.findIndex.coerceAtLeast(0) + if (model.findIndex >= 0) 1 else 0, matches.size)
-                },
-                style = config.textStyle,
-                color = colors.popupSecondaryForeground,
-                modifier = Modifier.padding(horizontal = padding).semantics { liveRegion = LiveRegionMode.Polite },
-                maxLines = 1,
-            )
-            ToolButton(
-                label = labels.findMatchCase,
-                selected = model.findCaseSensitive,
-                size = buttonSize,
-                colors = colors,
-                onClick = { model.findCaseSensitive = !model.findCaseSensitive },
-            ) {
-                Text("Aa", style = config.textStyle.copy(fontWeight = FontWeight.Bold), color = colors.popupForeground)
-            }
-            ToolButton(labels.findPrevious, false, buttonSize, colors, onClick = { model.findStep(-1) }) {
-                Icon(EditorIcons.ChevronUp, contentDescription = null, tint = colors.popupForeground)
-            }
-            ToolButton(labels.findNext, false, buttonSize, colors, onClick = { model.findStep(1) }) {
-                Icon(EditorIcons.ChevronDown, contentDescription = null, tint = colors.popupForeground)
-            }
-            ToolButton(labels.findClose, false, buttonSize, colors, onClick = { model.closeFind() }) {
-                Icon(EditorIcons.Close, contentDescription = null, tint = colors.popupForeground)
+            if (canReplace && session.replaceVisible) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(Modifier.width(buttonSize))
+                    FindField(
+                        state = session.replacement,
+                        placeholder = labels.replacePlaceholder,
+                        tag = REPLACE_FIELD_TAG,
+                        focusRequester = replaceFocus,
+                        width = fieldWidth,
+                        config = config,
+                    ) { event ->
+                        val shortcut = if (isApplePlatform) event.isMetaPressed else event.isCtrlPressed
+                        when (event.key) {
+                            Key.Enter, Key.NumPadEnter -> true.also { if (shortcut) session.replaceAll() else session.replaceCurrent() }
+                            else -> false
+                        }
+                    }
+                    TextToolButton(labels.replace, REPLACE_BUTTON_TAG, buttonSize, padding, config, onClick = { session.replaceCurrent() })
+                    TextToolButton(labels.replaceAll, REPLACE_ALL_BUTTON_TAG, buttonSize, padding, config, onClick = { session.replaceAll() })
+                }
             }
         }
+    }
+}
+
+/** A single-line field of the find bar with a placeholder; [onKeyDown] handles key presses first. */
+@Composable
+private fun FindField(
+    state: TextFieldState,
+    placeholder: String,
+    tag: String,
+    focusRequester: FocusRequester,
+    width: Dp,
+    config: EditorConfig,
+    onKeyDown: (KeyEvent) -> Boolean,
+) {
+    val colors = config.colors
+    Box(Modifier.width(width), contentAlignment = Alignment.CenterStart) {
+        if (state.text.isEmpty()) {
+            Text(placeholder, style = config.textStyle, color = colors.popupSecondaryForeground)
+        }
+        BasicTextField(
+            state = state,
+            textStyle = config.textStyle.copy(color = colors.popupForeground),
+            cursorBrush = SolidColor(colors.caret),
+            lineLimits = TextFieldLineLimits.SingleLine,
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
+                .testTag(tag)
+                .semantics { contentDescription = placeholder }
+                .onPreviewKeyEvent { event -> event.type == KeyEventType.KeyDown && onKeyDown(event) },
+        )
+    }
+}
+
+@Composable
+private fun TextToolButton(label: String, tag: String, height: Dp, padding: Dp, config: EditorConfig, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .height(height)
+            .clickable(onClick = onClick)
+            .testTag(tag)
+            .semantics { role = Role.Button }
+            .padding(horizontal = padding),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, style = config.textStyle, color = config.colors.popupForeground, maxLines = 1)
     }
 }
 
@@ -621,6 +702,11 @@ internal object EditorIcons {
         moveTo(6f, 15f)
         lineTo(12f, 9f)
         lineTo(18f, 15f)
+    }
+    val ChevronRight: ImageVector = stroked("ChevronRight") {
+        moveTo(9f, 6f)
+        lineTo(15f, 12f)
+        lineTo(9f, 18f)
     }
     val ChevronDown: ImageVector = stroked("ChevronDown") {
         moveTo(6f, 9f)

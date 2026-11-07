@@ -16,6 +16,12 @@ internal expect fun rememberEditorClipboard(): EditorClipboard
 /** True on macOS and iOS, where shortcuts use Command instead of Control. */
 internal expect val isApplePlatform: Boolean
 
+/**
+ * True when [error] is a stack overflow the platform can recover from (JVM and Android), such as one
+ * thrown by a deeply recursive regular-expression match. Kotlin/Native cannot recover from one.
+ */
+internal expect fun isRecoverableStackOverflow(error: Throwable): Boolean
+
 /** True when the RSyntaxTextArea engine can run on this platform. */
 internal expect val rSyntaxTextAreaAvailable: Boolean
 

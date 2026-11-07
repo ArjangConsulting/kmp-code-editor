@@ -18,6 +18,8 @@ class EditorKeymapTest {
         assertEquals(KeyBinding(EditorCommand.LINE_END), apple(KeyChord(Key.DirectionRight, meta = true)))
         assertEquals(KeyBinding(EditorCommand.DOCUMENT_START), apple(KeyChord(Key.DirectionUp, meta = true)))
         assertEquals(KeyBinding(EditorCommand.FIND_NEXT), apple(KeyChord(Key.G, meta = true)))
+        assertEquals(KeyBinding(EditorCommand.REPLACE), apple(KeyChord(Key.F, meta = true, alt = true)))
+        assertNull(apple(KeyChord(Key.H, ctrl = true)))
         assertEquals(KeyBinding(EditorCommand.DELETE_TO_LINE_START), apple(KeyChord(Key.Backspace, meta = true)))
         assertEquals(KeyBinding(EditorCommand.LINE_START), apple(KeyChord(Key.A, ctrl = true)))
         assertNull(apple(KeyChord(Key.Z, ctrl = true)))
@@ -30,6 +32,8 @@ class EditorKeymapTest {
         assertEquals(KeyBinding(EditorCommand.WORD_RIGHT), other(KeyChord(Key.DirectionRight, ctrl = true)))
         assertEquals(KeyBinding(EditorCommand.DOCUMENT_END, extend = true), other(KeyChord(Key.MoveEnd, ctrl = true, shift = true)))
         assertEquals(KeyBinding(EditorCommand.FIND), other(KeyChord(Key.F, ctrl = true)))
+        assertEquals(KeyBinding(EditorCommand.REPLACE), other(KeyChord(Key.H, ctrl = true)))
+        assertNull(other(KeyChord(Key.F, meta = true, alt = true)))
         assertEquals(KeyBinding(EditorCommand.TOGGLE_COMMENT), other(KeyChord(Key.Slash, ctrl = true)))
         assertNull(other(KeyChord(Key.G, meta = true)))
     }

@@ -117,12 +117,18 @@ internal class EditorModel(
     /** Gutter line under the mouse pointer, for diagnostic tooltips. */
     var gutterHoverLine: Int? by mutableStateOf(null)
 
-    var findVisible: Boolean by mutableStateOf(false)
-    val findQuery: TextFieldState = TextFieldState()
-    var findCaseSensitive: Boolean by mutableStateOf(false)
-    var findIndex: Int by mutableIntStateOf(-1)
-    var findFocusRequests: Int by mutableIntStateOf(0)
-        private set
+    val find: FindSession = FindSession(
+        object : FindSession.Host {
+            override val state: CodeEditorState get() = this@EditorModel.state
+            override val readOnly: Boolean get() = config.readOnly
+
+            override fun select(start: Int, end: Int) = selectRange(start, end)
+
+            override fun apply(outcome: EditOutcome): Boolean = applyOutcome(outcome)
+
+            override fun focusEditor() = onRequestFocus()
+        },
+    )
 
     var semanticTokens: Map<Int, List<SemanticToken>> by mutableStateOf(emptyMap())
     var semanticVersion: Long = -1
@@ -692,11 +698,12 @@ internal class EditorModel(
             EditorCommand.COPY -> copy(cut = false)
             EditorCommand.CUT -> copy(cut = !readOnly)
             EditorCommand.PASTE -> if (!readOnly) paste()
-            EditorCommand.FIND -> openFind()
-            EditorCommand.FIND_NEXT -> findStep(1)
-            EditorCommand.FIND_PREVIOUS -> findStep(-1)
+            EditorCommand.FIND -> find.open()
+            EditorCommand.REPLACE -> find.open(replace = true)
+            EditorCommand.FIND_NEXT -> find.step(1)
+            EditorCommand.FIND_PREVIOUS -> find.step(-1)
             EditorCommand.ESCAPE -> when {
-                findVisible -> closeFind()
+                find.visible -> find.close()
                 !selection.collapsed -> moveCaret(selection.caret, extend = false)
                 else -> return false
             }
@@ -793,81 +800,12 @@ internal class EditorModel(
 
     // region Find
 
-    private var findCacheKey: Any? = null
-    private var findCache: List<IntRange> = emptyList()
-
-    fun findMatches(): List<IntRange> {
-        val query = findQuery.text.toString()
-        val key = Triple(query, findCaseSensitive, state.version)
-        if (!findVisible) return emptyList()
-        if (key != findCacheKey) {
-            findCache = findMatches(state.text, query, findCaseSensitive)
-            findCacheKey = key
-        }
-        return findCache
-    }
-
-    fun openFind() {
-        val selected = state.selectedText
-        if (selected.isNotEmpty() && '\n' !in selected) {
-            findQuery.edit {
-                replace(0, length, selected)
-                selection = ComposeTextRange(0, length)
-            }
-        } else {
-            findQuery.edit { selection = ComposeTextRange(0, length) }
-        }
-        findVisible = true
-        findFocusRequests++
-        findIndex = -1
-    }
-
-    fun closeFind() {
-        findVisible = false
-        findIndex = -1
-        onRequestFocus()
-    }
-
-    /** Moves to the next ([direction] = 1) or previous match relative to the caret and selects it. */
-    fun findStep(direction: Int) {
-        if (!findVisible) {
-            openFind()
-            return
-        }
-        val matches = findMatches()
-        if (matches.isEmpty()) {
-            findIndex = -1
-            return
-        }
-        val caret = state.selectionInternal
-        val index = if (findIndex in matches.indices && matches[findIndex].first == caret.start && matches[findIndex].last + 1 == caret.end) {
-            (findIndex + direction + matches.size) % matches.size
-        } else if (direction > 0) {
-            matches.indexOfFirst { it.first >= caret.end }.takeIf { it >= 0 } ?: 0
-        } else {
-            matches.indexOfLast { it.last + 1 <= caret.start }.takeIf { it >= 0 } ?: (matches.size - 1)
-        }
-        selectMatch(matches, index)
-    }
-
-    /** Selects the first match at or after the caret while the query is typed. */
-    fun findIncremental() {
-        val matches = findMatches()
-        if (matches.isEmpty()) {
-            findIndex = -1
-            return
-        }
-        val from = state.selectionInternal.start
-        selectMatch(matches, matches.indexOfFirst { it.first >= from }.takeIf { it >= 0 } ?: 0)
-    }
-
-    private fun selectMatch(matches: List<IntRange>, index: Int) {
+    /** Selects `start until end` (a find match) and scrolls it into view without animation. */
+    private fun selectRange(start: Int, end: Int) {
         upstreamAffinity = false
-        findIndex = index
-        val match = matches[index]
-        state.selectionInternal = Selection(match.first, match.last + 1)
+        state.selectionInternal = Selection(start, end)
         val snapshot = state.snapshot()
-        reveal(TextRange(snapshot.positionOf(match.first), snapshot.positionOf(match.last + 1)), animated = false)
+        reveal(TextRange(snapshot.positionOf(start), snapshot.positionOf(end)), animated = false)
         noteCaretActivity()
         bridge.sync()
     }

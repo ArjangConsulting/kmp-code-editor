@@ -33,6 +33,7 @@ internal enum class EditorCommand {
     FIND,
     FIND_NEXT,
     FIND_PREVIOUS,
+    REPLACE,
     ESCAPE,
     TRIGGER_COMPLETION,
     TOGGLE_COMMENT,
@@ -101,7 +102,12 @@ internal fun mapKey(chord: KeyChord, apple: Boolean): KeyBinding? {
         Key.C -> if (shortcut && !s && !chord.alt) KeyBinding(EditorCommand.COPY) else null
         Key.X -> if (shortcut && !s && !chord.alt) KeyBinding(EditorCommand.CUT) else null
         Key.V -> if (shortcut && !s && !chord.alt) KeyBinding(EditorCommand.PASTE) else null
-        Key.F -> if (shortcut && !s && !chord.alt) KeyBinding(EditorCommand.FIND) else null
+        Key.F -> when {
+            shortcut && !s && !chord.alt -> KeyBinding(EditorCommand.FIND)
+            apple && chord.meta && chord.alt && !s && !chord.ctrl -> KeyBinding(EditorCommand.REPLACE)
+            else -> null
+        }
+        Key.H -> if (!apple && chord.ctrl && !s && !chord.alt && !chord.meta) KeyBinding(EditorCommand.REPLACE) else null
         Key.G -> if (apple && chord.meta) KeyBinding(if (s) EditorCommand.FIND_PREVIOUS else EditorCommand.FIND_NEXT) else null
         Key.LeftBracket, Key.RightBracket -> {
             val foldingShortcut = if (apple) {

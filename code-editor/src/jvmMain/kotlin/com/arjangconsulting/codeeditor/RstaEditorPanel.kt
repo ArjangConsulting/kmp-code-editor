@@ -24,6 +24,7 @@ import org.fife.ui.rsyntaxtextarea.parser.DefaultParseResult
 import org.fife.ui.rsyntaxtextarea.parser.DefaultParserNotice
 import org.fife.ui.rsyntaxtextarea.parser.ParseResult
 import org.fife.ui.rsyntaxtextarea.parser.ParserNotice
+import org.fife.ui.rtextarea.DocumentRange
 import org.fife.ui.rtextarea.RTextScrollPane
 import java.awt.BorderLayout
 import java.awt.Color
@@ -298,6 +299,10 @@ internal class RstaEditorPanel(
         fun requestHover(offset: Int)
         fun cancelHover()
         fun openFind()
+
+        /** Opens the find bar with the replace row; defaults to plain find. */
+        fun openReplace() = openFind()
+
         fun closeFind()
     }
 
@@ -424,6 +429,15 @@ internal class RstaEditorPanel(
         }
         bind(KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcut), "kmp.find") {
             callbacks.openFind()
+            true
+        }
+        val replaceStroke = if (isApplePlatform) {
+            KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcut or InputEvent.ALT_DOWN_MASK)
+        } else {
+            KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK)
+        }
+        bind(replaceStroke, "kmp.replace") {
+            callbacks.openReplace()
             true
         }
         bind(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "kmp.escape") {
@@ -710,6 +724,16 @@ internal class RstaEditorPanel(
         val last = textArea.viewToModel2D(Point(rect.x, rect.y + rect.height - 1))
         if (first < 0 || last < 0) return
         state.visibleLines = runCatching { textArea.getLineOfOffset(first)..textArea.getLineOfOffset(last) }.getOrElse { 0..0 }
+    }
+
+    /** Highlights find [matches] with RSTA's mark-all highlighter; an empty list clears them. */
+    fun markAll(matches: List<IntRange>) {
+        if (matches.isEmpty()) {
+            textArea.clearMarkAllHighlights()
+        } else {
+            val length = textArea.document.length
+            textArea.markAll(matches.filter { it.last < length }.map { DocumentRange(it.first, it.last + 1) })
+        }
     }
 
     fun focusEditor() {

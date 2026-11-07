@@ -24,6 +24,6 @@ purpose; start with [Getting started](GETTING_STARTED.md) for usage.
 | `highlightedText`, `rememberHighlightedText`, `CodeSnippet` | Lightweight read-only highlighting. |
 | `FuzzyMatcher`, `filterAndRankCompletions` | The client-side completion filter, reusable elsewhere. |
 | `CodeEditorSyntaxTheme` (`Default`, `HighContrast`), `CodeEditorSyntaxColors`, `contrastRatio`, `isDarkBackground` | Token color palettes; see [Colors and themes](THEMING.md). |
-| `CodeEditorColors` / `CodeEditorDefaults.colors(syntaxTheme)` / `colorsFrom(scheme, syntaxTheme)`, `CodeEditorLabels`, `CodeEditorOptions`, `LanguageServiceOptions`, `CodeEditorLogger`, `TabBehavior`, `CodeEditorEngine` | Configuration; `CodeEditorOptions.softWrap` defaults to `false`. |
+| `CodeEditorColors` / `CodeEditorDefaults.colors(syntaxTheme)` / `colorsFrom(scheme, syntaxTheme)`, `CodeEditorLabels`, `CodeEditorOptions`, `LanguageServiceOptions`, `CodeEditorLogger`, `TabBehavior`, `CodeEditorEngine` | Configuration; `CodeEditorOptions.softWrap` defaults to `false`. Find and replace strings (`findRegex`, `findInvalidPattern`, `findTimedOut`, `findTooComplex`, `findToggleReplace`, `replacePlaceholder`, `replace`, `replaceAll`, `replacedCount`) are in `CodeEditorLabels`. |
 
 Enum entries use SCREAMING_CASE (house style), e.g. `DiagnosticSeverity.ERROR`.

@@ -405,6 +405,46 @@ class ComposeEditorUiTest {
     }
 
     @Test
+    fun `regex replace and replace all are undoable`() = runComposeUiTest {
+        val state = CodeEditorState("k1=v1\nk2=v2\nk3=v3", 0 until 0)
+        setContent { Themed { CodeEditor(state, Modifier.size(700.dp, 200.dp)) } }
+        focusEditor()
+        input().performKeyInput {
+            if (isApplePlatform) withKeyDown(Key.MetaLeft) { withKeyDown(Key.AltLeft) { pressKey(Key.F) } } else withKeyDown(Key.CtrlLeft) { pressKey(Key.H) }
+        }
+        waitForIdle()
+        onNodeWithContentDescription("Use regular expression").performClick()
+        onNodeWithTag(FIND_FIELD_TAG).performTextInput("(\\w+)=(\\w+)")
+        onNodeWithTag(REPLACE_FIELD_TAG).performTextInput("$2=$1")
+        waitForIdle()
+        assertEquals(Selection(0, 5), state.selectionInternal)
+        onNodeWithTag(REPLACE_BUTTON_TAG).performClick()
+        waitForIdle()
+        assertEquals("v1=k1\nk2=v2\nk3=v3", state.text)
+        assertEquals(Selection(6, 11), state.selectionInternal)
+        onNodeWithTag(REPLACE_ALL_BUTTON_TAG).performClick()
+        waitForIdle()
+        assertEquals("k1=v1\nv2=k2\nv3=k3", state.text)
+        onNodeWithText("Replaced 3 occurrences").assertIsDisplayed()
+        assertTrue(state.undo())
+        assertEquals("v1=k1\nk2=v2\nk3=v3", state.text)
+    }
+
+    @Test
+    fun `invalid regex shows an error and read only hides replace`() = runComposeUiTest {
+        val state = CodeEditorState("abc", 0 until 0)
+        setContent { Themed { CodeEditor(state, Modifier.size(700.dp, 200.dp), readOnly = true) } }
+        focusEditor()
+        input().performKeyInput { shortcut(Key.F) }
+        waitForIdle()
+        assertFalse(onAllNodesExist(REPLACE_FIELD_TAG))
+        onNodeWithContentDescription("Use regular expression").performClick()
+        onNodeWithTag(FIND_FIELD_TAG).performTextInput("(a")
+        waitForIdle()
+        onNodeWithText("Invalid regular expression").assertIsDisplayed()
+    }
+
+    @Test
     fun `clicking a fold marker collapses the range`() = runComposeUiTest {
         val state = CodeEditorState("fun a() {\n    1\n    2\n}\nend")
         setContent { Themed { CodeEditor(state, Modifier.size(400.dp, 200.dp), language = KotlinRules) } }

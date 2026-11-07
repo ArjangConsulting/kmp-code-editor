@@ -41,3 +41,5 @@ internal actual fun RSyntaxTextAreaEditor(
     config: EditorConfig,
     modifier: Modifier,
 ): Unit = RstaCodeEditor(state, controller, config, modifier)
+
+internal actual fun isRecoverableStackOverflow(error: Throwable): Boolean = error is StackOverflowError
