@@ -72,7 +72,8 @@ in a `SwingPanel` with:
 `CodeEditorOptions.softWrap` also enables character wrapping in RSTA; Swing owns its native
 wrapping, glyph shaping, and caret affinity, so exact row breaks can differ from Compose.
 
-Not supported by the RSyntaxTextArea engine: semantic tokens, service folding ranges, hover
+Not supported by the RSyntaxTextArea engine: multiple cursors (it shows and edits only the
+primary selection, and a caret move there collapses the others), semantic tokens, service folding ranges, hover
 Markdown beyond escaped paragraphs, `TokenRules.indentUnit` other than tabs or spaces.
 
 ### Why RSyntaxTextArea is not the desktop default

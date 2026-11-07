@@ -75,7 +75,7 @@ public suspend fun CodeEditorState.format(
     }
     if (version != requested.version) return FormatResult.STALE
     if (edits == null) return FormatResult.UNAVAILABLE
-    val originalSelection = selectionInternal
+    val originalSelection = selectionSet
     try {
         edit(edits)
     } catch (failure: IllegalArgumentException) {
@@ -83,7 +83,7 @@ public suspend fun CodeEditorState.format(
         return FormatResult.FAILED
     }
     if (version == requested.version) {
-        selectionInternal = originalSelection
+        selectionSet = originalSelection
         return FormatResult.UNCHANGED
     }
     return FormatResult.APPLIED

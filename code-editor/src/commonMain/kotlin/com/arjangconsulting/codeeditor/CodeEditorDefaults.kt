@@ -114,6 +114,7 @@ public data class CodeEditorLabels(
     val replace: String = "Replace",
     val replaceAll: String = "Replace all",
     val replacedCount: (count: Int) -> String = { count -> if (count == 1) "Replaced 1 occurrence" else "Replaced $count occurrences" },
+    val cursorCount: (count: Int) -> String = { count -> "$count cursors" },
 )
 
 /** What the Tab key does when no completion popup is open. */

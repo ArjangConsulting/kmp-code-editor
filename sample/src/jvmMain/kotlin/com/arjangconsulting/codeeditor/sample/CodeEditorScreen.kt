@@ -275,7 +275,7 @@ fun CodeEditorScreen() {
                 )
             }
             Text(
-                "Ln ${caret.line + 1}, Col ${caret.character + 1}  ·  Ctrl+Space completes, Cmd/Ctrl+F finds, Cmd+Opt+F / Ctrl+H replaces, Cmd/Ctrl+/ comments",
+                "Ln ${caret.line + 1}, Col ${caret.character + 1}  ·  Ctrl+Space completes, Cmd/Ctrl+F finds, Cmd+Opt+F / Ctrl+H replaces, Alt+click adds cursors, Cmd/Ctrl+D next occurrence, Cmd/Ctrl+/ comments",
                 style = CodeEditorDefaults.textStyle(),
             )
             ReplDemo(engine, commandService, colors)

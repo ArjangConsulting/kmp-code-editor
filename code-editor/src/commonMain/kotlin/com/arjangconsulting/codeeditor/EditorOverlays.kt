@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
@@ -563,7 +564,10 @@ internal fun FindReplaceBar(session: FindSession, config: EditorConfig, charWidt
                     config = config,
                 ) { event ->
                     when (event.key) {
-                        Key.Enter, Key.NumPadEnter, Key.F3 -> true.also { session.step(if (event.isShiftPressed) -1 else 1) }
+                        Key.Enter, Key.NumPadEnter -> true.also {
+                            if (event.isAltPressed) session.selectAllMatches() else session.step(if (event.isShiftPressed) -1 else 1)
+                        }
+                        Key.F3 -> true.also { session.step(if (event.isShiftPressed) -1 else 1) }
                         else -> false
                     }
                 }

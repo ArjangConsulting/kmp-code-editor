@@ -1,7 +1,8 @@
 # Accessibility
 
 - The input field exposes a full editor-sized accessibility region, `contentDescription`
-  (`CodeEditorLabels.editorDescription`), and `stateDescription` with the caret's line and column.
+  (`CodeEditorLabels.editorDescription`), and `stateDescription` with the caret's line and column,
+  plus the cursor count (`CodeEditorLabels.cursorCount`) when there are several cursors.
   The drawing layer is hidden from accessibility so it does not obscure the text field.
 - Screen readers read the hidden input field, which holds the lines around the caret, not the whole
   document. Native screen-reader speech and navigation need platform-specific verification; the

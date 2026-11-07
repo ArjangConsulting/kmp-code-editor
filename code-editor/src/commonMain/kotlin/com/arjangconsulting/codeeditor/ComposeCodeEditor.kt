@@ -57,6 +57,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.isAltPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
@@ -180,6 +181,7 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
     val gutterLayout = GutterLayout.of(metrics, lineCountDigits, config.showLineNumbers, config.folding)
     val diagnosticsByLine = remember(config.diagnostics) { groupDiagnosticsByLine(config.diagnostics) }
     val caretPosition by remember(state) { derivedStateOf { state.caret } }
+    val selectionCount by remember(state) { derivedStateOf { state.selectionSet.size } }
 
     val selectionColors = TextSelectionColors(handleColor = Color.Transparent, backgroundColor = Color.Transparent)
     Box(
@@ -205,10 +207,8 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
                     .matchParentSize()
                     .semantics {
                         contentDescription = config.labels.editorDescription
-                        stateDescription = config.labels.caretDescription(
-                            caretPosition.line + 1,
-                            caretPosition.character + 1,
-                        )
+                        val caretText = config.labels.caretDescription(caretPosition.line + 1, caretPosition.character + 1)
+                        stateDescription = if (selectionCount > 1) "$caretText, ${config.labels.cursorCount(selectionCount)}" else caretText
                         customActions = if (config.folding) buildList {
                             if (state.foldingTarget(collapse = true) != null) {
                                 add(CustomAccessibilityAction(config.labels.fold) { model.changeFold(collapse = true) })
@@ -521,13 +521,22 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectEd
             lastClickPosition = down.position
             val offset = model.offsetAt(down.position)
             val shift = currentEvent.keyboardModifiers.isShiftPressed
-            when {
-                clickCount >= 3 -> model.selectLineAt(offset)
-                clickCount == 2 -> model.selectWordAt(offset)
-                else -> model.moveCaretAt(down.position, extend = shift)
+            val alt = currentEvent.keyboardModifiers.isAltPressed
+            if (alt && !shift) {
+                // Alt/Option+click toggles an extra caret; dragging extends a newly added one.
+                clickCount = 1
+                down.consume()
+                if (!model.toggleCaretAt(down.position)) return@awaitEachGesture
+            } else {
+                when {
+                    clickCount >= 3 -> model.selectLineAt(offset)
+                    clickCount == 2 -> model.selectWordAt(offset)
+                    else -> model.moveCaretAt(down.position, extend = shift)
+                }
+                down.consume()
             }
-            down.consume()
             val anchor = model.state.selectionInternal
+            val others = model.state.selectionSet.secondary
             while (true) {
                 val event = awaitPointerEvent()
                 val change = event.changes.firstOrNull { it.id == down.id } ?: break
@@ -537,7 +546,7 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectEd
                 if (position.y > size.height) model.scrollVerticallyBy((position.y - size.height) / 2f)
                 val target = model.offsetAt(position)
                 if (clickCount == 1) {
-                    model.state.selectionInternal = Selection(anchor.anchor, target)
+                    model.state.selectionSet = Selections(Selection(anchor.anchor, target), others)
                 } else {
                     // Extend by whole words/lines from the initial word/line selection.
                     val start = minOf(anchor.start, target)
@@ -622,6 +631,8 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
     val snapshot = state.snapshot()
     val fold = model.visualLayout()
     val selection = state.selectionInternal
+    val selectionSet = state.selectionSet
+    val allSelections = selectionSet.all
     val caretLine = snapshot.positionOf(selection.caret).line
     val brackets = if (config.options.matchBrackets && model.focused && selection.collapsed) model.matchingBracket() else null
     val matches = model.find.matches()
@@ -654,12 +665,17 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
                     index++
                 }
             }
-            if (!selection.collapsed && selection.start <= lineEnd && selection.end >= lineStart) {
-                val s = selection.start.coerceAtLeast(lineStart)
-                val e = selection.end.coerceAtMost(lineEnd)
-                val newlineSelected = fold.isLastRow(row) && selection.end > lineEnd
-                val right = x(e) + if (newlineSelected) m.charWidth * 0.6f else 0f
-                drawRect(colors.selectionBackground, Offset(x(s), top), Size((right - x(s)).coerceAtLeast(0f), m.lineHeight))
+            var selectionIndex = firstSelectionReaching(allSelections, lineStart)
+            while (selectionIndex < allSelections.size && allSelections[selectionIndex].start <= lineEnd) {
+                val drawn = allSelections[selectionIndex]
+                if (!drawn.collapsed) {
+                    val s = drawn.start.coerceAtLeast(lineStart)
+                    val e = drawn.end.coerceAtMost(lineEnd)
+                    val newlineSelected = fold.isLastRow(row) && drawn.end > lineEnd
+                    val right = x(e) + if (newlineSelected) m.charWidth * 0.6f else 0f
+                    drawRect(colors.selectionBackground, Offset(x(s), top), Size((right - x(s)).coerceAtLeast(0f), m.lineHeight))
+                }
+                selectionIndex++
             }
             if (brackets != null) {
                 for (offset in intArrayOf(brackets.open, brackets.close)) {
@@ -701,12 +717,33 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
             }
         }
         if (model.focused && model.caretBlinkOn && !config.readOnly) {
+            val caretWidth = maxOf(1.dp.toPx(), m.charWidth / 8f)
             val rect = model.caretRect()
             if (rect.bottom >= 0f && rect.top <= size.height) {
-                drawRect(colors.caret, rect.topLeft, Size(maxOf(1.dp.toPx(), m.charWidth / 8f), m.lineHeight))
+                drawRect(colors.caret, rect.topLeft, Size(caretWidth, m.lineHeight))
+            }
+            if (selectionSet.isMulti && fold.rowCount > 0) {
+                val visibleStart = fold.start(first)
+                val visibleEnd = fold.end(last)
+                for (secondary in selectionSet.secondary) {
+                    if (secondary.caret !in visibleStart..visibleEnd) continue
+                    val secondaryRect = model.caretRect(secondary.caret)
+                    drawRect(colors.caret, secondaryRect.topLeft, Size(caretWidth, m.lineHeight))
+                }
             }
         }
     }
+}
+
+/** Index of the first selection (sorted, non-overlapping) whose end is at or after [offset]. */
+private fun firstSelectionReaching(selections: List<Selection>, offset: Int): Int {
+    var low = 0
+    var high = selections.size
+    while (low < high) {
+        val mid = (low + high) ushr 1
+        if (selections[mid].end < offset) low = mid + 1 else high = mid
+    }
+    return low
 }
 
 private fun lowerBound(matches: List<IntRange>, offset: Int): Int {

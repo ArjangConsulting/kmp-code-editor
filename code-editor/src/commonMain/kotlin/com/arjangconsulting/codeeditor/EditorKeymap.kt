@@ -39,6 +39,8 @@ internal enum class EditorCommand {
     TOGGLE_COMMENT,
     FOLD,
     UNFOLD,
+    ADD_NEXT_OCCURRENCE,
+    SELECT_ALL_OCCURRENCES,
 }
 
 /** A command plus whether it extends the selection (Shift held for movement). */
@@ -122,6 +124,8 @@ internal fun mapKey(chord: KeyChord, apple: Boolean): KeyBinding? {
             }
         }
         Key.Slash -> if (shortcut) KeyBinding(EditorCommand.TOGGLE_COMMENT) else null
+        Key.D -> if (shortcut && !s && !chord.alt) KeyBinding(EditorCommand.ADD_NEXT_OCCURRENCE) else null
+        Key.L -> if (shortcut && s && !chord.alt) KeyBinding(EditorCommand.SELECT_ALL_OCCURRENCES) else null
         else -> null
     }
 }

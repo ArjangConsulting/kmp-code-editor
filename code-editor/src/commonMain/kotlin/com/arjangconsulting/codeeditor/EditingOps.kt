@@ -14,12 +14,18 @@ internal data class Selection(val anchor: Int, val caret: Int) {
 /** A replacement in original-text coordinates. */
 internal data class Replacement(val start: Int, val end: Int, val text: String)
 
-/** The outcome of an editing command: replacements plus the selection after applying them. */
+/**
+ * The outcome of an editing command: replacements plus the primary selection (and any secondary
+ * selections) after applying them.
+ */
 internal data class EditOutcome(
     val replacements: List<Replacement>,
     val selection: Selection,
     val kind: EditKind = EditKind.OTHER,
-)
+    val secondarySelections: List<Selection> = emptyList(),
+) {
+    val selections: Selections get() = Selections(selection, secondarySelections)
+}
 
 /** How an edit coalesces in the undo history. */
 internal enum class EditKind { TYPING, DELETION, OTHER }

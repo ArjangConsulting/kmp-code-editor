@@ -39,8 +39,8 @@ Run the desktop sample to see every feature: `./gradlew :sample:run`.
 - Pluggable `LanguageService`: completion, diagnostics, hover, semantic tokens, folding, formatting.
 - Local JSON and YAML validation and explicit, undoable formatting. No bundled LSP runtime.
 - Completion from tool endpoints and source-free add-ons through a versioned JSON contract.
-- Folding, find and replace (literal or regular expression), undo/redo, soft wrap, smart typing,
-  and a single-line REPL mode.
+- Folding, find and replace (literal or regular expression), multiple cursors, undo/redo, soft wrap,
+  smart typing, and a single-line REPL mode.
 - Light, dark, and high-contrast syntax palettes that follow the editor background.
 - Compose engine on every platform; opt-in RSyntaxTextArea engine on desktop.
 
@@ -67,7 +67,10 @@ and AI-agent conventions live in [AGENTS.md](AGENTS.md).
 
 ## Known gaps
 
-- No multi-cursor. Find highlights and navigates the first 10,000 matches; replace all is uncapped.
+- Multiple cursors are Compose-engine only (RSyntaxTextArea uses the primary selection) and need a
+  hardware keyboard or mouse. Completion, snippets, and hover act at the primary caret; starting IME
+  composition (for example, CJK input) collapses to the primary caret.
+- Find highlights and navigates the first 10,000 matches; replace all is uncapped.
 - Regular expressions use the platform engine (`java.util.regex` on desktop and Android,
   `NSRegularExpression` (ICU) on iOS), so advanced syntax can differ slightly. A pattern that recurses
   too deeply for a very long line (such as `((a)|(b))+` over minified JSON) reports "too complex"

@@ -332,6 +332,9 @@ internal class FindSession(private val host: Host) {
         fun apply(outcome: EditOutcome): Boolean
 
         fun focusEditor()
+
+        /** Selects every range in [ranges] as separate selections; returns false when unsupported. */
+        fun selectAll(ranges: List<IntRange>): Boolean = false
     }
 
     /** Which field a focus request targets; [id] makes each request distinct. */
@@ -480,6 +483,13 @@ internal class FindSession(private val host: Host) {
             host.apply(EditOutcome(replacements, selection, EditKind.OTHER))
         }
         replacedCount = replacements.size
+    }
+
+    /** Selects every match as its own selection and closes the bar so typing edits them all. */
+    fun selectAllMatches() {
+        val matches = matches()
+        if (matches.isEmpty() || !host.selectAll(matches)) return
+        close()
     }
 
     private fun clearNotices() {

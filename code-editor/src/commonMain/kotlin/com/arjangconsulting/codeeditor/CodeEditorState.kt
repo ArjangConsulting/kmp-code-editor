@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 public class CodeEditorState(initialText: String = "", initialSelection: IntRange = initialText.length until initialText.length) {
     private var textState by mutableStateOf(initialText)
     private var selectionState by mutableStateOf(Selection(initialSelection.first, initialSelection.last + 1).coerceIn(initialText.length))
+    private var secondaryState by mutableStateOf(emptyList<Selection>())
     private var versionState by mutableLongStateOf(0L)
     private var foldedState by mutableStateOf(emptySet<Int>())
     private var cachedSnapshot: DocumentSnapshot? = null
@@ -55,6 +56,18 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
     /** The caret position. */
     public val caret: TextPosition get() = snapshot().positionOf(selectionState.caret)
 
+    /**
+     * Every selection as LSP ranges: the primary selection (the one [selection], [caret], and
+     * [selectedText] describe) first, then the others in document order. There is more than one only
+     * when the user added cursors in the Compose engine, or after [setSelections].
+     */
+    public val selections: List<TextRange>
+        get() {
+            val snapshot = snapshot()
+            val ordered = listOf(selectionState) + secondaryState.sortedBy { it.start }
+            return ordered.map { TextRange(snapshot.positionOf(it.start), snapshot.positionOf(it.end)) }
+        }
+
     /** The selected text, or an empty string. */
     public val selectedText: String get() = text.substring(selectionState.start, selectionState.end)
 
@@ -81,12 +94,21 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
     /** Start lines of collapsed folding ranges. */
     public val foldedLines: Set<Int> get() = foldedState
 
+    /** The primary selection. Setting it removes any secondary selections. */
     internal var selectionInternal: Selection
         get() = selectionState
         set(value) {
-            val clamped = value.coerceIn(textState.length)
-            if (clamped != selectionState) {
-                selectionState = clamped
+            selectionSet = Selections(value)
+        }
+
+    /** The primary and secondary selections; setting normalizes (merges overlaps) and clamps them. */
+    internal var selectionSet: Selections
+        get() = Selections(selectionState, secondaryState)
+        set(value) {
+            val normalized = normalizeSelections(value.primary.coerceIn(textState.length), value.secondary.map { it.coerceIn(textState.length) })
+            if (normalized.primary != selectionState || normalized.secondary != secondaryState) {
+                selectionState = normalized.primary
+                secondaryState = normalized.secondary
                 history.seal()
             }
         }
@@ -135,12 +157,24 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
         selectionInternal = Selection(snapshot.offsetOf(range.start), snapshot.offsetOf(range.end))
     }
 
+    /**
+     * Selects several [ranges] at once: the first becomes the primary selection, and overlapping
+     * ranges merge. Each caret goes to its range's end. Only the Compose engine shows and edits more
+     * than one selection; the RSyntaxTextArea engine uses the primary one. An empty list is ignored.
+     */
+    public fun setSelections(ranges: List<TextRange>) {
+        if (ranges.isEmpty()) return
+        val snapshot = snapshot()
+        val mapped = ranges.map { Selection(snapshot.offsetOf(it.start), snapshot.offsetOf(it.end)) }
+        selectionSet = Selections(mapped.first(), mapped.drop(1))
+    }
+
     /** Selects the whole text. */
     public fun selectAll() {
         selectionInternal = Selection(0, textState.length)
     }
 
-    /** Replaces the selection with [text] as one undoable change. */
+    /** Replaces the primary selection with [text] as one undoable change. */
     public fun insert(text: String) {
         val selection = selectionState
         apply(EditOutcome(listOf(Replacement(selection.start, selection.end, text)), Selection(selection.start + text.length)))
@@ -154,7 +188,7 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
         if (edits.isEmpty()) return
         val snapshot = snapshot()
         val replacements = edits.map { Replacement(snapshot.offsetOf(it.range.start), snapshot.offsetOf(it.range.end), it.newText) }
-        apply(EditOutcome(replacements, shiftSelection(selectionState, replacements)))
+        apply(withShiftedSecondaries(EditOutcome(replacements, shiftSelection(selectionState, replacements)), secondaryState))
     }
 
     /** Undoes the last change. Returns false when there was nothing to undo. */
@@ -260,10 +294,10 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
     internal fun apply(outcome: EditOutcome, typed: Char? = null, record: Boolean = true): Boolean {
         val replacements = outcome.replacements.filter { !(it.start == it.end && it.text.isEmpty()) }
         if (replacements.isEmpty()) {
-            selectionInternal = outcome.selection
+            selectionSet = outcome.selections
             return false
         }
-        val before = selectionState
+        val before = selectionSet
         val oldText = textState
         val sorted = replacements.withIndex().sortedWith(
             compareByDescending<IndexedValue<Replacement>> { it.value.start }
@@ -291,15 +325,16 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
         builder.append(oldText, cursor, oldText.length)
         val newText = builder.toString()
         if (newText == oldText) {
-            selectionInternal = outcome.selection
+            selectionSet = outcome.selections
             return false
         }
         remapFolds(oldText, newText, sorted)
+        val after = normalizeSelections(outcome.selection.coerceIn(newText.length), outcome.secondarySelections.map { it.coerceIn(newText.length) })
         if (record) {
-            history.record(changes, before, outcome.selection, outcome.kind)
+            history.record(changes, before, after, outcome.kind)
             undoRevision++
         }
-        replaceAll(newText, outcome.selection, typed)
+        replaceAll(newText, after, typed)
         return true
     }
 
@@ -308,11 +343,13 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
         remapFolds(textState, text, listOf(Replacement(diff.start, diff.oldEnd, diff.newText)))
     }
 
-    private fun replaceAll(text: String, selection: Selection, typed: Char?) {
+    private fun replaceAll(text: String, selections: Selections, typed: Char?) {
         lastTypedCharacter = typed
         textState = text
         versionState++
-        selectionState = selection.coerceIn(text.length)
+        val clamped = selections.coerceIn(text.length)
+        selectionState = clamped.primary
+        secondaryState = clamped.secondary
         val listeners = textListeners.toList()
         listeners.forEach { it(text) }
     }
@@ -340,7 +377,7 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
     }
 
     public companion object {
-        /** Saves text and selection; history and folding are not saved. */
+        /** Saves text and the primary selection; history, folding, and extra cursors are not saved. */
         public val Saver: Saver<CodeEditorState, Any> = listSaver(
             save = { listOf(it.text, it.selectionStart, it.selectionEnd) },
             restore = {

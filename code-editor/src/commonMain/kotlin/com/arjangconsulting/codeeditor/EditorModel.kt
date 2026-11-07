@@ -127,6 +127,11 @@ internal class EditorModel(
             override fun apply(outcome: EditOutcome): Boolean = applyOutcome(outcome)
 
             override fun focusEditor() = onRequestFocus()
+
+            override fun selectAll(ranges: List<IntRange>): Boolean {
+                selectRanges(ranges)
+                return true
+            }
         },
     )
 
@@ -528,8 +533,11 @@ internal class EditorModel(
         val selected = session?.selected
         if (selected != null && c in selected.commitCharacters) acceptCompletion()
         val snapshot = state.snapshot()
+        val tokens = tokens()
         applyOutcome(
-            typeCharacterOutcome(snapshot, state.selectionInternal, c, config.language, tokens(), config.options.autoCloseBrackets),
+            combineOutcomes(state.selectionSet) { selection, _ ->
+                typeCharacterOutcome(snapshot, selection, c, config.language, tokens, config.options.autoCloseBrackets)
+            },
             typed = c,
         )
     }
@@ -540,7 +548,12 @@ internal class EditorModel(
             return
         }
         val snapshot = state.snapshot()
-        applyOutcome(newlineOutcome(snapshot, state.selectionInternal, config.language, tokens(), config.options.autoIndent))
+        val tokens = tokens()
+        applyOutcome(
+            combineOutcomes(state.selectionSet) { selection, _ ->
+                newlineOutcome(snapshot, selection, config.language, tokens, config.options.autoIndent)
+            },
+        )
     }
 
     fun submit() {
@@ -548,12 +561,22 @@ internal class EditorModel(
         config.onSubmit?.invoke(state.text)
     }
 
-    /** Inserts pasted or programmatic [text], normalizing line breaks (and dropping them when single-line). */
+    /**
+     * Inserts pasted or programmatic [text] at every selection, normalizing line breaks (and dropping
+     * them when single-line). With several selections and one line of text per selection, each
+     * selection gets its own line.
+     */
     fun insertText(text: String) {
         var normalized = text.replace("\r\n", "\n").replace('\r', '\n')
         if (config.singleLine) normalized = normalized.replace('\n', ' ')
-        val selection = state.selectionInternal
-        applyOutcome(EditOutcome(listOf(Replacement(selection.start, selection.end, normalized)), Selection(selection.start + normalized.length)))
+        val selections = state.selectionSet
+        val pieces = if (selections.isMulti) normalized.removeSuffix("\n").split('\n').takeIf { it.size == selections.size } else null
+        applyOutcome(
+            combineOutcomes(selections) { selection, index ->
+                val piece = pieces?.get(index) ?: normalized
+                EditOutcome(listOf(Replacement(selection.start, selection.end, piece)), Selection(selection.start + piece.length))
+            },
+        )
     }
 
     /**
@@ -571,7 +594,7 @@ internal class EditorModel(
             config.logger.logRejectedCompletion(item)
             return true
         }
-        applyOutcome(outcome)
+        applyOutcome(withShiftedSecondaries(outcome, state.selectionSet.secondary))
         return true
     }
 
@@ -615,8 +638,11 @@ internal class EditorModel(
                 else -> Unit
             }
         }
+        val singleLineHistory = config.singleLine && (command == EditorCommand.UP || command == EditorCommand.DOWN)
+        if (state.selectionSet.isMulti && !singleLineHistory && moveAllSelections(command, binding.extend)) return true
         val snapshot = state.snapshot()
         val selection = state.selectionInternal
+        val selections = state.selectionSet
         val text = snapshot.text
         val rules = config.language
         val readOnly = config.readOnly
@@ -662,20 +688,32 @@ internal class EditorModel(
                 noteCaretActivity()
                 bridge.sync()
             }
-            EditorCommand.BACKSPACE -> if (!readOnly) applyOutcome(backspaceOutcome(snapshot, selection, rules))
-            EditorCommand.DELETE_FORWARD -> if (!readOnly) applyOutcome(deleteForwardOutcome(text, selection))
+            EditorCommand.BACKSPACE -> if (!readOnly) applyOutcome(combineOutcomes(selections) { s, _ -> backspaceOutcome(snapshot, s, rules) })
+            EditorCommand.DELETE_FORWARD -> if (!readOnly) applyOutcome(combineOutcomes(selections) { s, _ -> deleteForwardOutcome(text, s) })
             EditorCommand.DELETE_WORD_BACKWARD -> if (!readOnly) {
-                val start = if (selection.collapsed) previousWordBoundary(text, selection.caret, rules) else selection.start
-                applyOutcome(EditOutcome(listOf(Replacement(start, selection.end, "")), Selection(start), EditKind.DELETION))
+                applyOutcome(
+                    combineOutcomes(selections) { s, _ ->
+                        val start = if (s.collapsed) previousWordBoundary(text, s.caret, rules) else s.start
+                        EditOutcome(listOf(Replacement(start, s.end, "")), Selection(start), EditKind.DELETION)
+                    },
+                )
             }
             EditorCommand.DELETE_WORD_FORWARD -> if (!readOnly) {
-                val end = if (selection.collapsed) nextWordBoundary(text, selection.caret, rules) else selection.end
-                applyOutcome(EditOutcome(listOf(Replacement(selection.start, end, "")), Selection(selection.start), EditKind.DELETION))
+                applyOutcome(
+                    combineOutcomes(selections) { s, _ ->
+                        val end = if (s.collapsed) nextWordBoundary(text, s.caret, rules) else s.end
+                        EditOutcome(listOf(Replacement(s.start, end, "")), Selection(s.start), EditKind.DELETION)
+                    },
+                )
             }
             EditorCommand.DELETE_TO_LINE_START -> if (!readOnly) {
-                val lineStart = snapshot.lineStart(snapshot.positionOf(selection.start).line)
-                val start = if (selection.collapsed) lineStart else selection.start
-                applyOutcome(EditOutcome(listOf(Replacement(start, selection.end, "")), Selection(start), EditKind.DELETION))
+                applyOutcome(
+                    combineOutcomes(selections) { s, _ ->
+                        val lineStart = snapshot.lineStart(snapshot.positionOf(s.start).line)
+                        val start = if (s.collapsed) lineStart else s.start
+                        EditOutcome(listOf(Replacement(start, s.end, "")), Selection(start), EditKind.DELETION)
+                    },
+                )
             }
             EditorCommand.ENTER -> {
                 if (readOnly) return false
@@ -685,13 +723,13 @@ internal class EditorModel(
                 if (config.tabBehavior == TabBehavior.MOVE_FOCUS || readOnly) {
                     return focusManager?.moveFocus(FocusDirection.Next) ?: false
                 }
-                applyOutcome(indentOutcome(snapshot, selection, rules))
+                applyOutcome(combineOutcomes(selections) { s, _ -> indentOutcome(snapshot, s, rules) })
             }
             EditorCommand.OUTDENT -> {
                 if (config.tabBehavior == TabBehavior.MOVE_FOCUS || readOnly) {
                     return focusManager?.moveFocus(FocusDirection.Previous) ?: false
                 }
-                applyOutcome(outdentOutcome(snapshot, selection, rules))
+                applyOutcome(combineOutcomes(selections) { s, _ -> outdentOutcome(snapshot, s, rules) })
             }
             EditorCommand.UNDO -> if (!readOnly && state.undo()) afterCaretChange()
             EditorCommand.REDO -> if (!readOnly && state.redo()) afterCaretChange()
@@ -704,11 +742,17 @@ internal class EditorModel(
             EditorCommand.FIND_PREVIOUS -> find.step(-1)
             EditorCommand.ESCAPE -> when {
                 find.visible -> find.close()
+                selections.isMulti -> {
+                    state.selectionInternal = selections.primary
+                    afterCaretChange()
+                }
                 !selection.collapsed -> moveCaret(selection.caret, extend = false)
                 else -> return false
             }
             EditorCommand.TRIGGER_COMPLETION -> if (!readOnly) requestCompletion()
-            EditorCommand.TOGGLE_COMMENT -> if (!readOnly) applyOutcome(toggleLineCommentOutcome(snapshot, selection, rules))
+            EditorCommand.TOGGLE_COMMENT -> if (!readOnly) applyOutcome(combineOutcomes(selections) { s, _ -> toggleLineCommentOutcome(snapshot, s, rules) })
+            EditorCommand.ADD_NEXT_OCCURRENCE -> selectNextOccurrence()
+            EditorCommand.SELECT_ALL_OCCURRENCES -> selectAllOccurrences()
             EditorCommand.FOLD -> return changeFold(collapse = true)
             EditorCommand.UNFOLD -> return changeFold(collapse = false)
         }
@@ -736,22 +780,38 @@ internal class EditorModel(
         moveCaret(target, extend, keepPreferredColumn = true, upstream = target == layout.end(targetRow) && !layout.isLastRow(targetRow))
     }
 
+    /**
+     * Copies (and with [cut], removes) every selection. A collapsed caret copies its whole line, as code
+     * editors do. Several selections are joined with line breaks, so pasting them into the same number
+     * of selections puts one piece at each.
+     */
     private fun copy(cut: Boolean) {
         val snapshot = state.snapshot()
-        val selection = state.selectionInternal
-        // With no selection, copy/cut the whole line, as code editors do.
-        val (start, end) = if (selection.collapsed) {
+        val selections = state.selectionSet
+        fun rangeOf(selection: Selection): Pair<Int, Int> = if (selection.collapsed) {
             val line = snapshot.positionOf(selection.caret).line
             val nextStart = if (line + 1 < snapshot.lineCount) snapshot.lineStart(line + 1) else snapshot.lineEnd(line)
             snapshot.lineStart(line) to nextStart
         } else {
             selection.start to selection.end
         }
-        var text = snapshot.text.substring(start, end)
-        if (selection.collapsed && !text.endsWith('\n')) text += "\n"
+        val all = selections.all
+        val pieces = all.map { selection ->
+            val (start, end) = rangeOf(selection)
+            val piece = snapshot.text.substring(start, end)
+            if (selection.collapsed && !piece.endsWith('\n')) piece + "\n" else piece
+        }
+        val text = if (all.all { it.collapsed }) pieces.joinToString("") else pieces.joinToString("\n")
         val clipboard = clipboard ?: return
         scope.launch { clipboard.setText(text) }
-        if (cut) applyOutcome(EditOutcome(listOf(Replacement(start, end, "")), Selection(start), EditKind.OTHER))
+        if (cut) {
+            applyOutcome(
+                combineOutcomes(selections) { selection, _ ->
+                    val (start, end) = rangeOf(selection)
+                    EditOutcome(listOf(Replacement(start, end, "")), Selection(start), EditKind.OTHER)
+                },
+            )
+        }
     }
 
     private fun paste() {
@@ -771,6 +831,122 @@ internal class EditorModel(
         val end = if (line + 1 < snapshot.lineCount) snapshot.lineStart(line + 1) else snapshot.lineEnd(line)
         state.selectionInternal = Selection(snapshot.lineStart(line), end)
         afterCaretChange()
+    }
+
+    /**
+     * Alt/Option+click: removes the caret at [point] if one is there (keeping at least one), otherwise
+     * adds a caret there as the new primary. Returns true when the primary is now a caret at [point],
+     * which a drag can extend into a selection.
+     */
+    fun toggleCaretAt(point: Offset): Boolean {
+        val offset = snapToCodePointBoundary(state.text, offsetAt(point))
+        state.selectionSet = toggleCaret(state.selectionSet, offset)
+        upstreamAffinity = false
+        preferredDisplayColumn = null
+        if (config.folding) state.unfoldToShow(state.caret.line)
+        afterCaretChange()
+        return state.selectionInternal == Selection(offset)
+    }
+
+    /**
+     * Cmd/Ctrl+D: with a caret, selects the word at the primary caret; with a selection, adds the next
+     * occurrence of its text (literal, case-sensitive, wrapping) as a new primary selection.
+     */
+    fun selectNextOccurrence() {
+        val current = state.selectionSet
+        if (current.primary.collapsed) {
+            val range = wordRangeAt(state.text, current.primary.caret, config.language)
+            if (range.isEmpty()) return
+            state.selectionSet = Selections(Selection(range.first, range.last + 1), current.secondary)
+        } else {
+            state.selectionSet = addNextOccurrence(state.text, current) ?: return
+        }
+        revealPrimarySelection()
+    }
+
+    /** Cmd/Ctrl+Shift+L: selects every occurrence of the primary selection (or the word at the caret). */
+    fun selectAllOccurrences() {
+        val primary = state.selectionInternal
+        val text = state.text
+        val (start, end) = if (primary.collapsed) {
+            val range = wordRangeAt(text, primary.caret, config.language)
+            if (range.isEmpty()) return
+            range.first to range.last + 1
+        } else {
+            primary.start to primary.end
+        }
+        selectRanges(findMatches(text, text.substring(start, end), caseSensitive = true, limit = MAX_SELECTIONS), start)
+    }
+
+    /** Selects every range in [ranges]; the one at or after [nearOffset] becomes primary. */
+    fun selectRanges(ranges: List<IntRange>, nearOffset: Int = state.selectionInternal.start) {
+        state.selectionSet = selectionsForRanges(ranges, nearOffset) ?: return
+        revealPrimarySelection()
+    }
+
+    private fun revealPrimarySelection() {
+        upstreamAffinity = false
+        preferredDisplayColumn = null
+        val primary = state.selectionInternal
+        val snapshot = state.snapshot()
+        reveal(TextRange(snapshot.positionOf(primary.start), snapshot.positionOf(primary.end)), animated = false)
+        noteCaretActivity()
+        bridge.sync()
+    }
+
+    /**
+     * Moves every selection for a movement [command] (extending when [extend]) and merges selections
+     * that meet. Returns false for commands that aren't movement. Each caret moves by its own column;
+     * the remembered column for Up/Down applies to a single caret only.
+     */
+    private fun moveAllSelections(command: EditorCommand, extend: Boolean): Boolean {
+        val snapshot = state.snapshot()
+        val text = snapshot.text
+        val rules = config.language
+        val layout = visualLayout()
+        val pageRows = ((viewportHeight / metrics.lineHeight).toInt() - 1).coerceAtLeast(1)
+        fun row(offset: Int): Int {
+            val position = snapshot.positionOf(offset)
+            return layout.rowOf(position.line, position.character)
+        }
+        fun vertical(caret: Int, rows: Int): Int {
+            val from = row(caret)
+            val target = from + rows
+            return when {
+                target < 0 -> 0
+                target >= layout.rowCount -> text.length
+                else -> layout.offsetAt(target, layout.xAt(from, caret))
+            }
+        }
+        val target: (Selection) -> Int = when (command) {
+            EditorCommand.LEFT -> { s -> if (!s.collapsed && !extend) s.start else crlfStart(text, previousCodePoint(text, s.caret)) }
+            EditorCommand.RIGHT -> { s -> if (!s.collapsed && !extend) s.end else crlfEnd(text, nextCodePoint(text, s.caret)) }
+            EditorCommand.WORD_LEFT -> { s -> previousWordBoundary(text, s.caret, rules) }
+            EditorCommand.WORD_RIGHT -> { s -> nextWordBoundary(text, s.caret, rules) }
+            EditorCommand.LINE_START -> { s -> if (config.options.softWrap) layout.start(row(s.caret)) else smartHome(snapshot, s.caret) }
+            EditorCommand.LINE_END -> { s -> layout.end(row(s.caret)) }
+            EditorCommand.DOCUMENT_START -> { _ -> 0 }
+            EditorCommand.DOCUMENT_END -> { _ -> text.length }
+            EditorCommand.UP -> { s -> vertical(s.caret, -1) }
+            EditorCommand.DOWN -> { s -> vertical(s.caret, 1) }
+            EditorCommand.PAGE_UP -> { s -> vertical(s.caret, -pageRows) }
+            EditorCommand.PAGE_DOWN -> { s -> vertical(s.caret, pageRows) }
+            else -> return false
+        }
+        fun move(selection: Selection): Selection {
+            val offset = snapToCodePointBoundary(text, target(selection).coerceIn(0, text.length))
+            return if (extend) Selection(selection.anchor, offset) else Selection(offset)
+        }
+        val current = state.selectionSet
+        state.selectionSet = Selections(move(current.primary), current.secondary.map(::move))
+        if (command == EditorCommand.PAGE_UP || command == EditorCommand.PAGE_DOWN) {
+            scrollVerticallyBy((if (command == EditorCommand.PAGE_UP) -pageRows else pageRows) * metrics.lineHeight)
+        }
+        upstreamAffinity = false
+        preferredDisplayColumn = null
+        if (config.folding) state.unfoldToShow(state.caret.line)
+        afterCaretChange()
+        return true
     }
 
     // endregion
@@ -965,13 +1141,17 @@ internal class InputBridge(private val model: EditorModel) {
                 model.execute(KeyBinding(EditorCommand.BACKSPACE))
             inserted.isEmpty() && selection.collapsed && start == selection.caret && end == nextCodePoint(state.text, start) ->
                 model.execute(KeyBinding(EditorCommand.DELETE_FORWARD))
+            // Pasted or committed text replacing the primary selection goes to every selection.
+            state.selectionSet.isMulti && inserted.isNotEmpty() && start == selection.start && end == selection.end ->
+                model.insertText(inserted)
             else -> {
                 var text = inserted
                 if (model.config.singleLine) text = text.replace("\r\n", " ").replace('\n', ' ').replace('\r', ' ')
                 val bufferSelection = buffer.selection
                 val newSelection = Selection(windowStart + bufferSelection.start, windowStart + bufferSelection.end)
                 val kind = if (text.isEmpty()) EditKind.DELETION else EditKind.OTHER
-                model.applyOutcome(EditOutcome(listOf(Replacement(start, end, text)), newSelection.coerceIn(state.text.length - removedLength + text.length), kind))
+                val outcome = EditOutcome(listOf(Replacement(start, end, text)), newSelection.coerceIn(state.text.length - removedLength + text.length), kind)
+                model.applyOutcome(withShiftedSecondaries(outcome, state.selectionSet.secondary))
             }
         }
     }

@@ -2,7 +2,7 @@
 
 ```
 CodeEditor (public composable)
- ├─ CodeEditorState ─── text, selection, version, folds, EditHistory (undo/redo)
+ ├─ CodeEditorState ─── text, selections (primary + secondary), version, folds, EditHistory (undo/redo)
  ├─ LanguageServiceController ── debounce · cancel · stale-drop · filter/rank ── LanguageService
  ├─ DocumentObserver / FoldingRangeUpdater (effects feeding the controller and fold ranges)
  └─ engine
@@ -26,8 +26,9 @@ CodeEditor (public composable)
 | `EditingOps.kt` | Pure editing commands returning `EditOutcome` (replacements in original coordinates plus the resulting selection): newline with auto-indent, typing with auto-close/overtype/wrap/outdent, backspace, indent/outdent, toggle comment, word boundaries, bracket matching, folding computation, `FoldLayout` (row ↔ line), find, snippets. | `EditingOpsTest`, `FoldingTest` |
 | `VisualLayout.kt` | Sparse advance checkpoints, bounded glyph tiles, logical-to-visual row mapping, tab expansion, Unicode cluster boundaries, fold header wrapping, and reuse of unchanged line geometry. | `VisualLayoutTest`, `LargeDocumentEditorUiTest` |
 | `FindReplace.kt` | Literal and regular-expression search (`findInText`), replacement template expansion, single and replace-all `Replacement`s, and `FindSession`, the find bar state shared by both engines through a small host interface. Regex searches go through `expect fun regexSearch`: on the JVM and Android, Kotlin `Regex` reads the text through a deadline-checking `CharSequence` (a runaway pattern times out) and a stack overflow is caught as "too complex"; on iOS, `NSRegularExpression` (ICU) is used because Kotlin/Native's engine overflows the thread stack, unrecoverably, on lines of a few thousand characters, while ICU reports an internal error and its progress callback enforces the time budget; replace all fails as a whole rather than applying a partial result. | `FindReplaceTest`, `FindReplaceTimeoutTest` |
-| `EditHistory.kt` | Undo stack of `(start, removed, inserted)` fragments with typing/deletion coalescing. | `CodeEditorStateTest` |
-| `CodeEditorState.kt` | Snapshot-state holder. `apply(outcome)` is the single mutation path: it records history, bumps `version`, remaps folds, and notifies listeners synchronously (the value overload depends on that). | `CodeEditorStateTest` |
+| `MultiCursor.kt` | `Selections` (primary plus secondary), normalization that merges overlapping or meeting selections, `combineOutcomes` (runs an editing command at every selection against one snapshot, skips edits that would overlap an earlier selection's, and shifts each result by earlier length changes), add-next-occurrence, and caret toggling. | `MultiCursorTest`, `MultiCursorEditorUiTest` |
+| `EditHistory.kt` | Undo stack of `(start, removed, inserted)` fragments with typing/deletion coalescing; entries store every selection before and after, and a multi-cursor step coalesces when each change continues its counterpart. | `CodeEditorStateTest`, `MultiCursorTest` |
+| `CodeEditorState.kt` | Snapshot-state holder. Setting the primary selection alone drops secondary selections, so single-caret code paths collapse multi-cursor state by default. `apply(outcome)` is the single mutation path: it records history, bumps `version`, remaps folds, and notifies listeners synchronously (the value overload depends on that). | `CodeEditorStateTest` |
 | `LanguageServiceController.kt` | Per-editor orchestration on the composition's scope. One job each for completion, resolve, analysis (diagnostics + semantic tokens + folding ranges), and hover. Service replacement or `languageServiceRevision` changes advance an internal generation, cancel jobs, clear published results, and refresh analysis. Requests check their generation and document version before publishing to a `StateFlow`; completion also checks the caret. | `LanguageServiceControllerTest` (virtual time) |
 | `CompletionEdits.kt` | Strict in-document position check for backend candidates, plus the shared overlap check. The controller offers only candidates whose mapped replacements (including the implicit prefix replacement) would apply, and acceptance revalidates resolved candidates the same way before either engine changes text. Rejected acceptance closes the popup, applies nothing, consumes the key, and logs an error. | `LanguageServiceControllerTest`, `BackendLanguageServiceTest` |
 | `KeywordLanguageService.kt` | Stateless local completion over `TokenRules.keywordKinds`, shared with highlighting. Replays lexer state through the caret line and probes the insertion position to suppress strings/comments/escapes; suppresses member-access prefixes. Returns the full vocabulary for controller filtering. | `KeywordLanguageServiceTest`, `ReplEditorUiTest` |
@@ -96,6 +97,13 @@ Keyboard folding and localized accessibility actions share the state holder's ra
 collapsing relocates a selection that would otherwise become hidden.
 
 **Overlays.** The completion list and hover are non-focusable `Popup`s anchored at the caret rect.
+**Multiple cursors.** The primary selection drives the input window, IME, completion, hover, and
+scrolling; secondary selections exist only in the state. Editing commands go through
+`combineOutcomes`, movement maps every selection, and drawing finds the selections in each visible
+row by binary search. Text from the native field that replaces the primary selection is inserted at
+every selection; IME composition and other raw field edits apply at the primary caret with the
+others mapped through them (composition collapses them).
+
 The find and replace bar is an in-editor overlay with its own focus. Replace all is one
 `EditOutcome`, so it is a single mutation and a single undo entry.
 

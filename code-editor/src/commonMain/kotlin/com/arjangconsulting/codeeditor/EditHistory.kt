@@ -17,8 +17,8 @@ internal class EditHistory(
 
     private class Entry(
         val changes: MutableList<Change>,
-        val selectionBefore: Selection,
-        var selectionAfter: Selection,
+        val selectionBefore: Selections,
+        var selectionAfter: Selections,
         val kind: EditKind,
         var time: Long,
     )
@@ -42,14 +42,21 @@ internal class EditHistory(
         sealed = true
     }
 
-    /** Records [changes], applied in list order, that moved the selection from [before] to [after]. */
-    fun record(changes: List<Change>, before: Selection, after: Selection, kind: EditKind) {
+    /** Records single-selection [changes]; see the [Selections] overload. */
+    fun record(changes: List<Change>, before: Selection, after: Selection, kind: EditKind) =
+        record(changes, Selections(before), Selections(after), kind)
+
+    /**
+     * Records [changes] (in descending start order, in the coordinates of the text before them) that
+     * moved the selections from [before] to [after]. A typing or deletion step merges into the previous
+     * entry when each change continues its counterpart, so typing at several carets coalesces too.
+     */
+    fun record(changes: List<Change>, before: Selections, after: Selections, kind: EditKind) {
         if (changes.isEmpty()) return
         redoStack.clear()
         val now = clock()
         val last = undoStack.lastOrNull()
-        if (!sealed && last != null && changes.size == 1 && canMerge(last, changes[0], kind, now)) {
-            mergeInto(last, changes[0])
+        if (!sealed && last != null && tryMerge(last, changes, kind, now)) {
             last.selectionAfter = after
             last.time = now
             return
@@ -59,34 +66,58 @@ internal class EditHistory(
         sealed = kind == EditKind.OTHER
     }
 
-    private fun canMerge(last: Entry, change: Change, kind: EditKind, now: Long): Boolean {
+    /**
+     * Merges [changes] into [last] when they pair up one to one (in document order) and each continues
+     * its counterpart: typing right after its insertion, or deleting just before (Backspace) or at
+     * (Delete) its deletion without reaching a neighbouring change. [last]'s changes use the text before
+     * [last]; [changes] use the text after it, so positions are converted through earlier changes.
+     */
+    private fun tryMerge(last: Entry, changes: List<Change>, kind: EditKind, now: Long): Boolean {
         if (kind != last.kind || kind == EditKind.OTHER) return false
-        if (now - last.time > coalesceWindowMillis || last.changes.size != 1) return false
-        val previous = last.changes[0]
-        return when (kind) {
-            EditKind.TYPING -> {
-                val contiguous = change.removed.isEmpty() && change.start == previous.start + previous.inserted.length
-                val breaksWord = change.inserted.firstOrNull()?.isWhitespace() == true &&
-                    previous.inserted.lastOrNull()?.isWhitespace() == false
-                contiguous && !breaksWord && '\n' !in change.inserted
+        if (now - last.time > coalesceWindowMillis || changes.size != last.changes.size) return false
+        val previous = last.changes.sortedBy { it.start }
+        val next = changes.sortedBy { it.start }
+        val postStarts = IntArray(previous.size)
+        var delta = 0
+        for (i in previous.indices) {
+            postStarts[i] = previous[i].start + delta
+            delta += previous[i].inserted.length - previous[i].removed.length
+        }
+        val merged = ArrayList<Change>(previous.size)
+        for (i in previous.indices) {
+            val p = previous[i]
+            val c = next[i]
+            val postStart = postStarts[i]
+            val postEnd = postStart + p.inserted.length
+            val lowerEnd = if (i > 0) postStarts[i - 1] + previous[i - 1].inserted.length else 0
+            val upperStart = if (i + 1 < previous.size) postStarts[i + 1] else Int.MAX_VALUE
+            merged += when (kind) {
+                EditKind.TYPING -> {
+                    val contiguous = c.removed.isEmpty() && c.start == postEnd
+                    val breaksWord = c.inserted.firstOrNull()?.isWhitespace() == true && p.inserted.lastOrNull()?.isWhitespace() == false
+                    if (!contiguous || breaksWord || '\n' in c.inserted) return false
+                    p.copy(inserted = p.inserted + c.inserted)
+                }
+                EditKind.DELETION -> {
+                    if (c.inserted.isNotEmpty() || p.inserted.isNotEmpty()) return false
+                    when {
+                        c.start + c.removed.length == postStart && c.start >= lowerEnd ->
+                            Change(p.start - c.removed.length, c.removed + p.removed, "")
+                        c.start == postStart && c.start + c.removed.length <= upperStart ->
+                            p.copy(removed = p.removed + c.removed)
+                        else -> return false
+                    }
+                }
+                EditKind.OTHER -> return false
             }
-            EditKind.DELETION -> change.inserted.isEmpty() && previous.inserted.isEmpty() &&
-                (change.start + change.removed.length == previous.start || change.start == previous.start)
-            EditKind.OTHER -> false
         }
+        last.changes.clear()
+        last.changes.addAll(merged.sortedByDescending { it.start })
+        return true
     }
 
-    private fun mergeInto(entry: Entry, change: Change) {
-        val previous = entry.changes[0]
-        entry.changes[0] = when {
-            change.removed.isEmpty() -> previous.copy(inserted = previous.inserted + change.inserted)
-            change.start + change.removed.length == previous.start -> Change(change.start, change.removed + previous.removed, "")
-            else -> previous.copy(removed = previous.removed + change.removed)
-        }
-    }
-
-    /** Undoes the last entry against [text]; returns the new text and selection, or null. */
-    fun undo(text: String): Pair<String, Selection>? {
+    /** Undoes the last entry against [text]; returns the new text and selections, or null. */
+    fun undo(text: String): Pair<String, Selections>? {
         val entry = undoStack.removeLastOrNull() ?: return null
         val builder = StringBuilder(text.length)
         var cursor = 0
@@ -105,8 +136,8 @@ internal class EditHistory(
         return result to entry.selectionBefore
     }
 
-    /** Re-applies the last undone entry against [text]; returns the new text and selection, or null. */
-    fun redo(text: String): Pair<String, Selection>? {
+    /** Re-applies the last undone entry against [text]; returns the new text and selections, or null. */
+    fun redo(text: String): Pair<String, Selections>? {
         val entry = redoStack.removeLastOrNull() ?: return null
         val builder = StringBuilder(text.length)
         var cursor = 0

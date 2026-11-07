@@ -85,9 +85,9 @@ class CodeEditorStateTest {
         val h = history()
         h.record(listOf(EditHistory.Change(3, "d", "")), Selection(4), Selection(3), EditKind.DELETION)
         h.record(listOf(EditHistory.Change(2, "c", "")), Selection(3), Selection(2), EditKind.DELETION)
-        val (restored, selection) = h.undo("abe")!!
+        val (restored, selections) = h.undo("abe")!!
         assertEquals("abcde", restored)
-        assertEquals(Selection(4), selection)
+        assertEquals(Selections(Selection(4)), selections)
         val h2 = history()
         h2.record(listOf(EditHistory.Change(1, "b", "")), Selection(1), Selection(1), EditKind.DELETION)
         h2.record(listOf(EditHistory.Change(1, "c", "")), Selection(1), Selection(1), EditKind.DELETION)
