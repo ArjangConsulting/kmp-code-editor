@@ -729,13 +729,17 @@ internal class EditorModel(
                 insertNewline()
             }
             EditorCommand.TAB -> {
+                if (config.tabBehavior == TabBehavior.COMPLETE && !readOnly) {
+                    requestCompletion()
+                    return true
+                }
                 if (config.tabBehavior == TabBehavior.MOVE_FOCUS || readOnly) {
                     return focusManager?.moveFocus(FocusDirection.Next) ?: false
                 }
                 applyOutcome(combineOutcomes(selections) { s, _ -> indentOutcome(snapshot, s, rules) })
             }
             EditorCommand.OUTDENT -> {
-                if (config.tabBehavior == TabBehavior.MOVE_FOCUS || readOnly) {
+                if (config.tabBehavior != TabBehavior.INSERT_INDENT || readOnly) {
                     return focusManager?.moveFocus(FocusDirection.Previous) ?: false
                 }
                 applyOutcome(combineOutcomes(selections) { s, _ -> outdentOutcome(snapshot, s, rules) })

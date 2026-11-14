@@ -58,3 +58,6 @@ Backspace by indent stop, and deleting an empty pair at once.
 
 On mobile, tap places the caret, long press selects a word and shows the platform text toolbar, and
 drag scrolls.
+
+`TabBehavior.COMPLETE` requests completion when closed and accepts the selected suggestion when
+open. Shift+Tab moves focus backward. The existing indent/focus defaults are unchanged.

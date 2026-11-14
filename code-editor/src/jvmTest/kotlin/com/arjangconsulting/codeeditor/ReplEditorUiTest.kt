@@ -48,6 +48,25 @@ class ReplEditorUiTest {
     }
 
     @Test
+    fun `tab explicitly requests completion with automatic completion disabled`() = runComposeUiTest {
+        val state = CodeEditorState("t")
+        setContent {
+            MaterialTheme {
+                CodeEditor(state, Modifier.size(400.dp, 80.dp), language = rules, languageService = service,
+                    singleLine = true, tabBehavior = TabBehavior.COMPLETE,
+                    options = CodeEditorOptions(completionOnTyping = false), serviceOptions = options)
+            }
+        }
+        input().requestFocus()
+        waitForCompletion(false)
+        input().performKeyInput { pressKey(Key.Tab) }
+        waitForCompletion(true)
+        input().performKeyInput { pressKey(Key.Tab) }
+        waitForIdle()
+        assertEquals("tap", state.text)
+    }
+
+    @Test
     fun `placeholder is exposed only while empty and never enters the document`() = runComposeUiTest {
         val state = CodeEditorState()
         setContent {

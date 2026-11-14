@@ -484,7 +484,12 @@ internal class RstaEditorPanel(
     }
 
     private fun handleTab(forward: Boolean): Boolean {
-        if (config.tabBehavior != TabBehavior.MOVE_FOCUS && !config.readOnly) return false
+        if (forward && autoCompletion.isPopupVisible) return false
+        if (forward && config.tabBehavior == TabBehavior.COMPLETE && !config.readOnly) {
+            callbacks.requestCompletion()
+            return true
+        }
+        if (config.tabBehavior == TabBehavior.INSERT_INDENT && !config.readOnly) return false
         if (forward) textArea.transferFocus() else textArea.transferFocusBackward()
         return true
     }

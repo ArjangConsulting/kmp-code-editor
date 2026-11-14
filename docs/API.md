@@ -39,3 +39,6 @@ external values as undoable replacements.
 `placeholder = "Enter a command"` displays a hint only while the document is empty. It is exposed
 on the editable accessibility node and uses `colors.placeholderForeground` (the Material defaults
 use `onSurfaceVariant` at 60% alpha). It does not affect text, selection, completion, or history.
+
+`TabBehavior.COMPLETE` requests completion when closed and accepts the selected suggestion when
+open. Shift+Tab moves focus backward. The existing indent/focus defaults are unchanged.

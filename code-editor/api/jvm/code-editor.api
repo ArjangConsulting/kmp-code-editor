@@ -1051,6 +1051,7 @@ public final class com/arjangconsulting/codeeditor/SemanticToken {
 }
 
 public final class com/arjangconsulting/codeeditor/TabBehavior : java/lang/Enum {
+	public static final field COMPLETE Lcom/arjangconsulting/codeeditor/TabBehavior;
 	public static final field INSERT_INDENT Lcom/arjangconsulting/codeeditor/TabBehavior;
 	public static final field MOVE_FOCUS Lcom/arjangconsulting/codeeditor/TabBehavior;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;

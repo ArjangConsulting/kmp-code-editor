@@ -160,6 +160,7 @@ final enum class com.arjangconsulting.codeeditor/MarkupKind : kotlin/Enum<com.ar
 }
 
 final enum class com.arjangconsulting.codeeditor/TabBehavior : kotlin/Enum<com.arjangconsulting.codeeditor/TabBehavior> { // com.arjangconsulting.codeeditor/TabBehavior|null[0]
+    enum entry COMPLETE // com.arjangconsulting.codeeditor/TabBehavior.COMPLETE|null[0]
     enum entry INSERT_INDENT // com.arjangconsulting.codeeditor/TabBehavior.INSERT_INDENT|null[0]
     enum entry MOVE_FOCUS // com.arjangconsulting.codeeditor/TabBehavior.MOVE_FOCUS|null[0]
 

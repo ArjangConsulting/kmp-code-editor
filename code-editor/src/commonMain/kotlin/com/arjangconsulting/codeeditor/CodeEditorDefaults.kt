@@ -126,6 +126,9 @@ public enum class TabBehavior {
 
     /** Moves focus to the next (Shift+Tab: previous) focusable element, like a normal text field. */
     MOVE_FOCUS,
+
+    /** Requests completion; an open suggestion is accepted first. Shift+Tab moves focus backward. */
+    COMPLETE,
 }
 
 /**
