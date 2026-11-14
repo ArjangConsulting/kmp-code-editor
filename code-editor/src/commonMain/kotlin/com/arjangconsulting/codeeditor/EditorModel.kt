@@ -139,7 +139,9 @@ internal class EditorModel(
     var semanticVersion: Long = -1
 
     private var highlighterInstance: Highlighter = Highlighter(config.language)
-    private val lineCache = HashMap<Any, CachedLine>()
+    private val lineCache = HashMap<TileLayoutKey, CachedLine>()
+    var shapedTileCount: Int = 0
+        private set
     private var frame = 0
     private var cacheStyleKey: Any? = null
     private var preferredDisplayColumn: Float? = null
@@ -321,34 +323,39 @@ internal class EditorModel(
     /** Only viewport tiles are shaped; no native paragraph contains a whole long source line. */
     fun tileLayout(line: Int, start: Int, end: Int): CachedLine {
         val lexed = syntaxLine(line)
-        val semantic = semanticTokens[line]
-        val key = listOf(state.version, lexed, semantic, start, end, config.textStyle, config.colors, config.options.tabSize)
-        lineCache[key]?.let {
-            it.lastUsedFrame = frame
-            return it
-        }
         val snapshot = state.snapshot()
-        val display = visualLayout().geometry(line).display(start, end)
-        val builder = AnnotatedString.Builder(display.text)
         val lineStart = snapshot.lineStart(line)
-        fun span(tokenStart: Int, tokenEnd: Int, kind: TokenKind) {
-            val s = (tokenStart + lineStart - start).coerceIn(0, end - start)
-            val e = (tokenEnd + lineStart - start).coerceIn(0, end - start)
-            if (e > s && kind != TokenKind.PLAIN) builder.addStyle(
-                SpanStyle(color = config.colors.tokenColor(kind)), display.toDisplay(s), display.toDisplay(e),
-            )
+        val relativeStart = start - lineStart
+        val relativeEnd = end - lineStart
+        fun clipped(from: Int, to: Int, kind: TokenKind): Token? {
+            val left = maxOf(from, relativeStart) - relativeStart
+            val right = minOf(to, relativeEnd) - relativeStart
+            return if (right > left && kind != TokenKind.PLAIN) Token(left, right, kind) else null
         }
+        val tokens = ArrayList<Token>()
         var low = 0
         var high = lexed.tokens.size
         while (low < high) {
             val mid = (low + high) ushr 1
-            if (lexed.tokens[mid].end <= start - lineStart) low = mid + 1 else high = mid
+            if (lexed.tokens[mid].end <= relativeStart) low = mid + 1 else high = mid
         }
-        while (low < lexed.tokens.size && lexed.tokens[low].start < end - lineStart) {
+        while (low < lexed.tokens.size && lexed.tokens[low].start < relativeEnd) {
             val token = lexed.tokens[low++]
-            span(token.start, token.end, token.kind)
+            clipped(token.start, token.end, token.kind)?.let(tokens::add)
         }
-        semantic?.forEach { span(it.startCharacter, it.startCharacter + it.length, it.kind) }
+        val semantic = semanticTokens[line].orEmpty().mapNotNull {
+            clipped(it.startCharacter, it.startCharacter + it.length, it.kind)
+        }
+        val key = TileLayoutKey(snapshot.text.substring(start, end), tokens, semantic, config.options.tabSize)
+        lineCache[key]?.let {
+            it.lastUsedFrame = frame
+            return it
+        }
+        val display = visualLayout().geometry(line).display(start, end)
+        val builder = AnnotatedString.Builder(display.text)
+        for (token in tokens + semantic) builder.addStyle(
+            SpanStyle(color = config.colors.tokenColor(token.kind)), display.toDisplay(token.start), display.toDisplay(token.end),
+        )
         val layout = (textMeasurer ?: error("textMeasurer not set")).measure(
             builder.toAnnotatedString(),
             style = geometryTextStyle().copy(color = config.colors.foreground),
@@ -357,6 +364,7 @@ internal class EditorModel(
             maxLines = 1,
             constraints = Constraints(),
         )
+        shapedTileCount++
         return CachedLine(display, layout, frame).also { lineCache[key] = it }
     }
 
@@ -1168,3 +1176,10 @@ internal class InputBridge(private val model: EditorModel) {
 
 /** Text style plus colors: the key for invalidating cached line layouts. */
 internal data class LineStyleKey(val style: TextStyle, val colors: CodeEditorColors, val tabSize: Int)
+
+private data class TileLayoutKey(
+    val text: String,
+    val tokens: List<Token>,
+    val semanticTokens: List<Token>,
+    val tabSize: Int,
+)

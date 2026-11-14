@@ -127,3 +127,8 @@ tokens, and section cards. The sample uses the library's `ThemeModeSelector` to 
 remain editor-specific. KMPComponents is absent from the published `code-editor` dependency graph.
 The sample uses the catalog artifact by default; `useLocalKmpComponents` enables composite-build
 substitution for a sibling checkout, with `kmpComponentsDir` overriding its location.
+
+Tile layouts use content keys: source text and clipped, tile-relative syntax and semantic tokens,
+plus tab size. Document versions and absolute offsets do not invalidate unchanged tiles. The frame
+style key clears the cache when typography, colors, or tab size change; old tiles are evicted by
+frame usage. `shapedTileCount` exposes actual shaping work to internal regression tests.

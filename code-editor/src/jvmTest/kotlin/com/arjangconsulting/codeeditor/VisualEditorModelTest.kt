@@ -1,12 +1,54 @@
 package com.arjangconsulting.codeeditor
 
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.geometry.Offset
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalTestApi::class)
 class VisualEditorModelTest {
+    @Test
+    fun typingReshapesOnlyTheChangedTileAndPreservesShiftedRows() = runComposeUiTest {
+        lateinit var measurer: androidx.compose.ui.text.TextMeasurer
+        setContent {
+            val value = rememberTextMeasurer(cacheSize = 0)
+            SideEffect { measurer = value }
+        }
+        waitForIdle()
+        runTest {
+            val state = CodeEditorState("one\ntwo\nthree")
+            val config = largeDocumentConfig()
+            val controller = LanguageServiceController(this, LanguageService.None, config.serviceOptions, config.language, config.logger)
+            val model = EditorModel(state, controller, this, config)
+            model.textMeasurer = measurer
+            model.metrics = EditorMetrics(20f, 10f, 0f, 0f)
+            fun shape() {
+                model.beginFrame(LineStyleKey(config.textStyle, config.colors, config.options.tabSize))
+                repeat(state.snapshot().lineCount) { model.lineLayout(it) }
+            }
+            shape()
+            val before = model.shapedTileCount
+            state.select(1)
+            model.typeCharacter('x')
+            shape()
+            assertEquals(before + 1, model.shapedTileCount)
+            state.select(0)
+            model.insertText("new\n")
+            shape()
+            assertEquals(before + 2, model.shapedTileCount)
+            model.config = config.copy(colors = config.colors.copy(foreground = androidx.compose.ui.graphics.Color.Red))
+            model.beginFrame(LineStyleKey(model.config.textStyle, model.config.colors, model.config.options.tabSize))
+            model.lineLayout(0)
+            assertEquals(before + 3, model.shapedTileCount)
+            model.dispose()
+        }
+    }
+
     @Test
     fun wrappedBoundaryAffinityAndResizeKeepSourcePositions() = runTest {
         val state = CodeEditorState("abcdefghijklmnopqrstuvwxyz")
