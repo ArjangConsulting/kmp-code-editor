@@ -18,6 +18,10 @@ class VisualEditorModelTest {
         val config = largeDocumentConfig().copy(singleLine = true)
         val controller = LanguageServiceController(this, LanguageService.None, config.serviceOptions, config.language, config.logger)
         val model = EditorModel(state, controller, this, config)
+        model.metrics = EditorMetrics(20.1f, 10f, 7.035f, 0f)
+        model.resize(300f, 34f)
+        assertEquals(0f, model.maxScrollY)
+        assertEquals(0f, model.scrollVerticallyBy(1f))
         for (command in listOf(EditorCommand.FIND, EditorCommand.REPLACE, EditorCommand.FIND_NEXT, EditorCommand.FIND_PREVIOUS)) {
             assertEquals(false, model.execute(KeyBinding(command)))
         }

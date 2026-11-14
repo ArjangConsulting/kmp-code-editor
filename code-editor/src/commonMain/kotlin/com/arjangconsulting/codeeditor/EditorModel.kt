@@ -275,7 +275,7 @@ internal class EditorModel(
 
     val contentWidth: Float get() = metrics.paddingLeft * 2 + visualLayout().width + metrics.charWidth
 
-    val maxScrollY: Float get() = (contentHeight - viewportHeight).coerceAtLeast(0f)
+    val maxScrollY: Float get() = if (config.singleLine) 0f else (contentHeight - viewportHeight).coerceAtLeast(0f)
 
     val maxScrollX: Float get() = (contentWidth - viewportWidth).coerceAtLeast(0f)
 
