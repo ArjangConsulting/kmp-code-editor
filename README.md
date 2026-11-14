@@ -33,14 +33,14 @@ Run the desktop sample to see every feature: `./gradlew :sample:run`.
 
 ## Features
 
-- Syntax highlighting for JSON, YAML, Kotlin, Swift, shell, and plain text, plus a `tokenRules { }`
+- Syntax highlighting for JSON, YAML, Kotlin, Swift, shell, XML/HTML/SVG, and plain text, plus a `tokenRules { }`
   DSL for your own languages.
 - Read-only `CodeSnippet`s and full-width line highlights for generated tests.
 - Pluggable `LanguageService`: completion, diagnostics, hover, semantic tokens, folding, formatting.
 - Local JSON and YAML validation and explicit, undoable formatting. No bundled LSP runtime.
 - Completion from tool endpoints and source-free add-ons through a versioned JSON contract.
 - Folding, find and replace (literal or regular expression), multiple cursors, undo/redo, soft wrap,
-  smart typing, and a single-line REPL mode.
+  smart typing, placeholders, Tab completion, and growing single-line or multi-line REPL inputs.
 - Light, dark, and high-contrast syntax palettes that follow the editor background.
 - Compose engine on every platform; opt-in RSyntaxTextArea engine on desktop.
 
@@ -48,9 +48,10 @@ Run the desktop sample to see every feature: `./gradlew :sample:run`.
 
 | Topic | What it covers |
 | --- | --- |
-| [Getting started](docs/GETTING_STARTED.md) | Install, hoisted state vs. plain string, REPL prompts, read-only snippets, line highlights |
+| [Getting started](docs/GETTING_STARTED.md) | Install, hoisted state vs. plain string, read-only snippets, line highlights |
+| [REPL prompts](docs/REPL.md) | Submission, undo boundaries, host history, completion, runtime revisions, transcripts |
 | [Public API](docs/API.md) | Every main type and the `CodeEditor` parameters |
-| [Languages](docs/LANGUAGES.md) | Presets, YAML notes, custom `tokenRules`, smart typing |
+| [Languages](docs/LANGUAGES.md) | Presets, YAML and XML notes, custom `tokenRules`, smart typing |
 | [Colors and themes](docs/THEMING.md) | Syntax palettes, contrast guarantees, user-editable token colors |
 | [Language services](docs/LANGUAGE_SERVICES.md) | Completion, request orchestration, tool backends, adapting an LSP server |
 | [Formatting and validation](docs/FORMATTING.md) | Format on demand, format before save, JSON and YAML services, diagnostics |
@@ -75,12 +76,12 @@ and AI-agent conventions live in [AGENTS.md](AGENTS.md).
   `NSRegularExpression` (ICU) on iOS), so advanced syntax can differ slightly. A pattern that recurses
   too deeply for a very long line (such as `((a)|(b))+` over minified JSON) reports "too complex"
   instead of crashing on every platform.
-- Snippets support only the first tab stop; there is no tab-stop navigation.
+- Snippet repeated stops are not mirrored, and choice/variable syntax remains literal.
 - Mobile has no selection handles. Long press shows the platform text toolbar instead.
 - IME composition text is drawn inline without an underline.
 - Hover is mouse-only in the Compose engine; touch has no hover.
 - In the RSyntaxTextArea engine, AutoCompletion's popup can't be shown headless, so tests cover the
   feed and acceptance, not the popup window.
+- With finite line limits, RSTA sizes from logical lines; Compose sizes from wrapped visual rows.
+- XML/HTML/SVG has lexical highlighting only; embedded languages and full DTD parsing are unsupported.
 - Engine differences are listed in [Engines](docs/ENGINES.md).
-
-With finite line limits, RSTA sizes from logical lines; Compose sizes from wrapped visual rows.

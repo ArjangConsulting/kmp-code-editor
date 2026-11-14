@@ -6,8 +6,8 @@ purpose; start with [Getting started](GETTING_STARTED.md) for usage.
 
 | Type | Purpose |
 | --- | --- |
-| `CodeEditor(state, …)` / `CodeEditor(value, onValueChange, …)` | The editor. Parameters: `language`, `languageService`, `engine`, `readOnly`, `singleLine`, `onSubmit`, `onHistory`, `showLineNumbers`, `folding`, `lineHighlights`, `diagnostics`, `revealLine`, `revealRange`, `onCaretChange`, `onLineClick`, `tabBehavior`, `colors`, `textStyle`, `labels`, `options`, `serviceOptions`, `logger`, `languageServiceRevision`. |
-| `CodeEditorState`, `rememberCodeEditorState` | Text, selection, monotonically increasing `version`, folding, undo/redo, `visibleLines`, `revealLine`/`revealRange`, `edit(List<TextEdit>)`, `snapshot()`. `selections` lists every selection (primary first) and `setSelections` sets several; `selection`, `caret`, `selectedText`, and `insert` refer to the primary one. |
+| `CodeEditor(state, …)` / `CodeEditor(value, onValueChange, …)` | The editor. Parameters: `language`, `languageService`, `engine`, `readOnly`, `singleLine`, `onSubmit`, `onHistory`, `showLineNumbers`, `folding`, `lineHighlights`, `diagnostics`, `revealLine`, `revealRange`, `onCaretChange`, `onLineClick`, `tabBehavior`, `colors`, `textStyle`, `labels`, `options`, `serviceOptions`, `logger`, `languageServiceRevision`, `placeholder`. |
+| `CodeEditorState`, `rememberCodeEditorState` | Text, selection, monotonically increasing `version`, folding, undo/redo, `visibleLines`, `revealLine`/`revealRange`, `edit(List<TextEdit>)`, `snapshot()`, `clearHistory()`, `resetText()`. `selections` lists every selection (primary first) and `setSelections` sets several; `selection`, `caret`, `selectedText`, and `insert` refer to the primary one. |
 | `TextPosition`, `TextRange`, `TextEdit`, `applyTextEdits`, `DocumentSnapshot` | LSP-shaped text model: 0-based lines, UTF-16 characters. `TextRange` is position based; it is not `androidx.compose.ui.text.TextRange`. |
 | `LanguageService` | `triggerCharacters`, `complete`, `resolveCompletionItem`, `diagnostics`, `format`, `hover`, `semanticTokens`, `foldingRanges`. All default to no-ops. |
 | `KeywordLanguageService(language)` | Local completion from the highlighting vocabulary, including keywords, constants, and known types. |
@@ -20,7 +20,7 @@ purpose; start with [Getting started](GETTING_STARTED.md) for usage.
 | `YamlLanguageService`, `YamlLanguageServiceLabels` | Local YAML syntax validation and formatting for `.yaml` and `.yml`, with localizable diagnostic messages. |
 | `CompletionItem`, `CompletionList`, `CompletionTrigger`, `Diagnostic`, `Hover`, `MarkupContent`, `SemanticToken`, `FoldingRange` | Mirrors of the LSP types. |
 | `LineHighlight(lines, role)` | Full-width line tint: `SELECTED`, `HOVER`, `WARNING`, `ERROR`, `INFO`. |
-| `TokenRules`, `tokenRules { }`, `PlainText`, `JsonRules`, `YamlRules`, `KotlinRules`, `SwiftRules`, `ShellRules` | Language definitions: lexer rules plus brackets, comment prefix, indentation. |
+| `TokenRules`, `tokenRules { }`, `PlainText`, `JsonRules`, `YamlRules`, `KotlinRules`, `SwiftRules`, `ShellRules`, `XmlRules` | Language definitions: lexer rules plus brackets, comment prefix, indentation. |
 | `highlightedText`, `rememberHighlightedText`, `CodeSnippet` | Lightweight read-only highlighting. |
 | `FuzzyMatcher`, `filterAndRankCompletions` | The client-side completion filter, reusable elsewhere. |
 | `CodeEditorSyntaxTheme` (`Default`, `HighContrast`), `CodeEditorSyntaxColors`, `contrastRatio`, `isDarkBackground` | Token color palettes; see [Colors and themes](THEMING.md). |
@@ -28,13 +28,15 @@ purpose; start with [Getting started](GETTING_STARTED.md) for usage.
 
 Enum entries use SCREAMING_CASE (house style), e.g. `DiagnosticSeverity.ERROR`.
 
-### Initial caret
+## State initialization
 
 `CodeEditorState(text)` starts at the end; pass `initialSelection = 0 until 0` to start at the
 beginning. `rememberCodeEditorState(text)` starts at offset 0. `setText(text)` is undoable and
 moves to the end; `resetText(text)` clears undo history and starts at 0. Both replacement methods
 accept an explicit `caret` offset. The value overload initializes at the end and synchronizes
 external values as undoable replacements.
+
+## Prompt configuration
 
 `placeholder = "Enter a command"` displays a hint only while the document is empty. It is exposed
 on the editable accessibility node and uses `colors.placeholderForeground` (the Material defaults
@@ -57,3 +59,5 @@ command. This clears undo/redo, so Undo cannot bring back a submitted command. R
 history with `state.resetText(command, caret = command.length)` for a fresh editing session.
 `state.clearHistory()` drops undo and redo while preserving text, selection, folds, and version.
 The value overload intentionally treats an external clear as an undoable replacement.
+
+See [REPL prompts and transcripts](REPL.md) for a complete host integration recipe.

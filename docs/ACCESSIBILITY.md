@@ -20,3 +20,7 @@
 
 Native verification evidence and the harness that produces it live in
 [verification/README.md](../verification/README.md).
+
+When empty, the editable node includes the host's `placeholder` alongside `editorDescription`.
+The hint is drawn separately and is never inserted into the document. It disappears from the
+accessible description when text is present.

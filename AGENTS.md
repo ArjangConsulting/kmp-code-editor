@@ -32,6 +32,7 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
     incremental `Highlighter`, pure `EditingOps` and `EditHistory`, `CodeEditorState`,
     `LanguageService` + `LanguageServiceController` (orchestration), the Compose engine
     (`ComposeCodeEditor`, `EditorModel`, `EditorOverlays`), `HighlightedText`, defaults/labels.
+    `SnippetSession` tracks editable completion placeholders and Tab/Shift+Tab navigation in both engines.
     `VisualLayout` supplies bounded rendering tiles and logical-to-visual wrapping geometry.
     `CompletionEdits` holds the backend in-document position check and the shared overlap check; the controller validates mapped replacements before publication and acceptance.
     `Formatting` handles explicit format actions; `JsonLanguageService` and `YamlLanguageService`
@@ -51,7 +52,7 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
 - `examples/completion/export_mcp_tools.py` — source-free MCP catalog export with Python 3.11+.
 - `docs/RELEASING.md` — credential setup, pre-1.0 versioning, ABI review, and initial release checks.
 - `docs/COMPLETION_PROTOCOL.md` — native/provider integration and the versioned JSON contract.
-- `docs/ARCHITECTURE.md` — internals. `README.md` — overview, install, quick start, docs index, known gaps. Topic pages in `docs/`: `GETTING_STARTED.md`, `API.md`, `LANGUAGES.md`, `THEMING.md`, `LANGUAGE_SERVICES.md`, `FORMATTING.md`, `ENGINES.md`, `KEYBOARD.md`, `ACCESSIBILITY.md`, `DEVELOPMENT.md`.
+- `docs/ARCHITECTURE.md` — internals. `README.md` — overview, install, quick start, docs index, known gaps. Topic pages in `docs/`: `GETTING_STARTED.md`, `API.md`, `LANGUAGES.md`, `THEMING.md`, `LANGUAGE_SERVICES.md`, `REPL.md`, `FORMATTING.md`, `ENGINES.md`, `KEYBOARD.md`, `ACCESSIBILITY.md`, `DEVELOPMENT.md`.
 - `.github/workflows/` — `ci.yml`, `docs.yml` (Dokka API docs to GitHub Pages at https://arjangconsulting.github.io/kmp-code-editor/, built by `ci.yml` and deployed after it passes on `main`), `release-please.yml` -> `release.yml` (Maven Central publish),
   `release-preflight.yml` (credential/App checks and signing without publishing),
   `dependabot-auto-merge.yml`. `.github/dependabot.yml` configures dependency updates.

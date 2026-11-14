@@ -13,12 +13,16 @@
 | Add / remove a cursor | ⌥-click (⌥-drag adds a selection) | Alt+click (Alt+drag) |
 | Add next occurrence | ⌘D | Ctrl+D |
 | Select all occurrences | ⇧⌘L, or ⌥Enter in the find field (all matches) | Ctrl+Shift+L, or Alt+Enter in the find field |
-| Complete | ⌃Space | Ctrl+Space |
+| Complete | ⌃Space, or Tab with `TabBehavior.COMPLETE` | Ctrl+Space, or Tab with `TabBehavior.COMPLETE` |
 | Toggle line comment | ⌘/ | Ctrl+/ |
 | Indent / outdent | Tab / ⇧Tab (or focus traversal with `TabBehavior.MOVE_FOCUS`) | same |
 | Fold / unfold region | ⌘⌥[ / ⌘⌥] | Ctrl+Shift+[ / Ctrl+Shift+] |
 | Completion popup | ↑/↓, PageUp/PageDown, Enter/Tab accept, Esc closes | same |
+| Submit in either mode | ⌘Enter | Ctrl+Enter |
 | REPL (`singleLine`) | Enter submits when no suggestion is selected; ↑/↓ browse history when the popup is closed | same |
+
+Single-line inputs leave all find/replace commands to the host. See [REPL prompts](REPL.md) for
+submission, command history, and growing multi-line inputs.
 
 ## Find and replace
 
@@ -54,14 +58,15 @@ Auto-indent (and splitting `{|}` onto three lines), auto-closing and overtyping 
 quotes, wrapping a selection in a pair, re-indenting a closing bracket typed on a blank line,
 Backspace by indent stop, and deleting an empty pair at once.
 
+## Snippets
+
+Both engines keep a snippet session after accepting numbered placeholders. Tab/Shift+Tab navigate
+stops before indentation, focus traversal, or completion requests. `$0` (or the implicit end)
+finishes the session. Escape, Undo/Redo, reset, multiple cursors, moving outside the active stop,
+or editing outside it ends the session. Edits within a placeholder shift subsequent stops;
+replacing an outer placeholder discards its nested stops. Repeated stops are not mirrored.
+
 ## Touch
 
 On mobile, tap places the caret, long press selects a word and shows the platform text toolbar, and
 drag scrolls.
-
-`TabBehavior.COMPLETE` requests completion when closed and accepts the selected suggestion when
-open. Shift+Tab moves focus backward. The existing indent/focus defaults are unchanged.
-
-Cmd+Enter on Apple platforms and Ctrl+Enter elsewhere call `onSubmit` in either mode, closing any
-completion popup. In multi-line mode, Enter inserts a newline. Read-only editors never submit.
-Without `onSubmit`, the shortcut is available to the host.

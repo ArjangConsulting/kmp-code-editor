@@ -37,3 +37,6 @@ other settings.
 
 The desktop sample's syntax color editor shows palette presets and per-token colors with a contrast
 check.
+
+Empty-input hints use `CodeEditorColors.placeholderForeground`, which defaults to Material
+`onSurfaceVariant` at 60% alpha. Override the role with `copy` to match the host surface.

@@ -19,10 +19,11 @@ merge the returned items with their own proposals; the host owns backend failure
 Change `languageServiceRevision` whenever runtime context changes, such as after command execution,
 session reset, or device switch. This cancels outstanding service requests and clears completion,
 hover, diagnostics, semantic tokens, and service folds even when the document is unchanged.
-Analysis is refreshed automatically; completion reopens on typing or Ctrl+Space. The document,
+Analysis is refreshed automatically; completion reopens on typing, Ctrl+Space, or `TabBehavior.COMPLETE`. The document,
 selection, undo history, and host-supplied diagnostics are preserved. The signal works in both
 engines and both editor overloads. Explicit host formatting calls have their own document version
-checks and are not cancelled by this signal.
+checks and are not cancelled by this signal. The complete prompt/history recipe is in
+[REPL prompts](REPL.md).
 
 ## Tool backends and external add-ons
 
@@ -50,7 +51,7 @@ surface or a native provider; a command schema supplies command and argument kno
 The editor owns orchestration so services can be simple, slow, remote, or flaky:
 
 - Completion is requested on a trigger character, while typing an identifier (debounced by
-  `completionDebounceMillis`), and on Ctrl+Space.
+  `completionDebounceMillis`), on Ctrl+Space, and with completion Tab.
 - Every request carries a `DocumentSnapshot` with a `version`. In-flight requests are cancelled when
   the document changes, and results for an older version are dropped. Moving the caret cancels pending
   completion and hover requests. An open completion list is retained only for edits within its prefix;

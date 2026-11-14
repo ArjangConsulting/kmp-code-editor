@@ -43,28 +43,9 @@ newer typing.
 
 ## A REPL prompt
 
-```kotlin
-val replService = remember { KeywordLanguageService(KotlinRules) }
-var sessionRevision by remember { mutableStateOf(0L) }
-CodeEditor(
-    value = command,
-    onValueChange = { command = it },
-    singleLine = true,
-    language = KotlinRules,
-    languageService = replService,
-    languageServiceRevision = sessionRevision,
-    onSubmit = {
-        run(it)
-        sessionRevision++
-        command = ""
-    },
-    onHistory = { delta -> command = history.step(delta) },
-)
-```
-
-Use the same rules with `CodeSnippet(command, language = KotlinRules)` for highlighted submitted
-commands. Keep ordinary runtime output as text. The sample REPL includes command, Kotlin, Swift,
-and shell modes, highlighted transcript entries that retain their original language, and a session reset.
+Use the state overload with `singleLine = true`, `placeholder`, `TabBehavior.COMPLETE`, and
+`onSubmit`. Call `state.resetText("")` after submission to start a fresh undo history. See
+[REPL prompts and transcripts](REPL.md) for the complete history/revision recipe and multi-line input.
 
 ## Read-only snippets
 
