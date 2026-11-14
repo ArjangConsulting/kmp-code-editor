@@ -1,6 +1,6 @@
 # Large-document benchmark evidence
 
-Measured 2026-11-06 on Apple M4 Max (16 cores), 48 GB RAM, macOS 27.3, Temurin JDK 21.0.13.
+Baseline measured 2026-11-06; revised observations refreshed 2026-11-14 on Apple M4 Max (16 cores), 48 GB RAM, macOS 27.3, Temurin JDK 21.0.13.
 Gradle test workers use the repository's default 512 MB heap and headless Skiko renderer. The
 machine is shared; these are local latency measurements, not hardware-independent thresholds.
 
@@ -85,16 +85,24 @@ paste, find, formatting, and undo/redo.
 
 | Shape | Target bytes | First frame before ms | First frame after ms |
 | --- | ---: | ---: | ---: |
-| pretty | 100,000 | 8.23 | 12.99 |
-| pretty | 1,000,000 | 29.01 | 28.10 |
-| pretty | 5,000,000 | 77.12 | 51.86 |
-| minified | 100,000 | 51.12 | 10.92 |
-| minified | 1,000,000 | 450.28 | 14.93 |
-| minified | 5,000,000 | 7895.44 | 31.49 |
-| string | 100,000 | 34.99 | 17.33 |
-| string | 1,000,000 | 188.88 | 12.19 |
-| string | 5,000,000 | 2182.17 | 25.50 |
+| pretty | 100,000 | 8.23 | 10.56 |
+| pretty | 1,000,000 | 29.01 | 24.53 |
+| pretty | 5,000,000 | 77.12 | 45.82 |
+| minified | 100,000 | 51.12 | 9.28 |
+| minified | 1,000,000 | 450.28 | 16.50 |
+| minified | 5,000,000 | 7895.44 | 29.11 |
+| string | 100,000 | 34.99 | 15.09 |
+| string | 1,000,000 | 188.88 | 10.61 |
+| string | 5,000,000 | 2182.17 | 27.47 |
 
 Raw observations: [before](before.csv), [after](after.csv), [frames before](display-before.csv), [frames after](display-after.csv), [5 MB format before](format-before.csv), [5 MB format after](format-after.csv).
 
 Verification and screenshot coverage: [VERIFICATION.md](VERIFICATION.md).
+
+The 2026-11-14 content-keyed tile-cache rerun reuses unchanged shaped tiles across edits. The
+regression test counts exactly one newly shaped tile after a one-character edit and one after
+inserting a new line above unchanged rows. In the existing 5 MB pretty JSON fixture, median
+`type_start` changed from 11.84 ms to 8.80 ms. Minified and long-string medians changed from
+26.55/17.97 ms to 27.31/18.90 ms; geometry and string rebuilding still dominate those cases.
+These shared-machine observations do not establish a universal speedup. Raw observations and the
+operation table include the full refreshed matrix.
