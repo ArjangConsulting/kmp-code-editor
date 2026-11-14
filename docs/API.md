@@ -27,3 +27,11 @@ purpose; start with [Getting started](GETTING_STARTED.md) for usage.
 | `CodeEditorColors` / `CodeEditorDefaults.colors(syntaxTheme)` / `colorsFrom(scheme, syntaxTheme)`, `CodeEditorLabels`, `CodeEditorOptions`, `LanguageServiceOptions`, `CodeEditorLogger`, `TabBehavior`, `CodeEditorEngine` | Configuration; `CodeEditorOptions.softWrap` defaults to `false`. Find and replace strings (`findRegex`, `findInvalidPattern`, `findTimedOut`, `findTooComplex`, `cursorCount`, `findToggleReplace`, `replacePlaceholder`, `replace`, `replaceAll`, `replacedCount`) are in `CodeEditorLabels`. |
 
 Enum entries use SCREAMING_CASE (house style), e.g. `DiagnosticSeverity.ERROR`.
+
+### Initial caret
+
+`CodeEditorState(text)` starts at the end; pass `initialSelection = 0 until 0` to start at the
+beginning. `rememberCodeEditorState(text)` starts at offset 0. `setText(text)` is undoable and
+moves to the end; `resetText(text)` clears undo history and starts at 0. Both replacement methods
+accept an explicit `caret` offset. The value overload initializes at the end and synchronizes
+external values as undoable replacements.

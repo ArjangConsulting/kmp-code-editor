@@ -19,6 +19,10 @@ import androidx.compose.runtime.setValue
  * what [DocumentSnapshot.version] reports to a [LanguageService]. Offsets are UTF-16 indices into
  * [text]; positions follow LSP (see [TextPosition]).
  *
+ * The constructor starts at the end unless [initialSelection] is supplied. [rememberCodeEditorState]
+ * and [resetText] start at offset 0; [setText] defaults to the end. Pass an explicit selection or
+ * caret when opening a body that should receive typing at its beginning.
+ *
  * All members are backed by snapshot state, so reading them in composition recomposes on change.
  * Mutate the state from the UI thread only.
  */
@@ -138,7 +142,7 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
         apply(EditOutcome(listOf(Replacement(0, textState.length, text)), Selection(caret.coerceIn(0, text.length))))
     }
 
-    /** Replaces the text and clears undo history, e.g. when loading a different file. */
+    /** Replaces the text and clears undo history, e.g. when loading a different file. The caret defaults to offset 0. */
     public fun resetText(text: String, caret: Int = 0) {
         apply(EditOutcome(listOf(Replacement(0, textState.length, text)), Selection(caret.coerceIn(0, text.length))), record = false)
         history.clear()
