@@ -23,6 +23,7 @@ internal enum class EditorCommand {
     DELETE_WORD_FORWARD,
     DELETE_TO_LINE_START,
     ENTER,
+    SUBMIT,
     TAB,
     OUTDENT,
     UNDO,
@@ -87,7 +88,11 @@ internal fun mapKey(chord: KeyChord, apple: Boolean): KeyBinding? {
             else -> KeyBinding(EditorCommand.BACKSPACE)
         }
         Key.Delete -> if (wordModifier) KeyBinding(EditorCommand.DELETE_WORD_FORWARD) else KeyBinding(EditorCommand.DELETE_FORWARD)
-        Key.Enter, Key.NumPadEnter -> if (shortcut || chord.alt) null else KeyBinding(EditorCommand.ENTER)
+        Key.Enter, Key.NumPadEnter -> when {
+            shortcut && !chord.alt -> KeyBinding(EditorCommand.SUBMIT)
+            chord.alt -> null
+            else -> KeyBinding(EditorCommand.ENTER)
+        }
         Key.Tab -> if (chord.ctrl || chord.meta || chord.alt) null else if (s) KeyBinding(EditorCommand.OUTDENT) else KeyBinding(EditorCommand.TAB)
         Key.Escape -> KeyBinding(EditorCommand.ESCAPE)
         Key.Spacebar -> if (chord.ctrl && !chord.meta && !chord.alt) KeyBinding(EditorCommand.TRIGGER_COMPLETION) else null

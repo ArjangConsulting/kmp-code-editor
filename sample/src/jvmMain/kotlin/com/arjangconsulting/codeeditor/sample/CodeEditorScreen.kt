@@ -90,6 +90,7 @@ private enum class DemoLanguage(val label: String, val rules: TokenRules, val sa
 @Composable
 fun CodeEditorScreen() {
     var language by remember { mutableStateOf(DemoLanguage.Commands) }
+    var multiline by remember { mutableStateOf(false) }
     var engine by remember { mutableStateOf(CodeEditorEngine.COMPOSE) }
     var readOnly by remember { mutableStateOf(false) }
     var showLineNumbers by remember { mutableStateOf(true) }
@@ -304,6 +305,7 @@ private fun Toggle(label: String, checked: Boolean, onChange: (Boolean) -> Unit)
 @Composable
 private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors: CodeEditorColors) {
     var language by remember { mutableStateOf(DemoLanguage.Commands) }
+    var multiline by remember { mutableStateOf(false) }
     var serviceRevision by remember { mutableStateOf(0L) }
     val state = rememberCodeEditorState("")
     val history = remember(language) { mutableStateListOf<String>() }
@@ -314,7 +316,7 @@ private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors:
     SectionCard(
         modifier = Modifier.fillMaxWidth(),
         title = "REPL",
-        description = "Tools (schema) uses amoo metadata and fixture element IDs; submissions are displayed locally. Enter accepts a suggestion before submitting.",
+        description = "Tools (schema) uses amoo metadata and fixture element IDs; submissions are displayed locally. Enter accepts a suggestion first; Cmd/Ctrl+Enter runs multi-line input.",
     ) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kmpSpacing.small)) {
             listOf(
@@ -332,6 +334,7 @@ private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors:
                     label = { Text(choice.label) },
                 )
             }
+            FilterChip(selected = multiline, onClick = { multiline = !multiline }, label = { Text("Multi-line") })
             TextButton(onClick = {
                 serviceRevision++
                 history.clear()
@@ -359,7 +362,7 @@ private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors:
             },
             languageServiceRevision = serviceRevision,
             engine = engine,
-            singleLine = true,
+            singleLine = !multiline,
             placeholder = "Enter a command",
             tabBehavior = TabBehavior.COMPLETE,
             colors = colors,

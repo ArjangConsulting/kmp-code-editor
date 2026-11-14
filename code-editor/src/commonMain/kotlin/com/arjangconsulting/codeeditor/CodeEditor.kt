@@ -61,7 +61,9 @@ internal data class EditorConfig(
  *
  * **Single-line (REPL) mode.** With [singleLine], Enter calls [onSubmit] with the text (Enter still
  * accepts an open completion first), and Up/Down call [onHistory] with -1 (older) or +1 (newer)
- * when no completion popup is open. Pasted line breaks become spaces.
+ * when no completion popup is open. Pasted line breaks become spaces. Cmd/Ctrl+Enter invokes
+ * [onSubmit] in either mode and closes completion; in multi-line mode plain Enter inserts a newline.
+ * Read-only editors do not submit.
  *
  * **Decorations.** [lineHighlights] tint whole lines; [revealLine] / [revealRange] scroll into view
  * whenever their value changes (use [CodeEditorState.revealLine] to repeat a reveal). [onLineClick]

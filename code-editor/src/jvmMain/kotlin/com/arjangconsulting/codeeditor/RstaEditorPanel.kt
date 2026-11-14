@@ -460,6 +460,12 @@ internal class RstaEditorPanel(
             callbacks.closeFind()
             false
         }
+        bind(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, shortcut), "kmp.submit") {
+            if (config.readOnly || config.onSubmit == null) return@bind false
+            callbacks.closeCompletion()
+            config.onSubmit?.invoke(state.text)
+            true
+        }
         bind(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "kmp.enter") { handleEnter() }
         bind(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "kmp.up") { handleHistory(-1) }
         bind(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "kmp.down") { handleHistory(1) }
@@ -469,7 +475,7 @@ internal class RstaEditorPanel(
 
     /** Enter submits in single-line mode when no completion popup is open. */
     internal fun handleEnter(): Boolean {
-        if (!config.singleLine || autoCompletion.isPopupVisible) return false
+        if (config.readOnly || !config.singleLine || autoCompletion.isPopupVisible) return false
         callbacks.closeCompletion()
         config.onSubmit?.invoke(state.text)
         return true

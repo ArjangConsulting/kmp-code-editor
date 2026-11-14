@@ -48,6 +48,31 @@ class ReplEditorUiTest {
     }
 
     @Test
+    fun `multi line enter inserts a newline and shortcut enter submits and resets history`() = runComposeUiTest {
+        val state = CodeEditorState("tap")
+        var submitted: String? = null
+        setContent {
+            MaterialTheme {
+                CodeEditor(state, Modifier.size(400.dp, 120.dp), onSubmit = {
+                    submitted = it
+                    state.resetText("")
+                })
+            }
+        }
+        input().requestFocus()
+        input().performKeyInput { pressKey(Key.Enter) }
+        waitForIdle()
+        assertEquals("tap\n", state.text)
+        assertNull(submitted)
+        input().performTextInput("type")
+        input().performKeyInput { withKeyDown(if (isApplePlatform) Key.MetaLeft else Key.CtrlLeft) { pressKey(Key.Enter) } }
+        waitForIdle()
+        assertEquals("tap\ntype", submitted)
+        assertEquals("", state.text)
+        assertTrue(!state.canUndo)
+    }
+
+    @Test
     fun `tab explicitly requests completion with automatic completion disabled`() = runComposeUiTest {
         val state = CodeEditorState("t")
         setContent {

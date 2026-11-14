@@ -11,6 +11,12 @@ class EditorKeymapTest {
     private fun other(chord: KeyChord) = mapKey(chord, apple = false)
 
     @Test
+    fun shortcutEnterSubmitsOnBothPlatforms() {
+        assertEquals(KeyBinding(EditorCommand.SUBMIT), mapKey(KeyChord(Key.Enter, meta = true), true))
+        assertEquals(KeyBinding(EditorCommand.SUBMIT), mapKey(KeyChord(Key.NumPadEnter, ctrl = true), false))
+    }
+
+    @Test
     fun `apple platforms use command and option`() {
         assertEquals(KeyBinding(EditorCommand.UNDO), apple(KeyChord(Key.Z, meta = true)))
         assertEquals(KeyBinding(EditorCommand.REDO), apple(KeyChord(Key.Z, meta = true, shift = true)))

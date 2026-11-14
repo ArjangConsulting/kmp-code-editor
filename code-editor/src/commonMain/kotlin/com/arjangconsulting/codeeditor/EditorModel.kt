@@ -724,6 +724,10 @@ internal class EditorModel(
                     },
                 )
             }
+            EditorCommand.SUBMIT -> {
+                if (readOnly || config.onSubmit == null) return false
+                submit()
+            }
             EditorCommand.ENTER -> {
                 if (readOnly) return false
                 insertNewline()

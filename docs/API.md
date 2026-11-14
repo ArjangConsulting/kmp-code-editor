@@ -42,3 +42,7 @@ use `onSurfaceVariant` at 60% alpha). It does not affect text, selection, comple
 
 `TabBehavior.COMPLETE` requests completion when closed and accepts the selected suggestion when
 open. Shift+Tab moves focus backward. The existing indent/focus defaults are unchanged.
+
+Cmd+Enter on Apple platforms and Ctrl+Enter elsewhere call `onSubmit` in either mode, closing any
+completion popup. In multi-line mode, Enter inserts a newline. Read-only editors never submit.
+Without `onSubmit`, the shortcut is available to the host.
