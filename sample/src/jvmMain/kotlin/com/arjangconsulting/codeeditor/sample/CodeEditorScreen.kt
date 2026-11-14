@@ -385,10 +385,10 @@ private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors:
                 }
                 if (historyIndex > history.lastIndex) {
                     historyIndex = -1
-                    state.setText("")
+                    state.resetText("")
                 } else {
                     historyIndex = historyIndex.coerceAtLeast(0)
-                    state.setText(history[historyIndex])
+                    state.resetText(history[historyIndex], caret = history[historyIndex].length)
                 }
             },
         )

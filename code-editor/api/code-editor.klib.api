@@ -530,6 +530,7 @@ final class com.arjangconsulting.codeeditor/CodeEditorState { // com.arjangconsu
     final var visibleLines // com.arjangconsulting.codeeditor/CodeEditorState.visibleLines|{}visibleLines[0]
         final fun <get-visibleLines>(): kotlin.ranges/IntRange // com.arjangconsulting.codeeditor/CodeEditorState.visibleLines.<get-visibleLines>|<get-visibleLines>(){}[0]
 
+    final fun clearHistory() // com.arjangconsulting.codeeditor/CodeEditorState.clearHistory|clearHistory(){}[0]
     final fun edit(kotlin.collections/List<com.arjangconsulting.codeeditor/TextEdit>) // com.arjangconsulting.codeeditor/CodeEditorState.edit|edit(kotlin.collections.List<com.arjangconsulting.codeeditor.TextEdit>){}[0]
     final fun fold(kotlin/Int) // com.arjangconsulting.codeeditor/CodeEditorState.fold|fold(kotlin.Int){}[0]
     final fun foldAll() // com.arjangconsulting.codeeditor/CodeEditorState.foldAll|foldAll(){}[0]

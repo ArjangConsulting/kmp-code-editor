@@ -233,6 +233,7 @@ public final class com/arjangconsulting/codeeditor/CodeEditorState {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Lkotlin/ranges/IntRange;)V
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/ranges/IntRange;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clearHistory ()V
 	public final fun edit (Ljava/util/List;)V
 	public final fun fold (I)V
 	public final fun foldAll ()V

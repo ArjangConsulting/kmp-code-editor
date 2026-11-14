@@ -51,3 +51,9 @@ Without `onSubmit`, the shortcut is available to the host.
 lines, then scrolls. Compose counts wrapped visual rows; RSTA counts logical lines for sizing.
 Parent height constraints take precedence. Single-line mode always requests one line. With the
 default unlimited maximum, bounded editors fill their parent and unbounded editors fit content.
+
+For REPL submissions, use the state overload and call `state.resetText("")` after recording the
+command. This clears undo/redo, so Undo cannot bring back a submitted command. Recall host-owned
+history with `state.resetText(command, caret = command.length)` for a fresh editing session.
+`state.clearHistory()` drops undo and redo while preserving text, selection, folds, and version.
+The value overload intentionally treats an external clear as an undoable replacement.

@@ -145,8 +145,13 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
     /** Replaces the text and clears undo history, e.g. when loading a different file. The caret defaults to offset 0. */
     public fun resetText(text: String, caret: Int = 0) {
         apply(EditOutcome(listOf(Replacement(0, textState.length, text)), Selection(caret.coerceIn(0, text.length))), record = false)
-        history.clear()
+        clearHistory()
         foldedState = emptySet()
+    }
+
+    /** Clears undo and redo without changing text, selection, folding, or document version. */
+    public fun clearHistory() {
+        history.clear()
         undoRevision++
     }
 

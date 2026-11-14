@@ -18,6 +18,26 @@ class CodeEditorStateTest {
     }
 
     @Test
+    fun clearHistoryPreservesTheDocumentAndSelectionAndDropsUndoAndRedo() {
+        val state = CodeEditorState("first")
+        state.setText("second")
+        state.setText("third")
+        state.undo()
+        state.select(1, 3)
+        val version = state.version
+        state.clearHistory()
+        assertEquals("second", state.text)
+        assertEquals(1, state.selectionStart)
+        assertEquals(3, state.selectionEnd)
+        assertEquals(version, state.version)
+        assertFalse(state.canUndo)
+        assertFalse(state.canRedo)
+        state.setText("new")
+        assertTrue(state.undo())
+        assertEquals("second", state.text)
+    }
+
+    @Test
     fun `every change bumps the version and notifies listeners`() {
         val state = CodeEditorState("ab")
         val seen = mutableListOf<String>()

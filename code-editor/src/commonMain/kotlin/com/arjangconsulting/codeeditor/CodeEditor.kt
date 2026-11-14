@@ -175,7 +175,8 @@ public fun CodeEditor(
  * completion acceptance, undo, and redo. Synchronizing an external [value] does not call
  * [onValueChange]: the editor text is replaced as one undoable change and the caret moves to the end.
  * Delayed echoes of recently reported values do not overwrite newer typing. Selection, folding,
- * and undo history live inside and survive recomposition.
+ * and undo history live inside and survive recomposition. Clearing [value] after submission is
+ * undoable. Use the state overload with [CodeEditorState.resetText] to start a fresh prompt history.
  * [languageServiceRevision] invalidates service results as in the state-based overload.
  * [placeholder] is shown and announced only while [value] is empty.
  */
