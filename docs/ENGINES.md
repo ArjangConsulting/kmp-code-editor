@@ -105,3 +105,6 @@ whole app. Compose is therefore the default everywhere. To use RSyntaxTextArea a
    engine to RSTA, and open the dialog and menu.
 
 Both engines display `placeholder` when empty and expose it on the editable accessibility node.
+
+Finite `minLines`/`maxLines` size both engines. Compose counts wrapped visual rows; RSTA counts
+logical lines, so wrapping does not grow its height. Parent constraints always take precedence.

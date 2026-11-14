@@ -163,6 +163,9 @@ public enum class CodeEditorEngine {
  *   Ctrl+Space always work).
  * @property hover Requests hover on pointer rest and shows diagnostic tooltips.
  * @property softWrap Visually wraps at the viewport without changing logical lines or document text. Ignored in single-line mode.
+ * @property minLines Minimum visible lines, subject to parent constraints. Ignored in single-line mode.
+ * @property maxLines Maximum visible lines before scrolling. A finite limit makes the editor grow
+ *   with its content; the default preserves filling a bounded parent or fitting unbounded content.
  * @property tabSize Display width of a tab character, in columns.
  */
 @Immutable
@@ -175,8 +178,11 @@ public data class CodeEditorOptions(
     val hover: Boolean = true,
     val tabSize: Int = 4,
     val softWrap: Boolean = false,
+    val minLines: Int = 1,
+    val maxLines: Int = Int.MAX_VALUE,
 ) {
     init {
+        require(minLines > 0 && maxLines >= minLines) { "Line limits require 1 <= minLines <= maxLines" }
         require(tabSize > 0) { "tabSize must be positive" }
     }
 }

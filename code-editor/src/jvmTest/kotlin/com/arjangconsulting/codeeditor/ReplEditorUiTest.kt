@@ -1,6 +1,7 @@
 package com.arjangconsulting.codeeditor
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
@@ -45,6 +46,29 @@ class ReplEditorUiTest {
         waitUntil(timeoutMillis = 3_000) {
             onAllNodesWithTag(COMPLETION_LIST_TAG).fetchSemanticsNodes().isNotEmpty() == open
         }
+    }
+
+    @Test
+    fun `finite line limits grow the input then scroll and shrink after reset`() = runComposeUiTest {
+        val state = CodeEditorState()
+        setContent {
+            MaterialTheme {
+                CodeEditor(state, Modifier.testTag("growing").width(400.dp),
+                    options = CodeEditorOptions(minLines = 2, maxLines = 3))
+            }
+        }
+        fun height() = onNodeWithTag("growing").fetchSemanticsNode().boundsInRoot.height
+        val initial = height()
+        state.setText("one\ntwo\nthree")
+        waitForIdle()
+        val full = height()
+        assertTrue(full > initial)
+        state.setText("one\ntwo\nthree\nfour\nfive")
+        waitForIdle()
+        assertEquals(full, height())
+        state.resetText("")
+        waitForIdle()
+        assertEquals(initial, height())
     }
 
     @Test

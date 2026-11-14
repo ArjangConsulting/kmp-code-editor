@@ -46,3 +46,8 @@ open. Shift+Tab moves focus backward. The existing indent/focus defaults are unc
 Cmd+Enter on Apple platforms and Ctrl+Enter elsewhere call `onSubmit` in either mode, closing any
 completion popup. In multi-line mode, Enter inserts a newline. Read-only editors never submit.
 Without `onSubmit`, the shortcut is available to the host.
+
+`CodeEditorOptions(minLines = 1, maxLines = 5)` grows an input with content up to five visible
+lines, then scrolls. Compose counts wrapped visual rows; RSTA counts logical lines for sizing.
+Parent height constraints take precedence. Single-line mode always requests one line. With the
+default unlimited maximum, bounded editors fill their parent and unbounded editors fit content.

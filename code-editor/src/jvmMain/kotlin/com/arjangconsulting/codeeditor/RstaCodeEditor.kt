@@ -2,7 +2,6 @@ package com.arjangconsulting.codeeditor
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -10,7 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
 
 /**
@@ -92,12 +90,9 @@ internal fun RstaCodeEditor(state: CodeEditorState, controller: LanguageServiceC
 
     val measurer = rememberTextMeasurer()
     val glyph = remember(config.textStyle, measurer) { measurer.measure("M", config.textStyle).size }
-    val singleLineHeight = if (config.singleLine) {
-        with(LocalDensity.current) { (glyph.height * 1.6f).toDp() }
-    } else {
-        null
-    }
-    Column(modifier) {
+    Column(modifier.editorLineHeight(glyph.height.toFloat(), glyph.height * 0.6f, config.singleLine, config.options) {
+        state.snapshot().lineCount
+    }) {
         if (find.visible) {
             FindReplaceBar(
                 session = find,
@@ -110,7 +105,7 @@ internal fun RstaCodeEditor(state: CodeEditorState, controller: LanguageServiceC
         SwingPanel(
             factory = { panel },
             update = { it.applyConfig(config) },
-            modifier = Modifier.fillMaxWidth().let { m -> if (singleLineHeight != null) m.height(singleLineHeight) else m.weight(1f) },
+            modifier = Modifier.fillMaxWidth().weight(1f),
         )
     }
 }

@@ -276,19 +276,33 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
     }
 }
 
-/** Single-line editors are one line tall; with unbounded height the editor fits all lines. */
-private fun Modifier.editorHeight(model: EditorModel, singleLine: Boolean): Modifier = layout { measurable, constraints ->
-    val metrics = model.metrics
+/** Sizes from visible rows, respecting explicit parent constraints. */
+private fun Modifier.editorHeight(model: EditorModel, singleLine: Boolean): Modifier = editorLineHeight(
+    lineHeight = model.metrics.lineHeight,
+    verticalPadding = model.metrics.paddingTop * 2,
+    singleLine = singleLine,
+    options = model.config.options,
+    rows = { model.visualLayout().rowCount },
+)
+
+internal fun Modifier.editorLineHeight(
+    lineHeight: Float,
+    verticalPadding: Float,
+    singleLine: Boolean,
+    options: CodeEditorOptions,
+    rows: () -> Int,
+): Modifier = layout { measurable, constraints ->
+    fun pixels(lines: Int): Int = (lineHeight.toDouble() * lines + verticalPadding).coerceAtMost(Int.MAX_VALUE.toDouble() - 1).roundToInt()
     val height = when {
-        singleLine -> (metrics.lineHeight + metrics.paddingTop * 2).roundToInt()
-        !constraints.hasBoundedHeight -> model.contentHeight.roundToInt().coerceAtLeast((metrics.lineHeight + metrics.paddingTop * 2).roundToInt())
+        singleLine -> pixels(1)
+        options.maxLines != Int.MAX_VALUE || !constraints.hasBoundedHeight -> pixels(rows().coerceIn(options.minLines, options.maxLines))
         else -> null
     }
     val childConstraints = if (height != null) {
         val h = height.coerceIn(constraints.minHeight, constraints.maxHeight)
         constraints.copy(minHeight = h, maxHeight = h)
     } else {
-        constraints
+        constraints.copy(minHeight = maxOf(constraints.minHeight, pixels(options.minLines)).coerceAtMost(constraints.maxHeight))
     }
     val placeable = measurable.measure(childConstraints)
     layout(placeable.width, placeable.height) { placeable.place(0, 0) }

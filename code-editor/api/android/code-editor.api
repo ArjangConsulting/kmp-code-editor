@@ -198,9 +198,10 @@ public final class com/arjangconsulting/codeeditor/CodeEditorLogger$DefaultImpls
 public final class com/arjangconsulting/codeeditor/CodeEditorOptions {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (ZZZZZZIZ)V
-	public synthetic fun <init> (ZZZZZZIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZZZZZZIZII)V
+	public synthetic fun <init> (ZZZZZZIZIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
+	public final fun component10 ()I
 	public final fun component2 ()Z
 	public final fun component3 ()Z
 	public final fun component4 ()Z
@@ -208,8 +209,9 @@ public final class com/arjangconsulting/codeeditor/CodeEditorOptions {
 	public final fun component6 ()Z
 	public final fun component7 ()I
 	public final fun component8 ()Z
-	public final fun copy (ZZZZZZIZ)Lcom/arjangconsulting/codeeditor/CodeEditorOptions;
-	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CodeEditorOptions;ZZZZZZIZILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorOptions;
+	public final fun component9 ()I
+	public final fun copy (ZZZZZZIZII)Lcom/arjangconsulting/codeeditor/CodeEditorOptions;
+	public static synthetic fun copy$default (Lcom/arjangconsulting/codeeditor/CodeEditorOptions;ZZZZZZIZIIILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorOptions;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAutoCloseBrackets ()Z
 	public final fun getAutoIndent ()Z
@@ -217,6 +219,8 @@ public final class com/arjangconsulting/codeeditor/CodeEditorOptions {
 	public final fun getHighlightCurrentLine ()Z
 	public final fun getHover ()Z
 	public final fun getMatchBrackets ()Z
+	public final fun getMaxLines ()I
+	public final fun getMinLines ()I
 	public final fun getSoftWrap ()Z
 	public final fun getTabSize ()I
 	public fun hashCode ()I

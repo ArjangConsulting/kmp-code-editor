@@ -460,7 +460,7 @@ final class com.arjangconsulting.codeeditor/CodeEditorLabels { // com.arjangcons
 }
 
 final class com.arjangconsulting.codeeditor/CodeEditorOptions { // com.arjangconsulting.codeeditor/CodeEditorOptions|null[0]
-    constructor <init>(kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Int = ..., kotlin/Boolean = ...) // com.arjangconsulting.codeeditor/CodeEditorOptions.<init>|<init>(kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Int;kotlin.Boolean){}[0]
+    constructor <init>(kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Int = ..., kotlin/Boolean = ..., kotlin/Int = ..., kotlin/Int = ...) // com.arjangconsulting.codeeditor/CodeEditorOptions.<init>|<init>(kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Int;kotlin.Boolean;kotlin.Int;kotlin.Int){}[0]
 
     final val autoCloseBrackets // com.arjangconsulting.codeeditor/CodeEditorOptions.autoCloseBrackets|{}autoCloseBrackets[0]
         final fun <get-autoCloseBrackets>(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.autoCloseBrackets.<get-autoCloseBrackets>|<get-autoCloseBrackets>(){}[0]
@@ -474,12 +474,17 @@ final class com.arjangconsulting.codeeditor/CodeEditorOptions { // com.arjangcon
         final fun <get-hover>(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.hover.<get-hover>|<get-hover>(){}[0]
     final val matchBrackets // com.arjangconsulting.codeeditor/CodeEditorOptions.matchBrackets|{}matchBrackets[0]
         final fun <get-matchBrackets>(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.matchBrackets.<get-matchBrackets>|<get-matchBrackets>(){}[0]
+    final val maxLines // com.arjangconsulting.codeeditor/CodeEditorOptions.maxLines|{}maxLines[0]
+        final fun <get-maxLines>(): kotlin/Int // com.arjangconsulting.codeeditor/CodeEditorOptions.maxLines.<get-maxLines>|<get-maxLines>(){}[0]
+    final val minLines // com.arjangconsulting.codeeditor/CodeEditorOptions.minLines|{}minLines[0]
+        final fun <get-minLines>(): kotlin/Int // com.arjangconsulting.codeeditor/CodeEditorOptions.minLines.<get-minLines>|<get-minLines>(){}[0]
     final val softWrap // com.arjangconsulting.codeeditor/CodeEditorOptions.softWrap|{}softWrap[0]
         final fun <get-softWrap>(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.softWrap.<get-softWrap>|<get-softWrap>(){}[0]
     final val tabSize // com.arjangconsulting.codeeditor/CodeEditorOptions.tabSize|{}tabSize[0]
         final fun <get-tabSize>(): kotlin/Int // com.arjangconsulting.codeeditor/CodeEditorOptions.tabSize.<get-tabSize>|<get-tabSize>(){}[0]
 
     final fun component1(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.component1|component1(){}[0]
+    final fun component10(): kotlin/Int // com.arjangconsulting.codeeditor/CodeEditorOptions.component10|component10(){}[0]
     final fun component2(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.component2|component2(){}[0]
     final fun component3(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.component3|component3(){}[0]
     final fun component4(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.component4|component4(){}[0]
@@ -487,7 +492,8 @@ final class com.arjangconsulting.codeeditor/CodeEditorOptions { // com.arjangcon
     final fun component6(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.component6|component6(){}[0]
     final fun component7(): kotlin/Int // com.arjangconsulting.codeeditor/CodeEditorOptions.component7|component7(){}[0]
     final fun component8(): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.component8|component8(){}[0]
-    final fun copy(kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Int = ..., kotlin/Boolean = ...): com.arjangconsulting.codeeditor/CodeEditorOptions // com.arjangconsulting.codeeditor/CodeEditorOptions.copy|copy(kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Int;kotlin.Boolean){}[0]
+    final fun component9(): kotlin/Int // com.arjangconsulting.codeeditor/CodeEditorOptions.component9|component9(){}[0]
+    final fun copy(kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Int = ..., kotlin/Boolean = ..., kotlin/Int = ..., kotlin/Int = ...): com.arjangconsulting.codeeditor/CodeEditorOptions // com.arjangconsulting.codeeditor/CodeEditorOptions.copy|copy(kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Int;kotlin.Boolean;kotlin.Int;kotlin.Int){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // com.arjangconsulting.codeeditor/CodeEditorOptions.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // com.arjangconsulting.codeeditor/CodeEditorOptions.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // com.arjangconsulting.codeeditor/CodeEditorOptions.toString|toString(){}[0]

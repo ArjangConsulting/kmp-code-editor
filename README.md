@@ -82,3 +82,5 @@ and AI-agent conventions live in [AGENTS.md](AGENTS.md).
 - In the RSyntaxTextArea engine, AutoCompletion's popup can't be shown headless, so tests cover the
   feed and acceptance, not the popup window.
 - Engine differences are listed in [Engines](docs/ENGINES.md).
+
+With finite line limits, RSTA sizes from logical lines; Compose sizes from wrapped visual rows.

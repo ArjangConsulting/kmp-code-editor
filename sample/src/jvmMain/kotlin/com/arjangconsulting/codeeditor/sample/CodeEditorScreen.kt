@@ -363,6 +363,7 @@ private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors:
             languageServiceRevision = serviceRevision,
             engine = engine,
             singleLine = !multiline,
+            options = CodeEditorOptions(minLines = 1, maxLines = 5),
             placeholder = "Enter a command",
             tabBehavior = TabBehavior.COMPLETE,
             colors = colors,
