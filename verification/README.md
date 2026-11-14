@@ -87,3 +87,13 @@ allow Accessibility Suite's prompt and relaunch the app) before the first TalkBa
 prompt takes the foreground and the run fails with the misleading "Initial app-owned TalkBack focus
 unavailable". A fresh emulator may also show a "Bluetooth keeps stopping" dialog that is absent from
 the accessibility tree; dismiss it by coordinates and confirm the foreground app before testing.
+
+## Prompt and growing script fixtures
+
+Prompt clears to a single-line input with `Enter a command` as its visual and accessible hint.
+Type `va`, request completion with Tab, accept a suggestion with Tab, and submit with Enter.
+Verify Submitted, empty Text, and that Undo cannot restore the submission. Find must leave the
+prompt unobscured. Script grows from one through three visible rows; Five lines supplies an
+oversized fixture that must scroll within three rows. Enter inserts a newline in Script;
+Cmd/Ctrl+Enter submits all lines. Capture empty/populated and capped-height screenshots in both
+platforms and inspect the editable node's placeholder description.

@@ -1,5 +1,6 @@
 package com.arjangconsulting.codeeditor.verification
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +27,8 @@ import com.arjangconsulting.codeeditor.JsonRules
 import com.arjangconsulting.codeeditor.TextPosition
 import com.arjangconsulting.codeeditor.TextRange
 import com.arjangconsulting.codeeditor.KotlinRules
+import com.arjangconsulting.codeeditor.KeywordLanguageService
+import com.arjangconsulting.codeeditor.TabBehavior
 
 private val initialText = "fun greet() {\n    val message = \"hello world\"\n    println(message)\n}\nend"
 
@@ -36,6 +39,10 @@ public fun VerificationContent(
     modifier: Modifier = Modifier,
 ): Unit {
     val state = remember { CodeEditorState(initialText, 0 until 0) }
+    var prompt by remember { mutableStateOf(false) }
+    var singleLine by remember { mutableStateOf(true) }
+    var submitted by remember { mutableStateOf("") }
+    val keywords = remember { KeywordLanguageService(KotlinRules) }
     var softWrap by remember { mutableStateOf(false) }
     var longJson by remember { mutableStateOf(false) }
     var readOnly by remember { mutableStateOf(false) }
@@ -45,7 +52,7 @@ public fun VerificationContent(
             Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding().padding(16.dp)) {
                 Text("Editor verification", style = MaterialTheme.typography.titleLarge)
                 Row {
-                    Button(onClick = { longJson = false; state.resetText(initialText) }) { Text("Reset") }
+                    Button(onClick = { prompt = false; longJson = false; state.resetText(initialText) }) { Text("Reset") }
                     Button(onClick = { longJson = false; state.resetText("") }) { Text("Empty") }
                     Button(onClick = { readOnly = !readOnly }) { Text(if (readOnly) "Make editable" else "Make read only") }
                 }
@@ -57,19 +64,32 @@ public fun VerificationContent(
                     }) { Text("Long JSON") }
                     Button(onClick = { softWrap = !softWrap }) { Text(if (softWrap) "Unwrap" else "Wrap") }
                 }
+                Row {
+                    Button(onClick = { prompt = true; singleLine = true; state.resetText("") }) { Text("Prompt") }
+                    Button(onClick = { prompt = true; singleLine = false; state.resetText("") }) { Text("Script") }
+                    Button(onClick = { prompt = true; singleLine = false; state.resetText("one\ntwo\nthree\nfour\nfive") }) { Text("Five lines") }
+                }
                 Button(onClick = { runCompositionProbe { probeResult = it + "; text=" + state.text.takeLast(80) } }) {
                     Text("Probe composition")
                 }
                 Text("Probe result: $probeResult")
                 Text("Selection: ${state.selectionStart}..${state.selectionEnd}")
                 Text("Folds: ${state.foldedLines.sorted().joinToString()}")
-                CodeEditor(
-                    state = state,
-                    modifier = Modifier.fillMaxWidth().weight(1f).testTag("verification-editor"),
-                    language = if (longJson) JsonRules else KotlinRules,
-                    options = CodeEditorOptions(softWrap = softWrap),
-                    readOnly = readOnly,
-                )
+                Box(Modifier.fillMaxWidth().weight(1f)) {
+                    CodeEditor(
+                        state = state,
+                        modifier = (if (prompt) Modifier.fillMaxWidth() else Modifier.fillMaxSize()).testTag("verification-editor"),
+                        language = if (longJson) JsonRules else KotlinRules,
+                        languageService = keywords,
+                        options = CodeEditorOptions(softWrap = softWrap, minLines = 1, maxLines = if (prompt) 3 else Int.MAX_VALUE),
+                        singleLine = prompt && singleLine,
+                        placeholder = "Enter a command",
+                        tabBehavior = if (prompt) TabBehavior.COMPLETE else TabBehavior.INSERT_INDENT,
+                        onSubmit = { submitted = it; state.resetText("") },
+                        readOnly = readOnly,
+                    )
+                }
+                Text("Submitted: ${submitted.replace("\n", "⏎")}", maxLines = 2)
                 Text("Text length: ${state.text.length}")
                 Text("Text: ${state.text.take(300).replace("\n", "⏎")}", maxLines = 4)
                 if (longJson) Text("Tail: ${state.text.takeLast(80)}", maxLines = 2)
