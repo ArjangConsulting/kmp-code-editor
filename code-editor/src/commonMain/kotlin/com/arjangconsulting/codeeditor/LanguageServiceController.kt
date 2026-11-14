@@ -48,7 +48,7 @@ internal class LanguageServiceController(
     service: LanguageService,
     options: LanguageServiceOptions,
     rules: TokenRules,
-    private val logger: CodeEditorLogger,
+    var logger: CodeEditorLogger,
 ) {
     var service: LanguageService = service
         set(value) {

@@ -112,6 +112,7 @@ public fun CodeEditor(
     val scope = rememberCoroutineScope()
     val controller = remember(state) { LanguageServiceController(scope, languageService, serviceOptions, language, logger) }
     SideEffect {
+        controller.logger = logger
         controller.options = serviceOptions
         controller.rules = language
         controller.service = languageService

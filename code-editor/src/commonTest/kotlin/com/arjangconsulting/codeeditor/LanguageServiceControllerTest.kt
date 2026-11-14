@@ -92,6 +92,19 @@ class LanguageServiceControllerTest {
     }
 
     @Test
+    fun `logger replacement receives failures from subsequent requests`() = runTest {
+        val first = RecordingLogger()
+        val second = RecordingLogger()
+        val service = FakeService(completions = { _, _, _ -> error("unavailable") })
+        val controller = controller(service, first)
+        controller.logger = second
+        controller.requestCompletion(DocumentSnapshot("t", 0), 1)
+        advanceUntilIdle()
+        assertTrue(first.errors.isEmpty())
+        assertTrue(second.errors.any { "complete failed" in it })
+    }
+
+    @Test
     fun `typing an identifier debounces into a single request`() = runTest {
         val service = FakeService(completions = { _, _, _ -> CompletionList(commands) })
         val controller = controller(service)
