@@ -430,6 +430,7 @@ internal class RstaEditorPanel(
             )
         }
         bind(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK), "kmp.complete") {
+            snippet.cancel()
             if (!config.readOnly) callbacks.requestCompletion()
             true
         }
@@ -521,6 +522,7 @@ internal class RstaEditorPanel(
     /** Pushes the state's text (minimal diff) and selection into RSTA. */
     fun syncFromState() {
         if (applyingToState) return
+        textArea.accessibleContext.accessibleDescription = config.placeholder.takeIf { state.text.isEmpty() }
         val current = textArea.text
         val target = state.text
         if (current != target) {
@@ -556,7 +558,7 @@ internal class RstaEditorPanel(
         this.config = config
         if (force || tokenMakerRules !== config.language) installLanguage(config.language)
         textArea.accessibleContext.accessibleName = config.labels.editorDescription
-        textArea.accessibleContext.accessibleDescription = config.placeholder
+        textArea.accessibleContext.accessibleDescription = config.placeholder.takeIf { state.text.isEmpty() }
         textArea.isEditable = !config.readOnly
         textArea.isAutoIndentEnabled = config.options.autoIndent
         textArea.closeCurlyBraces = config.options.autoCloseBrackets
@@ -716,9 +718,11 @@ internal class RstaEditorPanel(
 
     /** Shows, refreshes, or hides the completion popup for [session]. */
     fun showCompletion(session: CompletionSession?) {
-        completionProvider.session = session
+        val navigatingSnippet = snippet.synchronize(state)
+        completionProvider.session = session.takeUnless { navigatingSnippet }
+        if (navigatingSnippet) callbacks.closeCompletion()
         if (GraphicsEnvironment.isHeadless()) return
-        if (session == null || (session.items.isEmpty() && !session.explicit)) {
+        if (navigatingSnippet || session == null || (session.items.isEmpty() && !session.explicit)) {
             refreshingPopup = true
             try {
                 autoCompletion.hideChildWindows()

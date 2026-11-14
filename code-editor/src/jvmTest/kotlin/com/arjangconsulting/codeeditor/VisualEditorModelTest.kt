@@ -13,6 +13,19 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class VisualEditorModelTest {
     @Test
+    fun singleLineFindCommandsAreUnhandled() = runTest {
+        val state = CodeEditorState("prompt")
+        val config = largeDocumentConfig().copy(singleLine = true)
+        val controller = LanguageServiceController(this, LanguageService.None, config.serviceOptions, config.language, config.logger)
+        val model = EditorModel(state, controller, this, config)
+        for (command in listOf(EditorCommand.FIND, EditorCommand.REPLACE, EditorCommand.FIND_NEXT, EditorCommand.FIND_PREVIOUS)) {
+            assertEquals(false, model.execute(KeyBinding(command)))
+        }
+        assertEquals(false, model.find.visible)
+        model.dispose()
+    }
+
+    @Test
     fun typingReshapesOnlyTheChangedTileAndPreservesShiftedRows() = runComposeUiTest {
         lateinit var measurer: androidx.compose.ui.text.TextMeasurer
         setContent {

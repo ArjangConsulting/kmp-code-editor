@@ -261,7 +261,7 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
             }
             TextArea(model, diagnosticsByLine, textToolbar, Modifier.fillMaxHeight().weight(1f))
         }
-        if (model.find.visible) {
+        if (model.find.visible && !config.singleLine) {
             FindReplaceBar(
                 session = model.find,
                 config = config,
@@ -464,7 +464,7 @@ private fun TextArea(
     val config = model.config
     val vertical = rememberScrollableState { model.scrollVerticallyBy(it) }
     val horizontal = rememberScrollableState { model.scrollHorizontallyBy(it) }
-    val emptyHint = remember(config.placeholder, config.textStyle, config.colors.placeholderForeground) {
+    val emptyHint = remember(model.textMeasurer, config.placeholder, config.textStyle, config.colors.placeholderForeground) {
         config.placeholder?.let { model.textMeasurer?.measure(it, config.textStyle.copy(color = config.colors.placeholderForeground), softWrap = false, maxLines = 1) }
     }
     val placeholder = remember(config.textStyle, config.colors, config.labels.foldedPlaceholder) {

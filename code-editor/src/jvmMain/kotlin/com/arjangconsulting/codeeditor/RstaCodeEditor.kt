@@ -96,7 +96,7 @@ internal fun RstaCodeEditor(state: CodeEditorState, controller: LanguageServiceC
     Column(modifier.editorLineHeight(glyph.height.toFloat(), glyph.height * 0.6f, config.singleLine, config.options) {
         state.snapshot().lineCount
     }) {
-        if (find.visible) {
+        if (find.visible && !config.singleLine) {
             FindReplaceBar(
                 session = find,
                 config = config,

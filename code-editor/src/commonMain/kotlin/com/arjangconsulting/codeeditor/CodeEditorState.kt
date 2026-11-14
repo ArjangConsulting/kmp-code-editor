@@ -407,7 +407,7 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
 /** A pending request to scroll [range] into view; [id] distinguishes repeated requests. */
 internal data class RevealRequest(val range: TextRange, val id: Int)
 
-/** Remembers a [CodeEditorState] across recomposition and saved-state restoration. */
+/** Remembers a [CodeEditorState] initially at offset 0; restores saved text and primary selection. */
 @Composable
 public fun rememberCodeEditorState(initialText: String = ""): CodeEditorState =
     rememberSaveable(saver = CodeEditorState.Saver) { CodeEditorState(initialText, 0 until 0) }

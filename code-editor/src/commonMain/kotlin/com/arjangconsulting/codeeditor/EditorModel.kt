@@ -613,6 +613,7 @@ internal class EditorModel(
     }
 
     fun requestCompletion() {
+        snippet.cancel()
         controller.requestCompletion(state.snapshot(), state.selectionInternal.caret)
     }
 

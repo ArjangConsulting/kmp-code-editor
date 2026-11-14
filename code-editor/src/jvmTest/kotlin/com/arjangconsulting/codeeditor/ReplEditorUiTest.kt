@@ -8,6 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.input.key.Key
@@ -29,6 +31,9 @@ import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.unit.dp
+import org.jetbrains.skia.EncodedImageFormat
+import org.jetbrains.skia.Image
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -39,6 +44,12 @@ class ReplEditorUiTest {
     private val rules = tokenRules("repl") { keywords("tap", "type") }
     private val service = KeywordLanguageService(rules)
     private val options = LanguageServiceOptions(completionDebounceMillis = 0, diagnosticsDebounceMillis = 0)
+
+    private fun save(image: ImageBitmap, name: String) {
+        val file = File("build/reports/repl/$name.png")
+        file.parentFile.mkdirs()
+        Image.makeFromBitmap(image.asSkiaBitmap()).encodeToData(EncodedImageFormat.PNG)!!.use { data -> file.writeBytes(data.bytes) }
+    }
 
     private fun ComposeUiTest.input() = onNodeWithTag(CODE_EDITOR_INPUT_TAG)
 
@@ -94,6 +105,7 @@ class ReplEditorUiTest {
         }
         fun height() = onNodeWithTag("growing").fetchSemanticsNode().boundsInRoot.height
         val initial = height()
+        save(onNodeWithTag("growing").captureToImage(), "minimum-lines")
         state.setText("one\ntwo\nthree")
         waitForIdle()
         val full = height()
@@ -101,6 +113,7 @@ class ReplEditorUiTest {
         state.setText("one\ntwo\nthree\nfour\nfive")
         waitForIdle()
         assertEquals(full, height())
+        save(onNodeWithTag("growing").captureToImage(), "capped-lines")
         state.resetText("")
         waitForIdle()
         assertEquals(initial, height())
@@ -155,14 +168,16 @@ class ReplEditorUiTest {
         val state = CodeEditorState()
         setContent {
             MaterialTheme {
-                CodeEditor(state, Modifier.size(400.dp, 80.dp), placeholder = "Enter a command", singleLine = true)
+                CodeEditor(state, Modifier.size(400.dp, 80.dp).testTag("placeholder-editor"), placeholder = "Enter a command", singleLine = true)
             }
         }
         input().assertContentDescriptionEquals("Code editor, Enter a command")
+        save(onNodeWithTag("placeholder-editor").captureToImage(), "placeholder-empty")
         assertEquals("", state.text)
         input().requestFocus()
         input().performTextInput("tap")
         input().assertContentDescriptionEquals("Code editor")
+        save(onNodeWithTag("placeholder-editor").captureToImage(), "placeholder-populated")
         state.resetText("")
         waitForIdle()
         input().assertContentDescriptionEquals("Code editor, Enter a command")

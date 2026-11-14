@@ -94,12 +94,39 @@ class RstaEditorPanelTest {
     }
 
     @Test
+    fun `placeholder accessibility follows empty and populated text`() {
+        panel.applyConfig(config().copy(placeholder = "Enter a command"))
+        assertEquals(null, panel.textArea.accessibleContext.accessibleDescription)
+        state.resetText("")
+        panel.syncFromState()
+        assertEquals("Enter a command", panel.textArea.accessibleContext.accessibleDescription)
+        state.setText("tap")
+        panel.syncFromState()
+        assertEquals(null, panel.textArea.accessibleContext.accessibleDescription)
+    }
+
+    @Test
+    fun `single line find and replace do not open the bar`() {
+        panel.applyConfig(config(singleLine = true))
+        val shortcut = if (isApplePlatform) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
+        val find = KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcut)
+        val replace = if (isApplePlatform) KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcut or InputEvent.ALT_DOWN_MASK)
+            else KeyStroke.getKeyStroke(KeyEvent.VK_H, shortcut)
+        for (stroke in listOf(find, replace)) {
+            panel.textArea.actionMap.get(panel.textArea.inputMap.get(stroke)).actionPerformed(ActionEvent(panel.textArea, 0, "find"))
+        }
+        assertTrue(events.none { it == "find" || it == "replace" })
+    }
+
+    @Test
     fun `snippet navigation follows edits and Escape ends the session`() {
         val parsed = parseSnippet("tap \${1:id} \${2:text}$0")
         state.resetText(parsed.text, parsed.selectionEnd)
         state.select(parsed.selectionStart, parsed.selectionEnd)
         panel.syncFromState()
         panel.startSnippet(parsed.tabStops)
+        panel.showCompletion(CompletionSession(0, TextPosition.Zero, state.version, emptyList(), emptyList(), 0, false, false, ""))
+        assertEquals(null, panel.completionProvider.session)
         panel.textArea.replaceSelection("button")
         assertTrue(panel.handleTab(true))
         assertEquals("text", state.selectedText)
