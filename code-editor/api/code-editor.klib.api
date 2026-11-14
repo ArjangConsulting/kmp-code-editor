@@ -1562,6 +1562,8 @@ final val com.arjangconsulting.codeeditor/ShellRules // com.arjangconsulting.cod
     final fun <get-ShellRules>(): com.arjangconsulting.codeeditor/TokenRules // com.arjangconsulting.codeeditor/ShellRules.<get-ShellRules>|<get-ShellRules>(){}[0]
 final val com.arjangconsulting.codeeditor/SwiftRules // com.arjangconsulting.codeeditor/SwiftRules|{}SwiftRules[0]
     final fun <get-SwiftRules>(): com.arjangconsulting.codeeditor/TokenRules // com.arjangconsulting.codeeditor/SwiftRules.<get-SwiftRules>|<get-SwiftRules>(){}[0]
+final val com.arjangconsulting.codeeditor/XmlRules // com.arjangconsulting.codeeditor/XmlRules|{}XmlRules[0]
+    final fun <get-XmlRules>(): com.arjangconsulting.codeeditor/TokenRules // com.arjangconsulting.codeeditor/XmlRules.<get-XmlRules>|<get-XmlRules>(){}[0]
 final val com.arjangconsulting.codeeditor/YamlRules // com.arjangconsulting.codeeditor/YamlRules|{}YamlRules[0]
     final fun <get-YamlRules>(): com.arjangconsulting.codeeditor/TokenRules // com.arjangconsulting.codeeditor/YamlRules.<get-YamlRules>|<get-YamlRules>(){}[0]
 final val com.arjangconsulting.codeeditor/com_arjangconsulting_codeeditor_BackendLanguageService$stableprop // com.arjangconsulting.codeeditor/com_arjangconsulting_codeeditor_BackendLanguageService$stableprop|#static{}com_arjangconsulting_codeeditor_BackendLanguageService$stableprop[0]

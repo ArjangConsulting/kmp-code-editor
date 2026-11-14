@@ -132,3 +132,8 @@ Tile layouts use content keys: source text and clipped, tile-relative syntax and
 plus tab size. Document versions and absolute offsets do not invalidate unchanged tiles. The frame
 style key clears the cache when typography, colors, or tab size change; old tiles are evicted by
 frame usage. `shapedTileCount` exposes actual shaping work to internal regression tests.
+
+`XmlLexer.kt` implements a dedicated line tokenizer behind `XmlRules`. Opaque `LexerState`
+values carry tag, quote, comment, CDATA, declaration, and processing-instruction continuations.
+Both engines consume the same token stream and incremental highlighter. It has no validation or
+formatting dependency.

@@ -35,7 +35,7 @@ languages, services, persistence, and DI stay in consuming apps (e.g. amoo-studi
     `VisualLayout` supplies bounded rendering tiles and logical-to-visual wrapping geometry.
     `CompletionEdits` holds the backend in-document position check and the shared overlap check; the controller validates mapped replacements before publication and acceptance.
     `Formatting` handles explicit format actions; `JsonLanguageService` and `YamlLanguageService`
-    supply local syntax validation and formatting. `YamlLexer` handles indentation-aware YAML highlighting.
+    supply local syntax validation and formatting. `YamlLexer` handles indentation-aware YAML highlighting; `XmlLexer` supplies markup highlighting.
     `CompletionProtocol` and `BackendLanguageService` bridge tool completion providers;
     `ToolCommandCatalog` and `ToolCompletionBackend` support schema-based external add-ons.
   - `jvmMain/` — the opt-in RSyntaxTextArea engine (`RstaEditorPanel`, `RstaCodeEditor`).

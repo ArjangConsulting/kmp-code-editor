@@ -1253,6 +1253,7 @@ public final class com/arjangconsulting/codeeditor/TokenRulesPresetsKt {
 	public static final fun getPlainText ()Lcom/arjangconsulting/codeeditor/TokenRules;
 	public static final fun getShellRules ()Lcom/arjangconsulting/codeeditor/TokenRules;
 	public static final fun getSwiftRules ()Lcom/arjangconsulting/codeeditor/TokenRules;
+	public static final fun getXmlRules ()Lcom/arjangconsulting/codeeditor/TokenRules;
 	public static final fun getYamlRules ()Lcom/arjangconsulting/codeeditor/TokenRules;
 }
 

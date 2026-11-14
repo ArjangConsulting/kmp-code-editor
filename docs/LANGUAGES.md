@@ -49,3 +49,11 @@ Smart typing pairs `{` with `}`, and Enter between them creates an indented blan
 YAML use two spaces by default; Kotlin, Swift, and shell use four. Configure this through
 `TokenRules.indentUnit` and `CodeEditorOptions.autoIndent`/`autoCloseBrackets`. This is lightweight
 bracket-based indentation rather than whole-document formatting.
+
+## XML, HTML, SOAP, and SVG
+
+Use `language = XmlRules` for markup bodies. The line tokenizer preserves tag, quote, comment,
+CDATA, and processing-instruction context across lines and highlights tag names, attributes,
+quoted values, and entities. It supplies highlighting only; there is no validator or formatter.
+HTML raw-text elements such as script/style, embedded languages, and full DTD parsing are outside
+this lexical preset. Hosts choose the preset from Content-Type or their own body-format picker.

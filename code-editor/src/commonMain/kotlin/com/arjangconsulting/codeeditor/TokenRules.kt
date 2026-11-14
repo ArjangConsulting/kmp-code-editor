@@ -78,7 +78,7 @@ public class LexedLine internal constructor(
  * brackets, auto-closing pairs, indentation) that the editor needs for that language.
  *
  * Build one with [tokenRules]; presets include [PlainText], [JsonRules], [YamlRules], [KotlinRules],
- * [SwiftRules], and [ShellRules].
+ * [SwiftRules], [ShellRules], and [XmlRules].
  * Instances are immutable and safe to share; keep them in a top-level `val` so the editor's caches
  * survive recomposition.
  */

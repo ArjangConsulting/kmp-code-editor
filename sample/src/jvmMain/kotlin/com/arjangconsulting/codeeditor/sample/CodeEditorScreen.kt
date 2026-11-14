@@ -68,6 +68,7 @@ import com.arjangconsulting.codeeditor.TabBehavior
 import com.arjangconsulting.codeeditor.TextPosition
 import com.arjangconsulting.codeeditor.TokenRules
 import com.arjangconsulting.codeeditor.YamlLanguageService
+import com.arjangconsulting.codeeditor.XmlRules
 import com.arjangconsulting.codeeditor.YamlRules
 import com.arjangconsulting.codeeditor.format
 import com.arjangconsulting.codeeditor.rememberCodeEditorState
@@ -80,6 +81,7 @@ private enum class DemoLanguage(val label: String, val rules: TokenRules, val sa
     Tools("Tools (schema)", ToolDemoRules, "tap_element id=\"sign-in\" scope=app\nswipe_in_direction direction=down"),
     Json("JSON", JsonRules, JSON_SAMPLE),
     Yaml("YAML", YamlRules, YAML_SAMPLE),
+    Xml("XML / HTML", XmlRules, "<response status=\"ok\">Hello &amp; welcome</response>"),
     Kotlin("Kotlin", KotlinRules, KOTLIN_SAMPLE),
     Swift("Swift", SwiftRules, SWIFT_TEST_SAMPLE),
     Shell("Shell", ShellRules, SHELL_SAMPLE),
@@ -453,6 +455,7 @@ private val snippets = listOf(
     JsonRules to "{\"tool\": \"tap\", \"args\": {\"id\": \"sign-in\"}, \"ok\": true}",
     KotlinRules to "val result = runCatching { client.call(\"ping\") }",
     SwiftRules to "XCTAssertTrue(app.buttons[\"Send\"].exists)",
+    XmlRules to "<svg viewBox=\"0 0 10 10\"><path d=\"M0 0\"/></svg>",
     YamlRules to "name: editor\nformats: [yaml, yml]\nenabled: true",
     ShellRules to "export OUTPUT=\"\${HOME}/results\"; echo \"\$OUTPUT\"",
 )

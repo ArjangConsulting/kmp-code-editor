@@ -124,3 +124,14 @@ public val ShellRules: TokenRules = tokenRules("shell") {
     brackets('(' to ')', '[' to ']', '{' to '}')
     autoClose('"' to '"', '\'' to '\'')
 }
+
+/**
+ * XML-style markup highlighting for XML, HTML, SOAP, and SVG bodies: tags, attributes, quoted
+ * values, entities, comments, CDATA, declarations, and processing instructions across lines.
+ * This is lexical highlighting only, without validation, formatting, HTML raw-text elements,
+ * embedded languages, or full DTD parsing.
+ */
+public val XmlRules: TokenRules = tokenRules("xml") {
+    lineTokenizer = ::tokenizeXmlLine
+    autoClose('"' to '"', '\'' to '\'')
+}
