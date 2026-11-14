@@ -149,6 +149,7 @@ internal class EditorModel(
     private var revealJob: Job? = null
 
     val bridge: InputBridge = InputBridge(this)
+    private val snippet = SnippetSession()
 
     /** The highlighter, re-created when the language changes and updated to the current text. */
     val highlighter: Highlighter
@@ -453,6 +454,7 @@ internal class EditorModel(
     }
 
     private fun afterCaretChange() {
+        snippet.synchronize(state)
         noteCaretActivity()
         ensureCaretVisible()
         bridge.sync()
@@ -530,7 +532,9 @@ internal class EditorModel(
         if (config.readOnly) return false
         upstreamAffinity = false
         preferredDisplayColumn = null
+        snippet.synchronize(state)
         val changed = state.apply(outcome, typed)
+        snippet.synchronize(state)
         afterCaretChange()
         return changed
     }
@@ -566,6 +570,7 @@ internal class EditorModel(
 
     fun submit() {
         controller.closeCompletion()
+        snippet.cancel()
         config.onSubmit?.invoke(state.text)
     }
 
@@ -603,6 +608,7 @@ internal class EditorModel(
             return true
         }
         applyOutcome(withShiftedSecondaries(outcome, state.selectionSet.secondary))
+        if (!config.readOnly) snippet.start(state, outcome.snippetStops)
         return true
     }
 
@@ -634,6 +640,17 @@ internal class EditorModel(
     fun execute(binding: KeyBinding): Boolean {
         val command = binding.command
         if (config.singleLine && command in setOf(EditorCommand.FIND, EditorCommand.REPLACE, EditorCommand.FIND_NEXT, EditorCommand.FIND_PREVIOUS)) return false
+        snippet.synchronize(state)
+        if (config.readOnly) snippet.cancel()
+        if (command == EditorCommand.ESCAPE && snippet.cancel()) {
+            controller.closeCompletion()
+            return true
+        }
+        if ((command == EditorCommand.TAB || command == EditorCommand.OUTDENT) && snippet.move(state, command == EditorCommand.TAB)) {
+            controller.closeCompletion()
+            afterCaretChange()
+            return true
+        }
         val popupOpen = controller.completion.value != null
         if (popupOpen) {
             val pageSize = 8

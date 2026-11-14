@@ -137,3 +137,9 @@ frame usage. `shapedTileCount` exposes actual shaping work to internal regressio
 values carry tag, quote, comment, CDATA, declaration, and processing-instruction continuations.
 Both engines consume the same token stream and incremental highlighter. It has no validation or
 formatting dependency.
+
+`SnippetSession.kt` holds each engine's ephemeral ordered placeholder ranges. Completion planning
+maps parsed stops through the primary replacement and additional edits into final document offsets.
+The session remaps ranges after edits within the active placeholder, drops replaced nested stops,
+and invalidates on history-generation changes or a selection/edit outside the placeholder.
+`EditorModel` and `RstaEditorPanel` handle navigation before their normal Tab behavior.

@@ -431,7 +431,10 @@ private fun planCompletion(
     if (!hasNonOverlappingReplacements(replacements)) return null
     val shiftBefore = additional.filter { it.end <= start }.sumOf { it.text.length - (it.end - it.start) }
     val selection = Selection(start + shiftBefore + parsed.selectionStart, start + shiftBefore + parsed.selectionEnd)
-    return EditOutcome(replacements, selection, EditKind.OTHER)
+    val stops = if (item.insertTextFormat == InsertTextFormat.SNIPPET) parsed.tabStops.map {
+        Selection(start + shiftBefore + it.start, start + shiftBefore + it.end)
+    } else emptyList()
+    return EditOutcome(replacements, selection, EditKind.OTHER, snippetStops = stops)
 }
 
 /** Reports an accepted completion whose edits were discarded because they overlap or fall outside the document. */

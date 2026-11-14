@@ -194,7 +194,8 @@ replaces the identifier prefix with `insertText`, or `label` if insertion text i
 Items also support `detail`, `filterText`, `sortText`, `insertTextFormat`, `preselect`,
 `commitCharacters`, and opaque `id`, matching the public `CompletionItem` model. Documentation
 kinds are `PLAIN_TEXT` and `MARKDOWN`; insertion formats are `PLAIN_TEXT` and `SNIPPET`. Supported
-snippets insert the first placeholder and do not provide full tab-stop navigation. Omitted optional
+snippets navigate numbered placeholders with Tab/Shift+Tab and visit `$0` last. Repeated stops
+are not mirrored; choice/variable syntax remains literal. Omitted optional
 fields use the model defaults; the bundled encoder emits defaults explicitly.
 
 `isIncomplete: false` allows the editor to filter the full candidate set locally as an identifier

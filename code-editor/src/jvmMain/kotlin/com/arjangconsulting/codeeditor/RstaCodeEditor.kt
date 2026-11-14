@@ -57,7 +57,10 @@ internal fun RstaCodeEditor(state: CodeEditorState, controller: LanguageServiceC
                         config.logger.logRejectedCompletion(item)
                         return
                     }
-                    if (panelHolder[0]?.config?.readOnly == false) state.apply(outcome)
+                    if (panelHolder[0]?.config?.readOnly == false) {
+                        state.apply(outcome)
+                        panelHolder[0]?.startSnippet(outcome.snippetStops)
+                    }
                     panelHolder[0]?.syncFromState()
                 }
                 override fun requestHover(offset: Int) {

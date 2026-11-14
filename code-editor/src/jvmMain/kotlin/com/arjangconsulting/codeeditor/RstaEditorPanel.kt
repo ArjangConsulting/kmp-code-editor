@@ -310,6 +310,7 @@ internal class RstaEditorPanel(
         private set
 
     private val diagnosticsParser = DiagnosticsParser()
+    private val snippet = SnippetSession()
     private var tokenMakerRules: TokenRules? = null
     private var applyingFromState = false
     private var applyingToState = false
@@ -366,6 +367,7 @@ internal class RstaEditorPanel(
             if (applyingFromState || applyingToState) return@addCaretListener
             val caret = textArea.caret
             state.selectionInternal = Selection(caret.mark, caret.dot)
+            snippet.synchronize(state)
         }
         textArea.addMouseMotionListener(object : MouseAdapter() {
             override fun mouseMoved(e: MouseEvent) {
@@ -408,6 +410,10 @@ internal class RstaEditorPanel(
     }
 
     private var refreshingPopup = false
+
+    fun startSnippet(stops: List<Selection>) {
+        snippet.start(state, stops)
+    }
 
     private fun installKeyBindings() {
         val shortcut = if (isApplePlatform) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
@@ -457,12 +463,17 @@ internal class RstaEditorPanel(
             true
         }
         bind(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "kmp.escape") {
+            if (snippet.cancel()) {
+                callbacks.closeCompletion()
+                return@bind true
+            }
             callbacks.closeFind()
             false
         }
         bind(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, shortcut), "kmp.submit") {
             if (config.readOnly || config.onSubmit == null) return@bind false
             callbacks.closeCompletion()
+            snippet.cancel()
             config.onSubmit?.invoke(state.text)
             true
         }
@@ -477,6 +488,7 @@ internal class RstaEditorPanel(
     internal fun handleEnter(): Boolean {
         if (config.readOnly || !config.singleLine || autoCompletion.isPopupVisible) return false
         callbacks.closeCompletion()
+        snippet.cancel()
         config.onSubmit?.invoke(state.text)
         return true
     }
@@ -489,7 +501,13 @@ internal class RstaEditorPanel(
         return true
     }
 
-    private fun handleTab(forward: Boolean): Boolean {
+    internal fun handleTab(forward: Boolean): Boolean {
+        if (config.readOnly) snippet.cancel()
+        if (snippet.move(state, forward)) {
+            callbacks.closeCompletion()
+            syncSelectionFromState()
+            return true
+        }
         if (forward && autoCompletion.isPopupVisible) return false
         if (forward && config.tabBehavior == TabBehavior.COMPLETE && !config.readOnly) {
             callbacks.requestCompletion()

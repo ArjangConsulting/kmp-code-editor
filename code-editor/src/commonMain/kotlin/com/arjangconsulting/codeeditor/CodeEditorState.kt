@@ -36,6 +36,8 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
     private var cachedSnapshot: DocumentSnapshot? = null
     internal val history: EditHistory = EditHistory()
     private var undoRevision by mutableIntStateOf(0)
+    internal var historyGeneration: Int = 0
+        private set
     private val textListeners = ArrayList<(String) -> Unit>()
 
     /** The current text. */
@@ -151,6 +153,7 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
 
     /** Clears undo and redo without changing text, selection, folding, or document version. */
     public fun clearHistory() {
+        historyGeneration++
         history.clear()
         undoRevision++
     }
@@ -202,6 +205,7 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
 
     /** Undoes the last change. Returns false when there was nothing to undo. */
     public fun undo(): Boolean {
+        historyGeneration++
         val (text, selection) = history.undo(textState) ?: return false
         remapHistoryFolds(text)
         replaceAll(text, selection, typed = null)
@@ -211,6 +215,7 @@ public class CodeEditorState(initialText: String = "", initialSelection: IntRang
 
     /** Redoes the last undone change. Returns false when there was nothing to redo. */
     public fun redo(): Boolean {
+        historyGeneration++
         val (text, selection) = history.redo(textState) ?: return false
         remapHistoryFolds(text)
         replaceAll(text, selection, typed = null)

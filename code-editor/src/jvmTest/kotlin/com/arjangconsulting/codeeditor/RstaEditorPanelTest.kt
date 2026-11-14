@@ -94,6 +94,23 @@ class RstaEditorPanelTest {
     }
 
     @Test
+    fun `snippet navigation follows edits and Escape ends the session`() {
+        val parsed = parseSnippet("tap \${1:id} \${2:text}$0")
+        state.resetText(parsed.text, parsed.selectionEnd)
+        state.select(parsed.selectionStart, parsed.selectionEnd)
+        panel.syncFromState()
+        panel.startSnippet(parsed.tabStops)
+        panel.textArea.replaceSelection("button")
+        assertTrue(panel.handleTab(true))
+        assertEquals("text", state.selectedText)
+        assertTrue(panel.handleTab(false))
+        assertEquals("button", state.selectedText)
+        val stroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)
+        panel.textArea.actionMap.get(panel.textArea.inputMap.get(stroke)).actionPerformed(ActionEvent(panel.textArea, 0, "escape"))
+        assertFalse(panel.handleTab(true))
+    }
+
+    @Test
     fun `initial text comes from the state`() {
         assertEquals("{\"a\":1}", panel.textArea.text)
         assertEquals(0, state.version, "showing the state must not count as an edit")

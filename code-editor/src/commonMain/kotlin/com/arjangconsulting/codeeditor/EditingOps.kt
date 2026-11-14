@@ -23,6 +23,7 @@ internal data class EditOutcome(
     val selection: Selection,
     val kind: EditKind = EditKind.OTHER,
     val secondarySelections: List<Selection> = emptyList(),
+    val snippetStops: List<Selection> = emptyList(),
 ) {
     val selections: Selections get() = Selections(selection, secondarySelections)
 }
@@ -508,12 +509,17 @@ internal fun findMatches(text: String, query: String, caseSensitive: Boolean, li
 }
 
 /** A parsed LSP snippet: plain [text] and the selection (relative to the text) of the first tab stop. */
-internal data class ParsedSnippet(val text: String, val selectionStart: Int, val selectionEnd: Int)
+internal data class ParsedSnippet(
+    val text: String,
+    val selectionStart: Int,
+    val selectionEnd: Int,
+    val tabStops: List<Selection> = emptyList(),
+)
 
 /**
  * Parses the supported snippet subset: `$n`, `${n}`, `${n:placeholder}` (placeholders may nest),
- * `$0`, and `\$`, `\}`, `\\` escapes. The selection covers tab stop 1 if present, else lands on `$0`,
- * else at the end.
+ * `$0`, and `\$`, `\}`, `\\` escapes. Stops sort numerically with `$0` last; the selection covers
+ * the first numbered stop, otherwise `$0` or the implicit end.
  */
 internal fun parseSnippet(snippet: String): ParsedSnippet {
     val out = StringBuilder()
@@ -531,14 +537,14 @@ internal fun parseSnippet(snippet: String): ParsedSnippet {
                 c == '$' && i + 1 < snippet.length && snippet[i + 1].isDigit() -> {
                     var j = i + 1
                     while (j < snippet.length && snippet[j].isDigit()) j++
-                    val n = snippet.substring(i + 1, j).toInt()
+                    val n = snippet.substring(i + 1, j).toIntOrNull() ?: Int.MAX_VALUE
                     stops.getOrPut(n) { out.length until out.length }
                     i = j
                 }
                 c == '$' && i + 2 < snippet.length && snippet[i + 1] == '{' && snippet[i + 2].isDigit() -> {
                     var j = i + 2
                     while (j < snippet.length && snippet[j].isDigit()) j++
-                    val n = snippet.substring(i + 2, j).toInt()
+                    val n = snippet.substring(i + 2, j).toIntOrNull() ?: Int.MAX_VALUE
                     val start = out.length
                     i = if (j < snippet.length && snippet[j] == ':') parse(j + 1, untilBrace = true) else if (j < snippet.length && snippet[j] == '}') j + 1 else j
                     if (n !in stops) stops[n] = start until out.length
@@ -554,5 +560,7 @@ internal fun parseSnippet(snippet: String): ParsedSnippet {
     parse(0, untilBrace = false)
     val first = stops.keys.filter { it > 0 }.minOrNull()
     val range = first?.let { stops.getValue(it) } ?: stops[0] ?: (out.length until out.length)
-    return ParsedSnippet(out.toString(), range.first, range.last + 1)
+    val ordered = stops.keys.filter { it > 0 }.sorted().map { stops.getValue(it) } +
+        listOf(stops[0] ?: (out.length until out.length))
+    return ParsedSnippet(out.toString(), range.first, range.last + 1, ordered.map { Selection(it.first, it.last + 1) })
 }

@@ -67,8 +67,9 @@ public enum class InsertTextFormat {
 
     /**
      * An LSP snippet. `$1`, `${1:placeholder}`, `$0`, and `\$` escapes are supported: the placeholder
-     * text is inserted and the caret selects the first tab stop (or lands on `$0`). Choice and variable
-     * syntax is inserted literally, and there is no tab-stop navigation after the first one.
+     * text is inserted and the caret selects the first tab stop (or lands on `$0`). Tab/Shift+Tab
+     * visit numbered stops in order, with `$0` last. Escape, Undo, reset, or leaving the active stop
+     * ends navigation. Repeated stops are not mirrored; choice and variable syntax is literal.
      */
     SNIPPET,
 }

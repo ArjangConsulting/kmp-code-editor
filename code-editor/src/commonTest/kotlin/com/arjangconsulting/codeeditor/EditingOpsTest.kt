@@ -219,11 +219,11 @@ class EditingOpsTest {
 
     @Test
     fun `snippets expand placeholders and select the first stop`() {
-        assertEquals(ParsedSnippet("tap(id=)", 7, 7), parseSnippet("tap(id=$1)"))
-        assertEquals(ParsedSnippet("swipe(dir=up)", 10, 12), parseSnippet("swipe(dir=\${1:up})$0"))
-        assertEquals(ParsedSnippet("a b", 3, 3), parseSnippet("a $0b".replace("$0b", "b$0")))
-        assertEquals(ParsedSnippet("cost \$5", 7, 7), parseSnippet("cost \\$5"))
-        assertEquals(ParsedSnippet("f(outer inner)", 2, 13), parseSnippet("f(\${1:outer \${2:inner}})"))
+        assertEquals(ParsedSnippet("tap(id=)", 7, 7), parseSnippet("tap(id=$1)").copy(tabStops = emptyList()))
+        assertEquals(ParsedSnippet("swipe(dir=up)", 10, 12), parseSnippet("swipe(dir=\${1:up})$0").copy(tabStops = emptyList()))
+        assertEquals(ParsedSnippet("a b", 3, 3), parseSnippet("a $0b".replace("$0b", "b$0")).copy(tabStops = emptyList()))
+        assertEquals(ParsedSnippet("cost \$5", 7, 7), parseSnippet("cost \\$5").copy(tabStops = emptyList()))
+        assertEquals(ParsedSnippet("f(outer inner)", 2, 13), parseSnippet("f(\${1:outer \${2:inner}})").copy(tabStops = emptyList()))
     }
 
     @Test

@@ -108,3 +108,9 @@ Both engines display `placeholder` when empty and expose it on the editable acce
 
 Finite `minLines`/`maxLines` size both engines. Compose counts wrapped visual rows; RSTA counts
 logical lines, so wrapping does not grow its height. Parent constraints always take precedence.
+
+Both engines keep a snippet session after accepting numbered placeholders. Tab/Shift+Tab navigate
+stops before indentation, focus traversal, or completion requests. `$0` (or the implicit end)
+finishes the session. Escape, Undo/Redo, reset, multiple cursors, moving outside the active stop,
+or editing outside it ends the session. Edits within a placeholder shift subsequent stops;
+replacing an outer placeholder discards its nested stops. Repeated stops are not mirrored.

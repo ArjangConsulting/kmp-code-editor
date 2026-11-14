@@ -49,6 +49,41 @@ class ReplEditorUiTest {
     }
 
     @Test
+    fun `snippet Tab and Shift Tab navigate edited arguments before requesting completion`() = runComposeUiTest {
+        val state = CodeEditorState("t")
+        var requests = 0
+        val snippets = object : LanguageService {
+            override suspend fun complete(doc: DocumentSnapshot, position: TextPosition, trigger: CompletionTrigger): CompletionList {
+                requests++
+                return CompletionList(listOf(CompletionItem("tap", insertText = "tap id=\${1:id} text=\${2:text}$0", insertTextFormat = InsertTextFormat.SNIPPET)))
+            }
+        }
+        setContent {
+            MaterialTheme {
+                CodeEditor(state, Modifier.size(400.dp, 80.dp), languageService = snippets, singleLine = true,
+                    tabBehavior = TabBehavior.COMPLETE, options = CodeEditorOptions(completionOnTyping = false), serviceOptions = options)
+            }
+        }
+        input().requestFocus()
+        input().performKeyInput { pressKey(Key.Tab) }
+        waitForCompletion(true)
+        input().performKeyInput { pressKey(Key.Tab) }
+        waitForIdle()
+        assertEquals("id", state.selectedText)
+        input().performTextInput("button")
+        input().performKeyInput { pressKey(Key.Tab) }
+        waitForIdle()
+        assertEquals("text", state.selectedText)
+        input().performKeyInput { withKeyDown(Key.ShiftLeft) { pressKey(Key.Tab) } }
+        waitForIdle()
+        assertEquals("button", state.selectedText)
+        assertEquals(1, requests)
+        input().performKeyInput { pressKey(Key.Escape) }
+        input().performKeyInput { pressKey(Key.Tab) }
+        waitUntil { requests == 2 }
+    }
+
+    @Test
     fun `finite line limits grow the input then scroll and shrink after reset`() = runComposeUiTest {
         val state = CodeEditorState()
         setContent {

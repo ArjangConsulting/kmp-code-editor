@@ -71,6 +71,10 @@ class CommandLanguageService(private val latencyMillis: () -> Long) : LanguageSe
                     CompletionItem(
                         label = spec.name,
                         kind = CompletionItemKind.FUNCTION,
+                        insertText = spec.name + spec.attributes.filter { it.required }.mapIndexed { index, attribute ->
+                            " ${attribute.name}=\${${index + 1}:${attribute.values.firstOrNull() ?: attribute.name}}"
+                        }.joinToString("") + "$0",
+                        insertTextFormat = InsertTextFormat.SNIPPET,
                         detail = spec.attributes.filter { it.required }.joinToString(" ") { "${it.name}=" }.ifEmpty { null },
                         documentation = MarkupContent.markdown(spec.doc),
                     )
