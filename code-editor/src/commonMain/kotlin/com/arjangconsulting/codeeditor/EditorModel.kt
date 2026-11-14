@@ -625,6 +625,7 @@ internal class EditorModel(
     /** Executes a key [binding]; returns true when handled (so the key event is consumed). */
     fun execute(binding: KeyBinding): Boolean {
         val command = binding.command
+        if (config.singleLine && command in setOf(EditorCommand.FIND, EditorCommand.REPLACE, EditorCommand.FIND_NEXT, EditorCommand.FIND_PREVIOUS)) return false
         val popupOpen = controller.completion.value != null
         if (popupOpen) {
             val pageSize = 8

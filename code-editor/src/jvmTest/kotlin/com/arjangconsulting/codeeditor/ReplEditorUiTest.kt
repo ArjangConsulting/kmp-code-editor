@@ -10,6 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -84,6 +88,24 @@ class ReplEditorUiTest {
         waitForIdle()
         assertEquals(listOf(-1, 1), history)
         assertEquals("type", submitted)
+    }
+
+    @Test
+    fun `single line find commands remain available to the host`() = runComposeUiTest {
+        var handledByHost = 0
+        setContent {
+            MaterialTheme {
+                CodeEditor(CodeEditorState("tap"), Modifier.size(400.dp, 80.dp).onPreviewKeyEvent {
+                    if (it.key == Key.F && it.type == KeyEventType.KeyDown) handledByHost++
+                    false
+                }, singleLine = true)
+            }
+        }
+        input().requestFocus()
+        input().performKeyInput { withKeyDown(Key.MetaLeft) { pressKey(Key.F) } }
+        waitForIdle()
+        assertTrue(onAllNodesWithTag(FIND_FIELD_TAG).fetchSemanticsNodes().isEmpty())
+        assertEquals(1, handledByHost)
     }
 
     @Test

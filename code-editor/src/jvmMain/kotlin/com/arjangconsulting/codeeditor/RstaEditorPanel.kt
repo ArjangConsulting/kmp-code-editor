@@ -428,6 +428,7 @@ internal class RstaEditorPanel(
             }
         }
         bind(KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcut), "kmp.find") {
+            if (config.singleLine) return@bind false
             callbacks.openFind()
             true
         }
@@ -437,6 +438,7 @@ internal class RstaEditorPanel(
             KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK)
         }
         bind(replaceStroke, "kmp.replace") {
+            if (config.singleLine) return@bind false
             callbacks.openReplace()
             true
         }
