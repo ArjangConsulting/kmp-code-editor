@@ -35,3 +35,7 @@ beginning. `rememberCodeEditorState(text)` starts at offset 0. `setText(text)` i
 moves to the end; `resetText(text)` clears undo history and starts at 0. Both replacement methods
 accept an explicit `caret` offset. The value overload initializes at the end and synchronizes
 external values as undoable replacements.
+
+`placeholder = "Enter a command"` displays a hint only while the document is empty. It is exposed
+on the editable accessibility node and uses `colors.placeholderForeground` (the Material defaults
+use `onSurfaceVariant` at 60% alpha). It does not affect text, selection, completion, or history.

@@ -206,7 +206,9 @@ internal fun ComposeCodeEditor(state: CodeEditorState, controller: LanguageServi
                 modifier = Modifier
                     .matchParentSize()
                     .semantics {
-                        contentDescription = config.labels.editorDescription
+                        contentDescription = if (state.text.isEmpty() && config.placeholder != null) {
+                            "${config.labels.editorDescription}, ${config.placeholder}"
+                        } else config.labels.editorDescription
                         val caretText = config.labels.caretDescription(caretPosition.line + 1, caretPosition.character + 1)
                         stateDescription = if (selectionCount > 1) "$caretText, ${config.labels.cursorCount(selectionCount)}" else caretText
                         customActions = if (config.folding) buildList {
@@ -448,6 +450,9 @@ private fun TextArea(
     val config = model.config
     val vertical = rememberScrollableState { model.scrollVerticallyBy(it) }
     val horizontal = rememberScrollableState { model.scrollHorizontallyBy(it) }
+    val emptyHint = remember(config.placeholder, config.textStyle, config.colors.placeholderForeground) {
+        config.placeholder?.let { model.textMeasurer?.measure(it, config.textStyle.copy(color = config.colors.placeholderForeground), softWrap = false, maxLines = 1) }
+    }
     val placeholder = remember(config.textStyle, config.colors, config.labels.foldedPlaceholder) {
         model.textMeasurer?.measure(config.labels.foldedPlaceholder, config.textStyle.copy(color = config.colors.foldPlaceholderForeground))
     }
@@ -490,7 +495,7 @@ private fun TextArea(
                     }
                 }
             }
-            .drawBehind { drawEditor(model, diagnosticsByLine, placeholder) },
+            .drawBehind { drawEditor(model, diagnosticsByLine, placeholder, emptyHint) },
     ) {
         Scrollbars(model, Modifier.matchParentSize())
     }
@@ -621,7 +626,7 @@ private fun showTextToolbar(model: EditorModel, toolbar: androidx.compose.ui.pla
 }
 
 /** Draws backgrounds, selection, text, decorations, and the caret for the visible rows. */
-private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int, List<Diagnostic>>, placeholder: TextLayoutResult?) {
+private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int, List<Diagnostic>>, placeholder: TextLayoutResult?, emptyHint: TextLayoutResult?) {
     val m = model.metrics
     if (m.lineHeight <= 0f || model.textMeasurer == null) return
     val config = model.config
@@ -640,6 +645,9 @@ private fun DrawScope.drawEditor(model: EditorModel, diagnosticsByLine: Map<Int,
     val (first, last) = visibleRows(model, size.height, fold.rowCount)
     val textLeft = m.paddingLeft - model.scrollX
     clipRect {
+        if (state.text.isEmpty() && emptyHint != null) {
+            drawText(emptyHint, topLeft = Offset(textLeft, model.rowTop(0) + (m.lineHeight - emptyHint.size.height) / 2f))
+        }
         for (row in first..last) {
             val line = fold.lineAt(row)
             val top = model.rowTop(row)

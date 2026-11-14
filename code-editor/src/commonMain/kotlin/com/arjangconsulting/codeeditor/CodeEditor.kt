@@ -41,6 +41,7 @@ internal data class EditorConfig(
     val options: CodeEditorOptions,
     val serviceOptions: LanguageServiceOptions,
     val logger: CodeEditorLogger,
+    val placeholder: String? = null,
 )
 
 /**
@@ -78,6 +79,8 @@ internal data class EditorConfig(
  * The Compose input field also exposes localized fold/unfold actions for the current region and
  * the whole document. Collapsing moves a hidden selection to the region's header.
  *
+ * [placeholder] is shown and announced while the document is empty; it is never part of the text.
+ *
  * **Sizing.** Give the editor a bounded height to get virtualized rendering. With unbounded height
  * (e.g. inside a `verticalScroll`) it measures to fit every line.
  */
@@ -108,6 +111,7 @@ public fun CodeEditor(
     serviceOptions: LanguageServiceOptions = LanguageServiceOptions(),
     logger: CodeEditorLogger = CodeEditorLogger.None,
     languageServiceRevision: Long = 0,
+    placeholder: String? = null,
 ) {
     val scope = rememberCoroutineScope()
     val controller = remember(state) { LanguageServiceController(scope, languageService, serviceOptions, language, logger) }
@@ -144,6 +148,7 @@ public fun CodeEditor(
         options = options,
         serviceOptions = serviceOptions,
         logger = logger,
+        placeholder = placeholder,
     )
 
     DocumentObserver(state, controller, config)
@@ -170,6 +175,7 @@ public fun CodeEditor(
  * Delayed echoes of recently reported values do not overwrite newer typing. Selection, folding,
  * and undo history live inside and survive recomposition.
  * [languageServiceRevision] invalidates service results as in the state-based overload.
+ * [placeholder] is shown and announced only while [value] is empty.
  */
 @Composable
 public fun CodeEditor(
@@ -199,6 +205,7 @@ public fun CodeEditor(
     serviceOptions: LanguageServiceOptions = LanguageServiceOptions(),
     logger: CodeEditorLogger = CodeEditorLogger.None,
     languageServiceRevision: Long = 0,
+    placeholder: String? = null,
 ) {
     val state = remember { CodeEditorState(value) }
     val currentOnValueChange by rememberUpdatedState(onValueChange)
@@ -253,6 +260,7 @@ public fun CodeEditor(
         options = options,
         serviceOptions = serviceOptions,
         logger = logger,
+        placeholder = placeholder,
         languageServiceRevision = languageServiceRevision,
     )
 }

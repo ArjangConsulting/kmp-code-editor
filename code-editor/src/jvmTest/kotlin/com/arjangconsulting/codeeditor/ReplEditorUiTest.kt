@@ -17,6 +17,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -44,6 +45,24 @@ class ReplEditorUiTest {
         waitUntil(timeoutMillis = 3_000) {
             onAllNodesWithTag(COMPLETION_LIST_TAG).fetchSemanticsNodes().isNotEmpty() == open
         }
+    }
+
+    @Test
+    fun `placeholder is exposed only while empty and never enters the document`() = runComposeUiTest {
+        val state = CodeEditorState()
+        setContent {
+            MaterialTheme {
+                CodeEditor(state, Modifier.size(400.dp, 80.dp), placeholder = "Enter a command", singleLine = true)
+            }
+        }
+        input().assertContentDescriptionEquals("Code editor, Enter a command")
+        assertEquals("", state.text)
+        input().requestFocus()
+        input().performTextInput("tap")
+        input().assertContentDescriptionEquals("Code editor")
+        state.resetText("")
+        waitForIdle()
+        input().assertContentDescriptionEquals("Code editor, Enter a command")
     }
 
     @Test

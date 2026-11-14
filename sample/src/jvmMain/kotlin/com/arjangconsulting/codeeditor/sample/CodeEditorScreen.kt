@@ -360,6 +360,7 @@ private fun ReplDemo(engine: CodeEditorEngine, service: LanguageService, colors:
             languageServiceRevision = serviceRevision,
             engine = engine,
             singleLine = true,
+            placeholder = "Enter a command",
             colors = colors,
             onSubmit = { command ->
                 if (command.isNotBlank()) {

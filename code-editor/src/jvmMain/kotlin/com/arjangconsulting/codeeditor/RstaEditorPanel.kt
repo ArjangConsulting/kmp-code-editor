@@ -330,7 +330,21 @@ internal class RstaEditorPanel(
     val completionProvider = SessionCompletionProvider { config.language }
     internal val autoCompletion = ServiceAutoCompletion(completionProvider) { callbacks.acceptCompletion(it) }
 
-    internal val textArea: RSyntaxTextArea = RSyntaxTextArea().apply {
+    internal val textArea: RSyntaxTextArea = object : RSyntaxTextArea() {
+        override fun paintComponent(graphics: Graphics) {
+            super.paintComponent(graphics)
+            val hint = config.placeholder
+            if (document.length != 0 || hint == null) return
+            val copy = graphics.create()
+            try {
+                copy.font = font
+                copy.color = config.colors.placeholderForeground.toAwt()
+                copy.drawString(hint, insets.left, insets.top + copy.fontMetrics.ascent)
+            } finally {
+                copy.dispose()
+            }
+        }
+    }.apply {
         isCodeFoldingEnabled = true
         antiAliasingEnabled = true
         isBracketMatchingEnabled = true
@@ -512,6 +526,8 @@ internal class RstaEditorPanel(
         val previous = this.config
         this.config = config
         if (force || tokenMakerRules !== config.language) installLanguage(config.language)
+        textArea.accessibleContext.accessibleName = config.labels.editorDescription
+        textArea.accessibleContext.accessibleDescription = config.placeholder
         textArea.isEditable = !config.readOnly
         textArea.isAutoIndentEnabled = config.options.autoIndent
         textArea.closeCurlyBraces = config.options.autoCloseBrackets

@@ -103,3 +103,5 @@ whole app. Compose is therefore the default everywhere. To use RSyntaxTextArea a
    `System.setProperty("compose.layers.type", "WINDOW")` as the first line of `main`.
 2. Check overlays with the sample's "Overlay check" card: `./gradlew :sample:run`, switch the
    engine to RSTA, and open the dialog and menu.
+
+Both engines display `placeholder` when empty and expose it on the editable accessibility node.

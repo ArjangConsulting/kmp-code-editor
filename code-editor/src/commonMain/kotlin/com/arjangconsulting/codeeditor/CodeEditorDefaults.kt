@@ -50,6 +50,8 @@ public data class CodeEditorColors(
     val popupBorder: Color,
     val scrollbar: Color,
     val syntaxTheme: CodeEditorSyntaxTheme,
+    /** Foreground of the hint displayed in an empty editor. */
+    val placeholderForeground: Color = foreground.copy(alpha = 0.6f),
 ) {
     /** The [syntaxTheme] variant for [background]. */
     public val syntax: CodeEditorSyntaxColors = syntaxTheme.colorsFor(background)
@@ -222,6 +224,7 @@ public object CodeEditorDefaults {
         popupBorder = scheme.outlineVariant,
         scrollbar = scheme.onSurface.copy(alpha = 0.25f),
         syntaxTheme = syntaxTheme,
+        placeholderForeground = scheme.onSurfaceVariant.copy(alpha = 0.6f),
     )
 
     /** Monospace text based on `MaterialTheme.typography.bodyMedium`. */

@@ -14,7 +14,8 @@ public final class com/arjangconsulting/codeeditor/BackendLanguageService : com/
 
 public final class com/arjangconsulting/codeeditor/CodeEditorColors {
 	public static final field $stable I
-	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-0d7_KjU ()J
 	public final fun component10-0d7_KjU ()J
 	public final fun component11-0d7_KjU ()J
@@ -39,14 +40,15 @@ public final class com/arjangconsulting/codeeditor/CodeEditorColors {
 	public final fun component29-0d7_KjU ()J
 	public final fun component3-0d7_KjU ()J
 	public final fun component30 ()Lcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;
+	public final fun component31-0d7_KjU ()J
 	public final fun component4-0d7_KjU ()J
 	public final fun component5-0d7_KjU ()J
 	public final fun component6-0d7_KjU ()J
 	public final fun component7-0d7_KjU ()J
 	public final fun component8-0d7_KjU ()J
 	public final fun component9-0d7_KjU ()J
-	public final fun copy-r8AzLMM (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;)Lcom/arjangconsulting/codeeditor/CodeEditorColors;
-	public static synthetic fun copy-r8AzLMM$default (Lcom/arjangconsulting/codeeditor/CodeEditorColors;JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;ILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorColors;
+	public final fun copy-UOA7Rxs (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;J)Lcom/arjangconsulting/codeeditor/CodeEditorColors;
+	public static synthetic fun copy-UOA7Rxs$default (Lcom/arjangconsulting/codeeditor/CodeEditorColors;JJJJJJJJJJJJJJJJJJJJJJJJJJJJJLcom/arjangconsulting/codeeditor/CodeEditorSyntaxTheme;JILjava/lang/Object;)Lcom/arjangconsulting/codeeditor/CodeEditorColors;
 	public final fun diagnosticColor-vNxB06k (Lcom/arjangconsulting/codeeditor/DiagnosticSeverity;)J
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBackground-0d7_KjU ()J
@@ -70,6 +72,7 @@ public final class com/arjangconsulting/codeeditor/CodeEditorColors {
 	public final fun getLineHighlightSelected-0d7_KjU ()J
 	public final fun getLineHighlightWarning-0d7_KjU ()J
 	public final fun getMatchingBracketBackground-0d7_KjU ()J
+	public final fun getPlaceholderForeground-0d7_KjU ()J
 	public final fun getPopupBackground-0d7_KjU ()J
 	public final fun getPopupBorder-0d7_KjU ()J
 	public final fun getPopupForeground-0d7_KjU ()J
@@ -105,8 +108,8 @@ public final class com/arjangconsulting/codeeditor/CodeEditorEngine : java/lang/
 }
 
 public final class com/arjangconsulting/codeeditor/CodeEditorKt {
-	public static final fun CodeEditor (Lcom/arjangconsulting/codeeditor/CodeEditorState;Landroidx/compose/ui/Modifier;Lcom/arjangconsulting/codeeditor/TokenRules;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/CodeEditorEngine;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZZLjava/util/List;Ljava/util/List;Ljava/lang/Integer;Lcom/arjangconsulting/codeeditor/TextRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/arjangconsulting/codeeditor/TabBehavior;Lcom/arjangconsulting/codeeditor/CodeEditorColors;Landroidx/compose/ui/text/TextStyle;Lcom/arjangconsulting/codeeditor/CodeEditorLabels;Lcom/arjangconsulting/codeeditor/CodeEditorOptions;Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;JLandroidx/compose/runtime/Composer;IIII)V
-	public static final fun CodeEditor (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lcom/arjangconsulting/codeeditor/TokenRules;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/CodeEditorEngine;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZZLjava/util/List;Ljava/util/List;Ljava/lang/Integer;Lcom/arjangconsulting/codeeditor/TextRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/arjangconsulting/codeeditor/TabBehavior;Lcom/arjangconsulting/codeeditor/CodeEditorColors;Landroidx/compose/ui/text/TextStyle;Lcom/arjangconsulting/codeeditor/CodeEditorLabels;Lcom/arjangconsulting/codeeditor/CodeEditorOptions;Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;JLandroidx/compose/runtime/Composer;IIII)V
+	public static final fun CodeEditor (Lcom/arjangconsulting/codeeditor/CodeEditorState;Landroidx/compose/ui/Modifier;Lcom/arjangconsulting/codeeditor/TokenRules;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/CodeEditorEngine;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZZLjava/util/List;Ljava/util/List;Ljava/lang/Integer;Lcom/arjangconsulting/codeeditor/TextRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/arjangconsulting/codeeditor/TabBehavior;Lcom/arjangconsulting/codeeditor/CodeEditorColors;Landroidx/compose/ui/text/TextStyle;Lcom/arjangconsulting/codeeditor/CodeEditorLabels;Lcom/arjangconsulting/codeeditor/CodeEditorOptions;Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;JLjava/lang/String;Landroidx/compose/runtime/Composer;IIII)V
+	public static final fun CodeEditor (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lcom/arjangconsulting/codeeditor/TokenRules;Lcom/arjangconsulting/codeeditor/LanguageService;Lcom/arjangconsulting/codeeditor/CodeEditorEngine;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZZLjava/util/List;Ljava/util/List;Ljava/lang/Integer;Lcom/arjangconsulting/codeeditor/TextRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/arjangconsulting/codeeditor/TabBehavior;Lcom/arjangconsulting/codeeditor/CodeEditorColors;Landroidx/compose/ui/text/TextStyle;Lcom/arjangconsulting/codeeditor/CodeEditorLabels;Lcom/arjangconsulting/codeeditor/CodeEditorOptions;Lcom/arjangconsulting/codeeditor/LanguageServiceOptions;Lcom/arjangconsulting/codeeditor/CodeEditorLogger;JLjava/lang/String;Landroidx/compose/runtime/Composer;IIII)V
 }
 
 public final class com/arjangconsulting/codeeditor/CodeEditorLabels {
