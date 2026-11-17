@@ -84,10 +84,13 @@ KMPComponents and kommon, is in the `kmp-library-conventions` skill (from the KM
 ## Build and verification
 
 ```bash
-./gradlew :code-editor:jvmTest                     # fastest: common + desktop UI + RSTA tests
-./gradlew :code-editor:allTests                    # all targets (iOS needs macOS + Xcode)
+# Fastest: common + desktop UI + RSTA tests
+./gradlew :code-editor:jvmTest
+# All targets (iOS needs macOS + Xcode)
+./gradlew :code-editor:allTests
 ./gradlew :code-editor:checkKotlinAbi
-./gradlew :code-editor:dokkaGenerate               # API docs: code-editor/build/dokka/html
+# API docs: code-editor/build/dokka/html
+./gradlew :code-editor:dokkaGenerate
 ./gradlew :code-editor:assemble :sample:compileKotlinJvm
 ```
 
