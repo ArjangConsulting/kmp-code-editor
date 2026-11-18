@@ -11,7 +11,7 @@ rsyntaxtextarea = "4.0.1"
 rstaAutocomplete = "4.0.0"
 androidxActivity = "1.13.0"
 snakeyaml = "5.0.0"
-serialization = "1.12.0"
+serialization = "1.13.0"
 kmpComponents = "0.2.1"
 
 [libraries]
