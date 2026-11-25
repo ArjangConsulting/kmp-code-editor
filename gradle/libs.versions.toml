@@ -1,5 +1,5 @@
 [versions]
-agp = "9.5.1"
+agp = "9.5.2"
 kotlin = "2.4.21"
 compose = "1.12.2"
 # Compose Material 3 is versioned separately; keep it on the release paired with `compose`.
@@ -7,12 +7,12 @@ composeMaterial3 = "1.9.0"
 mavenPublish = "0.37.0"
 dokka = "2.3.0"
 coroutines = "1.11.0"
-rsyntaxtextarea = "4.0.1"
+rsyntaxtextarea = "4.0.2"
 rstaAutocomplete = "4.0.0"
 androidxActivity = "1.13.0"
 snakeyaml = "5.0.0"
 serialization = "1.13.0"
-kmpComponents = "0.2.1"
+kmpComponents = "0.4.0"
 
 [libraries]
 kmp-components = { module = "io.github.maniramezan.kmpcomponents:components", version.ref = "kmpComponents" }
